@@ -9,15 +9,14 @@
     <style>
         /* UI/UX Density Override: Mimic MS Access / WinXP Desktop App Density */
         body {
-            background-color: #d4d0c8; /* Classic WinXP Gray */
+            background-color: #d4d0c8;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 0.85rem;
             overflow-x: hidden;
         }
         
-        /* Master Layout Styles */
         .system-header {
-            background-color: #003366; /* Deep blue from the video */
+            background-color: #003366;
             color: white;
             font-weight: bold;
             padding: 4px 10px;
@@ -45,19 +44,18 @@
         .nav-btn:hover, .nav-btn.active {
             background-color: #c0c0c0;
             border-color: #808080;
+            color: #333;
         }
 
-        /* Dashboard Content Styles */
         .search-bar-container {
-            background-color: #ffcc66; /* The distinct orange/yellow search header */
+            background-color: #ffcc66;
             padding: 4px 10px;
             border-bottom: 1px solid #999;
             font-weight: bold;
         }
         
-        /* High Density Table Overrides */
         .table-container {
-            height: 350px; /* Fixed height for scrollable grid */
+            height: 350px;
             overflow-y: auto;
             background-color: white;
             border: 1px solid #999;
@@ -80,7 +78,6 @@
             white-space: nowrap;
         }
         
-        /* Split Form Bottom Area */
         .detail-form-container {
             background-color: #f0f0f0;
             border-top: 2px solid #a0a0a0;
@@ -112,50 +109,44 @@
             border: 1px solid #888;
         }
 
-        /* Windows XP Modal styling */
-        .modal-content-xp { background-color: #d4d0c8; border: 2px solid #003366; border-radius: 0; }
+        .modal-content-xp {
+            background-color: #d4d0c8;
+            border: 2px solid #003366;
+            border-radius: 0;
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
 
     <header class="system-header d-flex justify-content-between align-items-center">
-        <div>STUDENT RECORDS - Prefect Information System</div>
+        <div>HOMEPAGE - Prefect Information System</div>
         <div class="d-flex align-items-center gap-3">
-            <span>ENROLMENT CODE: <strong>2025-2026</strong></span>
-            <div class="d-flex align-items-center gap-1">
-                <label for="codeSelect" style="font-size: 0.8rem; margin:0;">Select Another Enrolment Code:</label>
-                <select id="codeSelect" class="form-select form-select-sm" style="width: 150px; height: 24px; padding: 0 5px; font-size: 0.8rem; border-radius:0;">
-                    <option>2025-2026</option>
-                    <option>2024-2025</option>
-                    <option>2023-2024</option>
-                </select>
-            </div>
+            <span>ENROLMENT CODE: <strong>{{ active_sy.code|default:"NO ACTIVE YEAR" }}</strong></span>
             <button class="btn btn-light btn-sm action-btn">Manage Enrolment</button>
-            <a href="/admin/" target="_blank" class="btn btn-warning btn-sm action-btn text-dark fw-bold" style="border: 1px solid #888;">Admin Panel</a>
         </div>
     </header>
 
     <nav class="main-nav d-flex">
         <a href="/" class="nav-btn">HOME</a>
         <button class="nav-btn">SECTIONS</button>
-        <button class="nav-btn active">CURRENTLY ENROLLED STUDENTS</button>
+        <a href="/students/" class="nav-btn active">CURRENTLY ENROLLED STUDENTS</a>
         <button class="nav-btn">REPORTS</button>
-        <button class="nav-btn">MAINTENANCE</button>
+        <a href="/admin/" target="_blank" class="nav-btn text-decoration-none text-dark">MAINTENANCE</a>
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column">
         
-        <form method="GET" action="" class="search-bar-container d-flex gap-4 align-items-center m-0">
+        <form method="GET" action="" class="search-bar-container d-flex gap-4 align-items-center m-0" id="search-form">
             <div class="d-flex align-items-center gap-2">
                 <label for="searchName" class="mb-0">Search by Name (Lastname, Firstname)</label>
-                <input type="text" id="searchName" name="searchName" value="{{ search_name }}" class="form-control form-control-xs" style="width: 250px;">
+                <input type="text" id="searchName" name="searchName" value="{{ search_name }}" class="form-control form-control-xs" style="width: 250px;" autocomplete="off">
             </div>
             <div class="d-flex align-items-center gap-2">
                 <label for="searchId" class="mb-0">Search by Student Number</label>
-                <input type="text" id="searchId" name="searchId" value="{{ search_id }}" class="form-control form-control-xs" style="width: 150px;">
+                <input type="text" id="searchId" name="searchId" value="{{ search_id }}" class="form-control form-control-xs" style="width: 150px;" autocomplete="off">
             </div>
             <button type="submit" class="btn btn-sm action-btn bg-white">Find</button>
-            <a href="/" class="btn btn-sm action-btn">Clear</a>
+            <a href="/students/" class="btn btn-sm action-btn">Clear</a>
         </form>
 
         <div class="table-container m-2">
@@ -171,22 +162,34 @@
                         <th style="width: 35%;">Address</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tbody id="student-table-body">
+                <tbody id="student-table-body">
+                    {% for student in students %}
                     <tr class="student-row" style="cursor: pointer;"
                         data-student-number="{{ student.student_number }}"
                         data-name="{{ student.last_name }}, {{ student.first_name }} {{ student.middle_initial|default:'' }}"
                         data-sex="{{ student.sex }}"
-                        data-date-enrolled="{{ student.date_enrolled|date:'Y-m-d'|default:'' }}"
-                        data-is-enrolled="{% if student.is_enrolled %}true{% else %}false{% endif %}"
+                        data-date-enrolled="{% for e in student.enrollments.all %}{% if e.school_year == active_sy %}{{ e.date_enrolled|date:'Y-m-d'|default:'' }}{% endif %}{% endfor %}"
+                        data-is-enrolled="{% for e in student.enrollments.all %}{% if e.school_year == active_sy %}{{ e.is_enrolled|lower }}{% endif %}{% endfor %}"
                         data-bday="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}"
                         data-address="{{ student.address|default:'' }}">
                         
                         <td>{{ student.student_number }}</td>
                         <td>{{ student.last_name }}, {{ student.first_name }} {{ student.middle_initial|default:'' }}</td>
                         <td>{{ student.sex }}</td>
-                        <td>{{ student.date_enrolled|date:"M-d-Y"|default:"" }}</td>
-                        <td>{% if student.is_enrolled %}YES{% else %}NO{% endif %}</td>
+                        <td>
+                            {% for e in student.enrollments.all %}
+                                {% if e.school_year == active_sy %}
+                                    {{ e.date_enrolled|date:"M-d-Y"|default:"" }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for e in student.enrollments.all %}
+                                {% if e.school_year == active_sy %}
+                                    {% if e.is_enrolled %}YES{% else %}NO{% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
                         <td>{{ student.date_of_birth|date:"M-d-Y"|default:"" }}</td>
                         <td>{{ student.address|default:"" }}</td>
                     </tr>
@@ -194,7 +197,7 @@
                     <tr>
                         <td colspan="7" class="text-center fw-bold text-danger">No matching students found.</td>
                     </tr>
-                    {% endfor %}</tbody>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -240,7 +243,7 @@
                                 <div class="col-2 form-label-custom">Edited by</div>
                                 <div class="col-4"><input type="text" class="form-control form-control-xs bg-light" readonly></div>
                                 <div class="col-2 form-label-custom">Date</div>
-                                <div class="col-4"><input type="text" class="form-control form-control-xs bg-light" value="2/4/2026" readonly></div>
+                                <div class="col-4"><input type="text" class="form-control form-control-xs bg-light" value="{% now 'n/j/Y' %}" readonly></div>
                             </div>
                         </div>
                     </div>
@@ -249,7 +252,13 @@
 
             <div class="row mt-3">
                 <div class="col-12 d-flex gap-2">
-                    <button class="btn action-btn">Enrol This Student Now</button>
+                    <form method="POST" action="" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="toggle_enrolment" value="1">
+                        <input type="hidden" name="student_number_to_toggle" id="toggle-student-id">
+                        <button type="submit" class="btn action-btn fw-bold" id="btn-toggle-enrolment" disabled>Enrol This Student Now</button>
+                    </form>
+                    
                     <button type="button" class="btn action-btn" data-bs-toggle="modal" data-bs-target="#addStudentModal">Add New Student</button>
                     <button class="btn action-btn">View Student Information</button>
                     <button class="btn action-btn">View Transcript of Records</button>
@@ -332,65 +341,81 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            function bindRowClicks() {
+                const rows = document.querySelectorAll('.student-row');
+                rows.forEach(row => {
+                    row.addEventListener('click', function() {
+                        // Highlight Row
+                        rows.forEach(r => r.classList.remove('table-primary'));
+                        this.classList.add('table-primary');
+        
+                        // Populate the Detail Form
+                        document.getElementById('detail-student-number').value = this.dataset.studentNumber;
+                        document.getElementById('detail-name').value = this.dataset.name;
+                        document.getElementById('detail-sex').value = this.dataset.sex;
+                        document.getElementById('detail-date-enrolled').value = this.dataset.dateEnrolled;
+                        document.getElementById('detail-bday').value = this.dataset.bday;
+                        document.getElementById('detail-address').value = this.dataset.address;
+                        document.getElementById('detail-is-enrolled').checked = (this.dataset.isEnrolled === 'true');
+                        
+                        // Activate the Delete Button
+                        document.getElementById('delete-student-id').value = this.dataset.studentNumber;
+                        document.getElementById('btn-delete-student').disabled = false;
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // Step 6 (Part 1): Encapsulate the row-click binding logic into a reusable function.
-        function bindRowClickEvents() {
-            const rows = document.querySelectorAll('.student-row');
-            rows.forEach(row => {
-                row.addEventListener('click', function() {
-                    rows.forEach(r => r.classList.remove('table-primary'));
-                    this.classList.add('table-primary');
-
-                    document.getElementById('detail-student-number').value = this.dataset.studentNumber;
-                    document.getElementById('detail-name').value = this.dataset.name;
-                    document.getElementById('detail-sex').value = this.dataset.sex;
-                    document.getElementById('detail-date-enrolled').value = this.dataset.dateEnrolled;
-                    document.getElementById('detail-bday').value = this.dataset.bday;
-                    document.getElementById('detail-address').value = this.dataset.address;
-                    document.getElementById('detail-is-enrolled').checked = (this.dataset.isEnrolled === 'true');
-                    
-                    document.getElementById('delete-student-id').value = this.dataset.studentNumber;
-                    document.getElementById('btn-delete-student').disabled = false;
+                        // Activate and configure the Enrol/Drop Toggle Button
+                        const toggleBtn = document.getElementById('btn-toggle-enrolment');
+                        document.getElementById('toggle-student-id').value = this.dataset.studentNumber;
+                        toggleBtn.disabled = false;
+                        
+                        if (this.dataset.isEnrolled === 'true') {
+                            toggleBtn.innerText = "Drop This Student";
+                            toggleBtn.classList.add('text-danger');
+                        } else {
+                            toggleBtn.innerText = "Enrol This Student Now";
+                            toggleBtn.classList.remove('text-danger');
+                        }
+                    });
                 });
-            });
-        }
-
-        // Step 2: The Debounce Engine
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-        }
-
-        // Step 4: The Fetch Request logic
-        async function performSearch() {
-            const searchName = document.getElementById('searchName').value;
-            const searchId = document.getElementById('searchId').value;
-            const url = `?searchName=${encodeURIComponent(searchName)}&searchId=${encodeURIComponent(searchId)}`;
-
-            const response = await fetch(url);
-            const htmlText = await response.text();
+            }
             
-            // Step 5: The DOM Swap
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            document.getElementById('student-table-body').innerHTML = doc.getElementById('student-table-body').innerHTML;
-            
-            // Step 6 (Part 2): Re-bind events to the newly injected rows.
-            bindRowClickEvents();
-        }
+            // Initial bind on page load
+            bindRowClicks();
 
-        // Step 3: Attach Event Listeners
-        bindRowClickEvents(); // Bind events on initial page load
-        document.getElementById('searchName').addEventListener('input', debounce(performSearch, 300));
-        document.getElementById('searchId').addEventListener('input', debounce(performSearch, 300));
-    });
-</script>
+            // The AJAX Debounce Search Engine
+            const searchNameInput = document.getElementById('searchName');
+            const searchIdInput = document.getElementById('searchId');
+            const tableBody = document.getElementById('student-table-body');
+            let debounceTimer;
+
+            function performAjaxSearch() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('searchName', searchNameInput.value);
+                url.searchParams.set('searchId', searchIdInput.value);
+
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const newTableBody = doc.getElementById('student-table-body');
+                    if (newTableBody) {
+                        tableBody.innerHTML = newTableBody.innerHTML;
+                        bindRowClicks(); // Re-bind clicks to the newly fetched rows
+                    }
+                });
+            }
+
+            function handleSearchInput() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(performAjaxSearch, 300);
+            }
+
+            searchNameInput.addEventListener('input', handleSearchInput);
+            searchIdInput.addEventListener('input', handleSearchInput);
+        });
+    </script>
 </body>
 </html>
