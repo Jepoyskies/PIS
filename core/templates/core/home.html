@@ -1,62 +1,101 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>Prefect Information System - Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+    <title>Main Switchboard - Prefect of Students Office</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
-        body { background-color: #d4d0c8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.85rem; overflow-x: hidden; }
-        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; }
-        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
-        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
-        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
-        .action-btn { font-size: 0.8rem; padding: 2px 10px; border-radius: 0; background-color: #e0e0e0; border: 1px solid #888; }
-        .switchboard-container { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; width: 600px; margin: 50px auto; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
-        .switchboard-header { background-color: #003366; color: white; padding: 10px; text-align: center; font-size: 1.2rem; font-weight: bold; border-bottom: 2px solid #ffcc66; }
-        .switchboard-btn { display: block; width: 100%; text-align: left; padding: 8px 15px; margin-bottom: 10px; font-weight: bold; font-size: 0.9rem; background-color: #e4e4e4; border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; text-decoration: none; color: #333;}
-        .switchboard-btn:active, .switchboard-btn:hover { border: 1px solid #808080; border-right-color: #fff; border-bottom-color: #fff; background-color: #d4d0c8; color: #000;}
+        body {
+            background-color: #d4d0c8;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Tahoma', sans-serif;
+        }
+
+        .switchboard-card {
+            background-color: #f0f0f0;
+            border: 2px solid #fff;
+            border-right-color: #808080;
+            border-bottom-color: #808080;
+            width: 600px;
+            padding: 20px;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .header-title {
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border: 2px solid #ffcc00;
+        }
+
+        .module-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: #333;
+            background: linear-gradient(to bottom, #e4e4e4, #d0d0d0);
+            border: 2px solid #fff;
+            border-right-color: #808080;
+            border-bottom-color: #808080;
+            transition: all 0.1s;
+        }
+
+        .module-btn:hover {
+            background: linear-gradient(to bottom, #fff, #e4e4e4);
+            color: #003366;
+        }
+
+        .module-btn:active {
+            border: 2px solid #808080;
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            background: #ccc;
+            transform: translate(1px, 1px);
+        }
+
+        .btn-ris { border-left: 10px solid #ff9900; }
+        .btn-pis { border-left: 10px solid #0055ea; }
     </style>
 </head>
-<body class="d-flex flex-column vh-100">
+<body>
 
-    <header class="system-header d-flex justify-content-between align-items-center">
-        <div>HOMEPAGE - Prefect Information System</div>
-        <div class="d-flex align-items-center gap-3">
-            <span>ENROLMENT CODE: <strong>2025-2026</strong></span>
-            <button class="btn btn-light btn-sm action-btn">Manage Enrolment</button>
-            <a href="/admin/" target="_blank" class="btn btn-warning btn-sm action-btn text-dark fw-bold" style="border: 1px solid #888;">Admin Panel</a>
+    <div class="switchboard-card">
+        <div class="header-title">
+            XAVIER HIGH SCHOOL<br>
+            <span style="font-size: 1rem; font-weight: normal;">PREFECT OF STUDENTS OFFICE SYSTEM</span>
         </div>
-    </header>
 
-    <nav class="main-nav d-flex">
-        <a href="/" class="nav-btn active">HOME</a>
-        <button class="nav-btn">SECTIONS</button>
-        <a href="/students/" class="nav-btn">CURRENTLY ENROLLED STUDENTS</a>
-        <button class="nav-btn">REPORTS</button>
-        <button class="nav-btn">MAINTENANCE</button>
-    </nav>
+        <p class="mb-4">Welcome, <strong>{{ request.user.username|default:"Staff" }}</strong>. Please select a module:</p>
 
-    <main class="flex-grow-1 d-flex">
-        <div class="switchboard-container d-flex flex-column">
-            <div class="switchboard-header">PREFECT INFORMATION SYSTEM</div>
-            <div class="row m-0 flex-grow-1 p-3">
-                <div class="col-5 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
-                    <div style="width: 120px; height: 120px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666;">LOGO</div>
-                    <h5 class="mt-3 text-center" style="color: #003366; font-weight: bold;">DISCIPLINARY<br>MODULE</h5>
-                </div>
-                
-                <div class="col-7 p-4">
-                    <a href="/discipline/absences/" class="switchboard-btn">1. Absences</a>
-                    <a href="/discipline/tardiness/" class="switchboard-btn">2. Tardiness</a>
-                    <a href="/discipline/conduct/" class="switchboard-btn">3. Conduct</a>
-                    <a href="/discipline/suspension/" class="switchboard-btn">4. Suspension</a>
-                    <hr class="my-3 border-secondary">
-                    <button class="switchboard-btn" style="color: #8b0000;">X. Exit Application</button>
-                </div>
-            </div>
-        </div>
-    </main>
+        <!-- BUTTON 1: REGISTRAR SYSTEM -->
+        <!-- Logic: Goes to RIS Dashboard (currently Sections) -->
+        <a href="{% url 'ris_dashboard' %}" class="module-btn btn-ris">
+            📂 Registrar Information System (RIS)
+            <div style="font-size: 0.8rem; font-weight: normal; margin-top: 5px;">Enrolment, Sections, Subjects, Teacher Load</div>
+        </a>
+
+        <!-- BUTTON 2: PREFECT SYSTEM -->
+        <!-- FIX: Now points correctly to 'pis_home' (The Logo Menu), NOT the grid -->
+        <a href="{% url 'pis_home' %}" class="module-btn btn-pis">
+            ⚖️ Prefect Information System (PIS)
+            <div style="font-size: 0.8rem; font-weight: normal; margin-top: 5px;">Conduct, Absences, Tardiness, Suspension</div>
+        </a>
+
+        <hr>
+        <a href="{% url 'logout' %}" class="btn btn-sm btn-secondary w-50">Log Off / Switch User</a>
+    </div>
+
 </body>
 </html>

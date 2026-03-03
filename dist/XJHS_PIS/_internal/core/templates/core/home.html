@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Prefect Information System - Home</title>
+    <!-- USING LOCAL BOOTSTRAP FOR OFFLINE USE -->
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    
+    <style>
+        body { background-color: #d4d0c8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.85rem; overflow-x: hidden; }
+        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; }
+        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
+        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
+        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
+        .action-btn { font-size: 0.8rem; padding: 2px 10px; border-radius: 0; background-color: #e0e0e0; border: 1px solid #888; }
+        .switchboard-container { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; width: 600px; margin: 50px auto; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .switchboard-header { background-color: #003366; color: white; padding: 10px; text-align: center; font-size: 1.2rem; font-weight: bold; border-bottom: 2px solid #ffcc66; }
+        .switchboard-btn { display: block; width: 100%; text-align: left; padding: 8px 15px; margin-bottom: 10px; font-weight: bold; font-size: 0.9rem; background-color: #e4e4e4; border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; text-decoration: none; color: #333;}
+        .switchboard-btn:active, .switchboard-btn:hover { border: 1px solid #808080; border-right-color: #fff; border-bottom-color: #fff; background-color: #d4d0c8; color: #000;}
+    </style>
+</head>
+<body class="d-flex flex-column vh-100">
+
+    <header class="system-header d-flex justify-content-between align-items-center">
+        <div>HOMEPAGE - Prefect Information System</div>
+        <div class="d-flex align-items-center gap-3">
+            <span>ENROLMENT CODE: <strong>2025-2026</strong></span>
+            <button class="btn btn-light btn-sm action-btn">Manage Enrolment</button>
+            <a href="/admin/" class="btn btn-warning btn-sm action-btn text-dark fw-bold" style="border: 1px solid #888;">Admin Panel</a>
+        </div>
+    </header>
+
+    <nav class="main-nav d-flex">
+        <a href="/" class="nav-btn active">HOME</a>
+        <button class="nav-btn">SECTIONS</button>
+        <a href="/students/" class="nav-btn">CURRENTLY ENROLLED STUDENTS</a>
+        <button class="nav-btn">REPORTS</button>
+        <button class="nav-btn">MAINTENANCE</button>
+    </nav>
+
+    <main class="flex-grow-1 d-flex">
+        <div class="switchboard-container d-flex flex-column">
+            <div class="switchboard-header">PREFECT INFORMATION SYSTEM</div>
+            <div class="row m-0 flex-grow-1 p-3">
+                <div class="col-5 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
+                    <div style="width: 120px; height: 120px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666;">LOGO</div>
+                    <h5 class="mt-3 text-center" style="color: #003366; font-weight: bold;">DISCIPLINARY<br>MODULE</h5>
+                </div>
+                
+                <div class="col-7 p-4">
+                    <a href="/discipline/absences/" class="switchboard-btn">1. Absences</a>
+                    <a href="/discipline/tardiness/" class="switchboard-btn">2. Tardiness</a>
+                    <a href="/discipline/conduct/" class="switchboard-btn">3. Conduct</a>
+                    <a href="/discipline/suspension/" class="switchboard-btn">4. Suspension</a>
+                    <hr class="my-3 border-secondary">
+                    <button class="switchboard-btn" style="color: #8b0000;">X. Exit Application</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

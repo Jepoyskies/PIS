@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RIS - Subjects and Sections</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; font-size: 11px; }
+        
+        /* The Orange Header Bar */
+        .ris-header {
+            background: linear-gradient(to bottom, #ff9900, #ffcc00);
+            border-bottom: 2px solid #cc6600;
+            padding: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* The Tab Navigation */
+        .ris-tabs { display: flex; gap: 2px; padding: 5px 10px; background-color: #e0e0e0; border-bottom: 1px solid #999; }
+        .ris-tab {
+            padding: 4px 12px;
+            background-color: #f0f0f0;
+            border: 1px solid #999;
+            border-bottom: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+            text-decoration: none;
+        }
+        .ris-tab.active {
+            background-color: #fff;
+            border-top: 2px solid #ff9900;
+            color: #000;
+        }
+
+        /* The 3-Column Layout */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr 1fr; /* Left Sidebar | Sections | Subjects */
+            gap: 10px;
+            padding: 10px;
+            height: calc(100vh - 100px);
+        }
+
+        /* Left Sidebar (Grade Levels) */
+        .grade-list { background-color: #fff; border: 1px solid #999; height: 100%; overflow-y: auto; }
+        .grade-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: block;
+            text-decoration: none;
+            color: #333;
+        }
+        .grade-item:hover, .grade-item.active { background-color: #ffcc00; font-weight: bold; }
+
+        /* Data Tables */
+        .data-panel { background-color: #fff; border: 1px solid #999; height: 100%; overflow-y: auto; display: flex; flex-column;}
+        .panel-header {
+            background-color: #e0e0e0;
+            padding: 5px;
+            font-weight: bold;
+            border-bottom: 1px solid #999;
+            text-align: center;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+        th { background-color: #f0f0f0; position: sticky; top: 0; }
+        tr:hover { background-color: #ffffcc; }
+    </style>
+</head>
+<body>
+
+    <!-- Header similar to screenshot -->
+    <div class="ris-header d-flex justify-content-between">
+        <span>RIS: Registrar Information System</span>
+        <span>ENROLMENT CODE: 2025-2026</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="ris-tabs">
+        <a href="/" class="ris-tab">HOME</a>
+        <a href="#" class="ris-tab active">SUBJECTS and SECTIONS</a>
+        <a href="#" class="ris-tab">TEACHER LOAD</a>
+        <a href="#" class="ris-tab">ENROLMENT</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="layout-grid">
+        
+        <!-- Column 1: Grade Level Selector -->
+        <div class="grade-list">
+            <div style="background-color: #003366; color: white; padding: 5px; font-weight: bold;">Select a Level:</div>
+            {% for g in grade_levels %}
+                <a href="?grade={{ g }}" class="grade-item {% if g == selected_grade %}active{% endif %}">
+                    Grade {{ g }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- Column 2: Sections List -->
+        <div class="data-panel d-flex flex-column">
+            <div class="panel-header">SECTIONS IN THIS LEVEL</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Section Name</th>
+                        <th>Moderator</th>
+                        <th>Campus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for section in sections %}
+                    <tr>
+                        <td>{{ section.name }}</td>
+                        <td>{{ section.moderator.last_name|default:"TBA" }}</td>
+                        <td>{{ section.campus }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No sections found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Column 3: Subjects List -->
+        <div class="data-panel d-flex flex-column">
+            <div class="panel-header">SUBJECTS IN THIS LEVEL</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject.name }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="1" class="text-center text-muted">No subjects found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

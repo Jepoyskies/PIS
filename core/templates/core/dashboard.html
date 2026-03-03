@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-width=1.0">
     <title>Prefect Information System - Currently Enrolled Students</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     
     <style>
         /* UI/UX Density Override: Mimic MS Access / WinXP Desktop App Density */
@@ -127,7 +128,7 @@
     </header>
 
     <nav class="main-nav d-flex">
-        <a href="/" class="nav-btn">HOME</a>
+        <a href="{% url 'pis_home' %}" class="nav-btn">HOME</a>
         <button class="nav-btn">SECTIONS</button>
         <a href="/students/" class="nav-btn active">CURRENTLY ENROLLED STUDENTS</a>
         <button class="nav-btn">REPORTS</button>
@@ -171,6 +172,7 @@
                         data-date-enrolled="{% for e in student.enrollments.all %}{% if e.school_year == active_sy %}{{ e.date_enrolled|date:'Y-m-d'|default:'' }}{% endif %}{% endfor %}"
                         data-is-enrolled="{% for e in student.enrollments.all %}{% if e.school_year == active_sy %}{{ e.is_enrolled|lower }}{% endif %}{% endfor %}"
                         data-bday="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}"
+                        data-unserved-cs="{{ student.unserved_cs_hours }}"
                         data-address="{{ student.address|default:'' }}">
                         
                         <td>{{ student.student_number }}</td>
@@ -260,9 +262,12 @@
                     </form>
                     
                     <button type="button" class="btn action-btn" data-bs-toggle="modal" data-bs-target="#addStudentModal">Add New Student</button>
+                    <button type="button" class="btn action-btn text-success fw-bold" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
                     <button class="btn action-btn">View Student Information</button>
                     <button class="btn action-btn">View Transcript of Records</button>
                     <div class="ms-auto">
+                        <button type="button" class="btn action-btn fw-bold text-success" data-bs-toggle="modal" data-bs-target="#csModal" id="btn-cs" disabled>Unserved CS: <span id="cs-display">0</span> Hrs</button>
+                        
                         <form method="POST" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this student?');">
                             {% csrf_token %}
                             <input type="hidden" name="delete_student" value="1">
@@ -340,7 +345,70 @@
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="csModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content modal-content-xp">
+            <div class="modal-header system-header" style="border-radius: 0;">
+              <h5 class="modal-title" style="font-size: 1rem;">Log Community Service</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="">
+              {% csrf_token %}
+              <input type="hidden" name="log_cs_hours" value="1">
+              <input type="hidden" name="student_number" id="cs-student-id">
+              <div class="modal-body p-3">
+                  <div class="mb-2">
+                      <label class="form-label-custom d-block text-start">Date Served</label>
+                      <input type="date" name="date_served" class="form-control form-control-xs w-100" required>
+                  </div>
+                  <div class="mb-2">
+                      <label class="form-label-custom d-block text-start">Hours Served</label>
+                      <input type="number" name="hours_served" class="form-control form-control-xs w-100" required>
+                  </div>
+                  <div class="mb-2">
+                      <label class="form-label-custom d-block text-start">Remarks</label>
+                      <textarea name="remarks" class="form-control form-control-xs w-100" rows="3" style="height: auto;"></textarea>
+                  </div>
+              </div>
+              <div class="modal-footer" style="border-top: 1px solid #999;">
+                <button type="button" class="btn action-btn" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn action-btn bg-white fw-bold">Log Hours</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXCEL IMPORT MODAL -->
+    <div class="modal fade" id="importExcelModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content modal-content-xp">
+            <div class="modal-header system-header" style="border-radius: 0;">
+              <h5 class="modal-title" style="font-size: 1rem;">Import Students from Excel</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="modal-body p-3">
+                  <div class="alert alert-warning" style="font-size: 0.8rem; padding: 10px;">
+                      <strong>Required Format:</strong> Your Excel file must have a header row with exact column names:<br>
+                      <code>Student Number</code> | <code>Last Name</code> | <code>First Name</code> | <code>Sex</code>
+                  </div>
+                  <div class="mb-2">
+                      <label class="form-label-custom d-block text-start">Select Excel File (.xlsx)</label>
+                      <input type="file" name="import_excel" class="form-control form-control-xs w-100 h-auto" accept=".xlsx, .xls" required>
+                  </div>
+              </div>
+              <div class="modal-footer" style="border-top: 1px solid #999;">
+                <button type="button" class="btn action-btn" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn action-btn bg-success text-white fw-bold">Import Data</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -365,6 +433,11 @@
                         // Activate the Delete Button
                         document.getElementById('delete-student-id').value = this.dataset.studentNumber;
                         document.getElementById('btn-delete-student').disabled = false;
+
+                        // Activate CS Button and Inject Data
+                        document.getElementById('cs-display').innerText = this.dataset.unservedCs;
+                        document.getElementById('cs-student-id').value = this.dataset.studentNumber;
+                        document.getElementById('btn-cs').disabled = false;
 
                         // Activate and configure the Enrol/Drop Toggle Button
                         const toggleBtn = document.getElementById('btn-toggle-enrolment');

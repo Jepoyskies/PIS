@@ -30,6 +30,12 @@ class Student(TimeStampedModel):
     # We use a soft-delete boolean so we don't accidentally wipe historical records
     is_deleted = models.BooleanField(default=False)
 
+    @property
+    def unserved_cs_hours(self):
+        demerits = self.disciplinary_records.aggregate(total=models.Sum('demerits'))['total'] or 0
+        served = self.community_service_records.aggregate(total=models.Sum('hours_served'))['total'] or 0
+        return demerits - served
+
     def __str__(self):
         return f"{self.last_name}, {self.first_name} ({self.student_number})"
 
@@ -64,3 +70,53 @@ class DisciplinaryRecord(TimeStampedModel):
     
     def __str__(self):
         return f"{self.get_category_display()} - {self.student.last_name} ({self.date_of_incident})"
+
+class CommunityServiceRecord(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='community_service_records')
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.RESTRICT)
+    date_served = models.DateField()
+    hours_served = models.IntegerField()
+    remarks = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.student.last_name} - {self.hours_served} hrs"
+
+        # ==========================================
+# REGISTRAR INFORMATION SYSTEM (RIS) MODELS
+# ==========================================
+
+class Teacher(TimeStampedModel):
+    prefix = models.CharField(max_length=10, help_text="e.g., Mr., Ms., Bro., Fr.")
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.prefix} {self.last_name}, {self.first_name}"
+
+class Section(TimeStampedModel):
+    GRADE_CHOICES = [(7, 'Grade 7'), (8, 'Grade 8'), (9, 'Grade 9'), (10, 'Grade 10')]
+    
+    grade_level = models.IntegerField(choices=GRADE_CHOICES)
+    name = models.CharField(max_length=100, help_text="e.g., ST. ALOYSIUS GONZAGA")
+    moderator = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True, related_name='moderated_sections')
+    campus = models.CharField(max_length=50, default="PUEBLO")
+
+    def __str__(self):
+        return f"Grade {self.grade_level} - {self.name}"
+
+class Subject(TimeStampedModel):
+    name = models.CharField(max_length=100)
+    grade_level = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.name} (Grade {self.grade_level})"
+
+class TeacherLoad(TimeStampedModel):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teaching_loads')
+    section = models.ForeignKey(Section, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    school_year = models.ForeignKey('SchoolYear', on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return f"{self.teacher.last_name} - {self.subject.name} ({self.section.name})"
