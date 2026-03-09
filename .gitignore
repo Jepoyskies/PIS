@@ -6,8 +6,12 @@ env/
 __pycache__/
 *.pyc
 
+
 # IDEs
 .vscode/
 
 # Ignore local database if using SQLite (though we use MySQL)
 db.sqlite3
+
+# Environment variables
+.env
