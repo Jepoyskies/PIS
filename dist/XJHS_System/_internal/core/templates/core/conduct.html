@@ -128,12 +128,14 @@
         </div>
     </header>
 
+    <!-- PIS NAVIGATION -->
     <nav class="main-nav d-flex">
         <a href="{% url 'pis_home' %}" class="nav-btn text-decoration-none text-dark">HOME</a>
-        <a href="/discipline/conduct/" class="nav-btn {% if module_name == 'CONDUCT' %}active{% endif %} text-decoration-none text-dark">CONDUCT</a>
-        <a href="/discipline/absences/" class="nav-btn {% if module_name == 'ABSENCES' %}active{% endif %} text-decoration-none text-dark">ABSENCES</a>
-        <a href="/discipline/tardiness/" class="nav-btn {% if module_name == 'TARDINESS' %}active{% endif %} text-decoration-none text-dark">TARDINESS</a>
-        <a href="/discipline/suspension/" class="nav-btn {% if module_name == 'SUSPENSION' %}active{% endif %} text-decoration-none text-dark">SUSPENSION</a>
+        <!-- FIX: Now uses the correct URL tag -->
+        <a href="{% url 'disciplinary_module' 'Conduct' %}" class="nav-btn {% if module_name == 'CONDUCT' %}active{% endif %} text-decoration-none text-dark">CONDUCT</a>
+        <a href="{% url 'disciplinary_module' 'Absences' %}" class="nav-btn {% if module_name == 'ABSENCES' %}active{% endif %} text-decoration-none text-dark">ABSENCES</a>
+        <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="nav-btn {% if module_name == 'TARDINESS' %}active{% endif %} text-decoration-none text-dark">TARDINESS</a>
+        <a href="{% url 'disciplinary_module' 'Suspension' %}" class="nav-btn {% if module_name == 'SUSPENSION' %}active{% endif %} text-decoration-none text-dark">SUSPENSION</a>
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column">

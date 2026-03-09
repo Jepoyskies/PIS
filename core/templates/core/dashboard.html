@@ -127,10 +127,11 @@
         </div>
     </header>
 
+    <!-- PIS NAVIGATION -->
     <nav class="main-nav d-flex">
         <a href="{% url 'pis_home' %}" class="nav-btn">HOME</a>
         <button class="nav-btn">SECTIONS</button>
-        <a href="/students/" class="nav-btn active">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'pis_dashboard' %}" class="nav-btn active">CURRENTLY ENROLLED STUDENTS</a>
         <button class="nav-btn">REPORTS</button>
         <a href="/admin/" target="_blank" class="nav-btn text-decoration-none text-dark">MAINTENANCE</a>
     </nav>

@@ -88,7 +88,7 @@
  [],
  False,
  False,
- 1773022897,
+ 1773023811,
  [('runw.exe',
    'C:\\Users\\alber\\OneDrive\\Documents\\Vscode\\XUJHS ITCC '
    '40\\venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\runw.exe',
