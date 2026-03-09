@@ -42,7 +42,11 @@ class Student(TimeStampedModel):
 # PREFECT/ENROLLMENT DATA (Relational)
 class Enrollment(TimeStampedModel):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
-    school_year = models.ForeignKey(SchoolYear, on_delete=models.RESTRICT)
+    school_year = models.ForeignKey('SchoolYear', on_delete=models.RESTRICT)
+    
+    # NEW: Link the student to a specific section!
+    section = models.ForeignKey('Section', on_delete=models.SET_NULL, null=True, blank=True, related_name='enrolled_students')
+    
     date_enrolled = models.DateField(null=True, blank=True)
     is_enrolled = models.BooleanField(default=True)
     

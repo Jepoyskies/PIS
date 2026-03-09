@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PIS - Home</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; height: 100vh; display: flex; flex-direction: column;}
+        
+        /* Same Header/Nav as the rest of PIS for consistency */
+        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; }
+        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
+        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
+        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
+        .action-btn { font-size: 0.8rem; padding: 2px 10px; border-radius: 0; background-color: #e0e0e0; border: 1px solid #888; text-decoration: none; display: inline-block; color: black;}
+
+        /* The Internal Switchboard Card */
+        .pis-card {
+            background-color: #f0f0f0;
+            border: 2px solid #fff;
+            border-right-color: #808080;
+            border-bottom-color: #808080;
+            width: 700px;
+            margin: auto; /* Center it */
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+        }
+        .pis-btn {
+            display: block; width: 100%; text-align: left; padding: 10px 15px; margin-bottom: 8px;
+            font-weight: bold; font-size: 0.9rem; background-color: #e4e4e4;
+            border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080;
+            text-decoration: none; color: #333;
+        }
+        .pis-btn:hover { background-color: #fff; color: #003366; }
+    </style>
+</head>
+<body>
+
+    <!-- PIS HEADER -->
+    <header class="system-header d-flex justify-content-between align-items-center">
+        <div>HOMEPAGE - Prefect Information System</div>
+        <div class="d-flex align-items-center gap-3">
+            <span>ENROLMENT CODE: <strong>2025-2026</strong></span>
+            <!-- FIX: Exit button points back to 'home' (Main Switchboard) -->
+            <a href="{% url 'home' %}" class="btn btn-warning btn-sm action-btn fw-bold">⬅ Exit to Main Menu</a>
+        </div>
+    </header>
+
+    <!-- PIS NAVIGATION -->
+    <nav class="main-nav d-flex">
+        <a href="{% url 'pis_home' %}" class="nav-btn active">HOME</a>
+        <button class="nav-btn">SECTIONS</button>
+        <!-- FIX: Correct link to the Grid -->
+        <a href="{% url 'pis_dashboard' %}" class="nav-btn">CURRENTLY ENROLLED STUDENTS</a>
+        <button class="nav-btn">REPORTS</button>
+        <button class="nav-btn">MAINTENANCE</button>
+    </nav>
+
+    <!-- PIS CONTENT -->
+    <main class="flex-grow-1 d-flex">
+        <div class="pis-card d-flex flex-column">
+            <div style="background-color: #003366; color: white; padding: 8px; text-align: center; font-weight: bold; border-bottom: 2px solid #ffcc00;">
+                PREFECT INFORMATION SYSTEM
+            </div>
+            <div class="row m-0 flex-grow-1 p-4">
+                <!-- Left: Logo Area -->
+                <div class="col-5 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
+                    <div style="width: 130px; height: 130px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: 4px solid #003366;">
+                        LOGO
+                    </div>
+                    <h5 class="mt-3 text-center" style="color: #003366; font-weight: bold;">DISCIPLINARY<br>MODULE</h5>
+                </div>
+                
+                <!-- Right: Action Buttons -->
+                <div class="col-7 ps-4 d-flex flex-column justify-content-center">
+                    <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn">1. Absences</a>
+                    <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn">2. Tardiness</a>
+                    <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn">3. Conduct</a>
+                    <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn">4. Suspension</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
