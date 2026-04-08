@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PIS - Maintenance</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; font-size: 0.85rem; }
+        .xp-header { background-color: #003366; color: white; padding: 5px 10px; font-weight: bold; border-bottom: 2px solid #fff; }
+        .xp-card { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; padding: 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .xp-btn { background-color: #e4e4e4; border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; padding: 10px 15px; margin-bottom: 5px; text-decoration: none; color: black; display: block; font-weight: bold; }
+        .xp-btn:hover { background-color: #fff; }
+    </style>
+</head>
+<body>
+    <header class="xp-header d-flex justify-content-between">
+        <span>MAINTENANCE SYSTEM - Prefect of Students Office</span>
+        <a href="{% url 'staff_home' %}" style="color: #ffcc00; text-decoration: none;">[ BACK TO HOME ]</a>
+    </header>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="xp-card">
+                    <h6 style="border-bottom: 1px solid #999; padding-bottom: 5px;">General Maintenance</h6>
+                    <a href="{% url 'manage_students' %}" class="xp-btn">1. Student Records</a>
+                    <a href="{% url 'manage_sections' %}" class="xp-btn">2. Section Management</a>
+                    <a href="#" class="xp-btn text-muted">3. School Year Settings</a>
+                    
+                    {% if is_admin %}
+                    <h6 class="mt-4" style="border-bottom: 1px solid #999; padding-bottom: 5px; color: #cc0000;">System Admin</h6>
+                    <a href="{% url 'manage_staff' %}" class="xp-btn">Manage Staff Accounts</a>
+                    <a href="/admin/" target="_blank" class="xp-btn" style="background-color: #ffebcd;">Go to Django Admin Panel</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="xp-card" style="min-height: 400px;">
+                    <h5>{{ msg|default:"Maintenance Dashboard" }}</h5>
+                    <hr>
+                    <p>Welcome to the custom maintenance module. This area allows staff to manage the underlying data of the PIS without needing access to the Django technical backend.</p>
+                    <ul>
+                        <li>Total Students: {{ student_count }}</li>
+                        <li>Total Staff: {{ staff_count }}</li>
+                        <li>Total Sections: {{ section_count }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

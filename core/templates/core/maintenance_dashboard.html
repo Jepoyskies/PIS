@@ -1,0 +1,11 @@
+{% extends 'core/maintenance_base.html' %}
+
+{% block maintenance_content %}
+    <h5>Maintenance Dashboard</h5>
+    <hr>
+    <p>Welcome to the custom maintenance module, <strong>{{ request.user.username }}</strong>.</p>
+    <p>This area allows staff and administrators to manage the underlying data of the PIS without needing access to the Django technical backend.</p>
+    <div class="alert alert-info mt-4" style="border-radius:0; border: 1px solid #003366;">
+        Select a module from the left to begin managing records.
+    </div>
+{% endblock %}

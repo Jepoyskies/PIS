@@ -1,0 +1,83 @@
+{% extends 'core/maintenance_base.html' %}
+{% load static %}
+
+{% block maintenance_content %}
+    <!-- This replaces the standalone header with your internal title style -->
+    <div style="background-color: #003366; color: white; padding: 5px 10px; font-weight: bold; font-size: 0.9rem; margin-bottom: 15px; border-bottom: 2px solid #ffcc00;">
+        STAFF ACCOUNT MANAGEMENT
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} py-1 px-3 mb-2" style="font-size: 0.8rem; border-radius: 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-3">
+        <!-- Left Side: Your Original Registration Form -->
+        <div class="col-md-5">
+            <div style="background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; padding: 15px;">
+                <div style="background-color: #003366; color: white; padding: 2px 8px; font-weight: bold; font-size: 0.8rem; margin-bottom: 10px;">REGISTER NEW STAFF</div>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 2px;">Username (Login ID):</label>
+                        <input type="text" name="username" class="form-control form-control-sm" style="border-radius: 0; border: 1px solid #7f9db9;" required>
+                    </div>
+                    <div class="mb-2">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 2px;">Employee ID / ID Number:</label>
+                        <input type="text" name="employee_id" class="form-control form-control-sm" style="border-radius: 0; border: 1px solid #7f9db9;" required>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col">
+                            <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 2px;">First Name:</label>
+                            <input type="text" name="first_name" class="form-control form-control-sm" style="border-radius: 0; border: 1px solid #7f9db9;" required>
+                        </div>
+                        <div class="col">
+                            <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 2px;">Last Name:</label>
+                            <input type="text" name="last_name" class="form-control form-control-sm" style="border-radius: 0; border: 1px solid #7f9db9;" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 2px;">Temporary Password:</label>
+                        <input type="password" name="password" class="form-control form-control-sm" style="border-radius: 0; border: 1px solid #7f9db9;" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100" style="background-color: #003366; border-radius: 0; font-weight: bold;">💾 SAVE STAFF ACCOUNT</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Side: Your Original Existing Accounts Table -->
+        <div class="col-md-7">
+            <div style="background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; padding: 15px;">
+                <div style="background-color: #555; color: white; padding: 2px 8px; font-weight: bold; font-size: 0.8rem; margin-bottom: 10px;">CURRENT STAFF LIST</div>
+                <div style="background: white; border: 1px solid #888; height: 320px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; background: white;">
+                        <thead style="position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th style="background: #e4e4e4; border: 1px solid #888; padding: 4px; font-size: 0.8rem; width: 25%;">Username</th>
+                                <th style="background: #e4e4e4; border: 1px solid #888; padding: 4px; font-size: 0.8rem; width: 40%;">Full Name</th>
+                                <th style="background: #e4e4e4; border: 1px solid #888; padding: 4px; font-size: 0.8rem; width: 35%;">Employee ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff in staff_list %}
+                            <tr style="border-bottom: 1px solid #ccc;">
+                                <td style="padding: 4px; font-size: 0.8rem; border-right: 1px solid #eee;">{{ staff.username }}</td>
+                                <td style="padding: 4px; font-size: 0.8rem; border-right: 1px solid #eee;">{{ staff.last_name }}, {{ staff.first_name }}</td>
+                                <td style="padding: 4px; font-size: 0.8rem;">{{ staff.staff_profile.employee_id|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; padding: 20px; color: #999;">No staff accounts found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

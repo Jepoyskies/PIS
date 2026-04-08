@@ -8,7 +8,6 @@
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
         body {
-            /* The classic faded pink/gray MS Access background color */
             background-color: #f8e8e8; 
             height: 100vh;
             display: flex;
@@ -81,30 +80,30 @@
             <span style="background-color: #e04343; border: 1px solid white; border-radius: 3px; padding: 0 4px; cursor: pointer;">X</span>
         </div>
         
-        <form method="POST" class="xp-content">
-            {% csrf_token %}
-            <div>
-                <div class="d-flex align-items-center mb-2">
-                    <label class="xp-label">Name:</label>
-                    <input type="text" name="username" class="xp-input" required autocomplete="off" autofocus>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                    <label class="xp-label">Password:</label>
-                    <input type="password" name="password" class="xp-input" required>
-                </div>
-                
-                {% if messages %}
-                    {% for message in messages %}
-                        <div style="color: red; font-size: 11px; margin-top: 5px;">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
+<form method="POST" class="xp-content">
+    {% csrf_token %} 
+    <div>
+        <div class="d-flex align-items-center mb-2">
+            <label class="xp-label">Name:</label>
+            <input type="text" name="username" class="xp-input" required autocomplete="off" autofocus>
+        </div>
+        <div class="d-flex align-items-center mb-2">
+            <label class="xp-label">Password:</label>
+            <input type="password" name="password" class="xp-input" required>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div style="color: red; font-size: 11px; margin-top: 5px;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
 
-            <div class="d-flex flex-column">
-                <button type="submit" class="xp-btn">OK</button>
-                <button type="button" class="xp-btn" onclick="window.close()">Cancel</button>
-            </div>
-        </form>
+    <div class="d-flex flex-column">
+        <button type="submit" class="xp-btn">OK</button>
+        <button type="button" class="xp-btn" onclick="window.close()">Cancel</button>
+    </div>
+</form>
     </div>
 
 </body>
