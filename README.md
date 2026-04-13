@@ -16,6 +16,7 @@ This "clean-room" reconstruction was developed using Python, Django, and MySQL, 
 ## Tech Stack
 
 *   **Backend:** Python 3.10+, Django
+-   **Language:** Python 3.12 (Required)
 *   **Database:** MySQL 8.0
 *   **Frontend:** HTML5, CSS3, Bootstrap 5, Vanilla JavaScript
 *   **Desktop Wrapper:** PyWebView
@@ -30,7 +31,7 @@ Follow these instructions to set up and run the project on your local machine fo
 ### Prerequisites
 
 You must have the following software installed on your machine:
-*   [Python](https://www.python.org/downloads/) (version 3.10 or higher)
+*   [Python 3.12](https://www.python.org/downloads/release/python-3120/) (Do NOT use 3.14+ as it lacks library support)
 *   [Git](https://git-scm.com/downloads/)
 *   [XAMPP](https://www.apachefriends.org/index.html) (or another local MySQL server environment)
 
@@ -91,5 +92,26 @@ You can run the system in two ways:
 
 #### 1. As a Desktop Application (Recommended)
 This command starts the background Django server and launches the native Windows UI window.
+
+---
+
+## Running with Docker
+
+Utilizing Docker ensures environment parity and simplifies the setup of the MySQL database and Python dependencies.
+
+1.  **Build and Start the Containers**  
+    This command builds the Django image and starts both the web and database services.
+    ```bash
+    docker-compose up --build
+    ```
+
+2.  **Create Your Admin Account**  
+    Once the containers are running, execute this command in a separate terminal to create your login:
+    ```bash
+    docker-compose exec web python manage.py createsuperuser
+    ```
+
+3.  **Access the System**  
+    Open your browser and navigate to `http://localhost:8000`.
 ```bash
 python desktop.py

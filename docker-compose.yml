@@ -1,0 +1,32 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: xjhs_pis_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - xjhs_mysql_data:/var/lib/mysql
+
+  web:
+    build: .
+    restart: on-failure
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=xjhs_pis_db
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+    depends_on:
+      - db
+
+volumes:
+  xjhs_mysql_data:
