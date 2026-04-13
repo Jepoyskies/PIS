@@ -1,14 +1,13 @@
 # XJHS Prefect & Registrar Information System (XJHS-PIS)
 
-This project is a modern, standalone desktop application built to replace the legacy Windows XP and MS Access-based system used by the Xavier University - Ateneo de Cagayan Junior High School's Prefect of Students Office. 
+This project is a modern web application built to replace the legacy Windows XP and MS Access-based system used by the Xavier University - Ateneo de Cagayan Junior High School's Prefect of Students Office. 
 
-This "clean-room" reconstruction was developed using Python, Django, and MySQL, and packaged as a native Windows executable to ensure a seamless, no-retraining-required user experience for the administrative staff. The system unifies the formerly separate **Prefect Information System (PIS)** and **Registrar Information System (RIS)** into a single, cohesive application.
+This "clean-room" reconstruction was developed using Python, Django, and MySQL. The system unifies the formerly separate **Prefect Information System (PIS)** and **Registrar Information System (RIS)** into a single, cohesive application.
 
 ## Core Features
 
 *   **Unified System:** Combines RIS (Enrolment, Sections, Subjects, Teachers) and PIS (Discipline, Conduct, Absences) into one database.
 *   **Legacy UI/UX Replication:** The interface is designed to be a 1-to-1 visual and functional match of the original 2002 software, built with modern HTML5 and Bootstrap 5.
-*   **Standalone Desktop Application:** Packaged as a `.exe` using PyInstaller and PyWebView, requiring no external browser or Python installation on the client machine.
 *   **Strictly Offline & Local:** The system is hardcoded to run on `127.0.0.1`, ensuring student data privacy by preventing any network or internet access.
 *   **Database Migration:** Includes a robust Excel (`.xlsx`) import tool to allow for a "clean slate" data migration from legacy student lists.
 *   **Relational Data Management:** Full CRUD (Create, Read, Update, Delete) functionality for managing students, teachers, sections, subjects, and their relationships.
@@ -19,8 +18,6 @@ This "clean-room" reconstruction was developed using Python, Django, and MySQL, 
 -   **Language:** Python 3.12 (Required)
 *   **Database:** MySQL 8.0
 *   **Frontend:** HTML5, CSS3, Bootstrap 5, Vanilla JavaScript
-*   **Desktop Wrapper:** PyWebView
-*   **Packaging:** PyInstaller
 
 ---
 
@@ -90,11 +87,10 @@ You must have the following software installed on your machine:
 
 You can run the system in two ways:
 
-#### 1. As a Desktop Application (Recommended)
-This command starts the background Django server and launches the native Windows UI window.
+#### 1. Running the Local Server
+This command starts the Django development server for local access.
 
 ---
-
 ## Running with Docker
 
 Utilizing Docker ensures environment parity and simplifies the setup of the MySQL database and Python dependencies.
