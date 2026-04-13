@@ -28,7 +28,7 @@ Follow these instructions to set up and run the project on your local machine fo
 ### Prerequisites
 
 You must have the following software installed on your machine:
-*   [Python 3.12](https://www.python.org/downloads/release/python-3120/) (Do NOT use 3.14+ as it lacks library support)
+*   [Python 3.12+](https://www.python.org/downloads/)
 *   [Git](https://git-scm.com/downloads/)
 *   [XAMPP](https://www.apachefriends.org/index.html) (or another local MySQL server environment)
 
@@ -50,7 +50,7 @@ You must have the following software installed on your machine:
     ```
 
 3.  **Install Project Dependencies**
-    This command reads the `requirements.txt` file and installs Django, PyWebView, Pandas, etc.
+    This command reads the `requirements.txt` file and installs Django and other necessary backend dependencies.
     ```bash
     pip install -r requirements.txt
     ```
