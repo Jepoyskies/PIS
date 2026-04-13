@@ -109,5 +109,3 @@ Utilizing Docker ensures environment parity and simplifies the setup of the MySQ
 
 3.  **Access the System**  
     Open your browser and navigate to `http://localhost:8000`.
-```bash
-python desktop.py
