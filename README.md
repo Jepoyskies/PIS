@@ -106,6 +106,11 @@ Utilizing Docker ensures environment parity and simplifies the setup of the MySQ
     ```bash
     docker-compose exec web python manage.py createsuperuser
     ```
+3.  **Seeding Data**  
+    Once the containers are running, execute this command in a separate terminal to create your login:
+    ```bash
+    docker-compose exec web python manage.py seed_data
+    ```
 
-3.  **Access the System**  
+4.  **Access the System**  
     Open your browser and navigate to `http://localhost:8000`.
