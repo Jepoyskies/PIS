@@ -1,116 +1,99 @@
+{% extends 'core/maintenance_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>PIS - {{ module_name }}</title>
-    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <style>
-        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; font-size: 0.85rem; overflow: hidden; }
-        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; border-bottom: 2px solid #fff; }
-        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
-        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
-        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
-        .search-bar-container { background-color: #ffcc66; padding: 4px 10px; border-bottom: 1px solid #999; font-weight: bold; }
-        .table-container { height: 200px; overflow-y: auto; background-color: white; border: 1px solid #999; }
-        .table-ms-access th { position: sticky; top: 0; background-color: #e4e4e4; border: 1px solid #808080; padding: 2px 4px !important; font-size: 0.8rem; }
-        .table-ms-access td { padding: 2px 4px !important; border: 1px solid #ccc; font-size: 0.8rem; vertical-align: middle; }
-        .detail-form-container { background-color: #f0f0f0; border-top: 2px solid #a0a0a0; padding: 10px; height: calc(100vh - 350px); }
-        .action-btn { font-size: 0.8rem; padding: 2px 15px; background-color: #e0e0e0; border: 1px solid #888; font-weight: bold; }
-    </style>
-</head>
-<body class="d-flex flex-column vh-100">
-    <header class="system-header d-flex justify-content-between align-items-center">
-        <div>{{ module_name|upper }} RECORDS - Prefect Information System</div>
-        <div class="d-flex align-items-center gap-3">
-            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0">
-                {% csrf_token %}
-                <label style="font-size:0.8rem;">Enrolment Code:</label>
-                <select name="school_year_id" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 130px;">
-                    {% for sy in all_school_years %}
-                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+
+{% block maintenance_content %}
+<div class="d-flex flex-column h-100">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold m-0 text-uppercase" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">{{ module_name }} Records</h4>
+        {% if student %}
+        <div class="px-3 py-2 bg-light border rounded fw-bold text-muted small">
+            Student: <span style="color: var(--xu-blue-1);">{{ student.last_name }}, {{ student.first_name }} ({{ student.student_number }})</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search Bar -->
+    <div class="bg-light p-3 rounded mb-4 border shadow-sm">
+        <form method="GET" class="d-flex align-items-center gap-3">
+            <label class="small fw-bold text-uppercase text-muted mb-0">Find Student ID:</label>
+            <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 200px;" placeholder="e.g. 2024-0001">
+            <button type="submit" class="btn btn-xu-primary btn-sm px-4 fw-bold">SEARCH</button>
+            <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light btn-sm px-3 text-muted">CLEAR</a>
+        </form>
+    </div>
+
+    <!-- History Table -->
+    <div class="card card-xu border shadow-sm flex-grow-1 mb-4" style="max-height: 350px;">
+        <div class="card-xu-header bg-secondary">
+            <span class="small fw-bold text-uppercase">Incident History</span>
+        </div>
+        <div class="table-responsive h-100">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-xu">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Category</th>
+                        <th>Remarks/Details</th>
+                        <th>Demerits</th>
+                        <th class="pe-4">Reported By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ record.category }}</span></td>
+                        <td>{{ record.remarks }}</td>
+                        <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ record.demerits }}</span></td>
+                        <td class="pe-4">{{ record.recorded_by.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">No records found for this student.</td>
+                    </tr>
                     {% endfor %}
-                </select>
-            </form>
-            <a href="{% url 'logout' %}" class="btn btn-danger btn-sm fw-bold text-white px-3" style="border: 1px solid #000;">Log Off</a>
+                </tbody>
+            </table>
         </div>
-    </header>
+    </div>
 
-    <nav class="main-nav d-flex">
-        <a href="{% url 'staff_home' %}" class="nav-btn text-decoration-none text-dark">HOME</a>
-        <a href="{% url 'disciplinary_module' 'Conduct' %}" class="nav-btn {% if module_name == 'CONDUCT' %}active{% endif %} text-dark">CONDUCT</a>
-        <a href="{% url 'disciplinary_module' 'Absences' %}" class="nav-btn {% if module_name == 'ABSENCES' %}active{% endif %} text-dark">ABSENCES</a>
-        <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="nav-btn {% if module_name == 'TARDINESS' %}active{% endif %} text-dark">TARDINESS</a>
-        <a href="{% url 'disciplinary_module' 'Suspension' %}" class="nav-btn {% if module_name == 'SUSPENSION' %}active{% endif %} text-dark">SUSPENSION</a>
-    </nav>
-
-    <main class="flex-grow-1 d-flex flex-column">
-        <div class="search-bar-container">
-            <form method="GET" class="d-flex align-items-center gap-2 m-0">
-                <label>Find Student No:</label>
-                <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm" style="width: 150px;">
-                <button type="submit" class="btn action-btn bg-white">Search</button>
-                {% if student %}
-                <span class="ms-4 text-primary">Name: <strong>{{ student.last_name }}, {{ student.first_name }}</strong></span>
-                {% endif %}
-            </form>
-        </div>
-
-        <div class="p-2">
-            <div style="background-color: #003366; color: white; padding: 2px 10px; font-weight: bold; font-size: 0.8rem;">HISTORY</div>
-            <div class="table-container">
-                <table class="table table-bordered table-striped table-ms-access mb-0">
-                    <thead><tr><th style="width:15%">Date</th><th style="width:15%">Category</th><th style="width:40%">Remarks/Details</th><th style="width:10%">Demerits</th><th style="width:20%">Reported By</th></tr></thead>
-                    <tbody>
-                        {% for record in records %}
-                        <tr>
-                            <td>{{ record.date_of_incident }}</td>
-                            <td>{{ record.category }}</td>
-                            <td>{{ record.remarks }}</td>
-                            <td>{{ record.demerits }}</td>
-                            <td>{{ record.recorded_by.username }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted p-4">No records found for this student.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="detail-form-container mx-2 mb-2 border">
-            <div style="background-color: #555; color: white; padding: 2px 10px; font-weight: bold; font-size: 0.8rem; margin-bottom: 10px;">LOG NEW {{ module_name }} RECORD</div>
-            <form method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="save_record" value="1">
-                <input type="hidden" name="student_number" value="{{ student.student_number }}">
-                <div class="row g-2">
-                    <div class="col-md-8">
-                        <div class="row mb-2 align-items-center">
-                            <div class="col-2 text-end">Date:</div>
-                            <div class="col-4"><input type="date" name="date_of_incident" class="form-control form-control-sm" required></div>
-                            <div class="col-2 text-end">Demerits:</div>
-                            <div class="col-2"><input type="number" name="demerits" class="form-control form-control-sm" value="0"></div>
-                        </div>
-                        <div class="row mb-2 align-items-center">
-                            <div class="col-2 text-end">Level:</div>
-                            <div class="col-4"><select name="offense_level" class="form-select form-select-sm"><option>Minor</option><option>Major</option></select></div>
-                            <div class="col-2 text-end">Reported By:</div>
-                            <div class="col-4"><input type="text" class="form-control form-control-sm bg-light" value="{{ request.user.username }}" readonly></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-2 text-end">Specific Details:</div>
-                            <div class="col-10"><textarea name="details" class="form-control" rows="2" style="font-size:0.8rem; border-radius:0;"></textarea></div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 d-flex flex-column gap-2 justify-content-center border-start ps-4">
-                        <button type="submit" class="btn action-btn py-2 w-100" {% if not student %}disabled{% endif %}>💾 SAVE RECORD</button>
-                        <button type="reset" class="btn action-btn w-100">CLEAR FORM</button>
-                    </div>
+    <!-- New Entry Form -->
+    <div class="card card-xu border shadow-sm p-4 bg-light">
+        <h6 class="fw-bold mb-3 text-uppercase text-muted small letter-spacing-1">Log New {{ module_name }} Record</h6>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="save_record" value="1">
+            <input type="hidden" name="student_number" value="{{ student.student_number }}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Date</label>
+                    <input type="date" name="date_of_incident" class="form-control border-0 shadow-sm" required>
                 </div>
-            </form>
-        </div>
-    </main>
-    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
-</body>
-</html>
+                <div class="col-md-2">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
+                    <input type="number" name="demerits" class="form-control border-0 shadow-sm" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Offense Level</label>
+                    <select name="offense_level" class="form-select border-0 shadow-sm">
+                        <option>Minor</option>
+                        <option>Major</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
+                    <input type="text" class="form-control border-0 shadow-sm bg-white" value="{{ request.user.username }}" readonly>
+                </div>
+                <div class="col-12">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details</label>
+                    <textarea name="details" class="form-control border-0 shadow-sm" rows="2"></textarea>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-xu-primary px-5 fw-bold" {% if not student %}disabled{% endif %}>SAVE RECORD</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
