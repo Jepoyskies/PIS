@@ -3,107 +3,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>Logon - MS Access Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logon - XU Prefect Information System</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
         body {
-            background-color: #f8e8e8; 
+            background: linear-gradient(135deg, var(--xu-blue-1) 0%, var(--xu-blue-2) 100%);
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Tahoma', sans-serif;
-            margin: 0;
         }
 
-        .xp-modal {
-            background-color: #d4d0c8;
-            border: 2px solid #0055ea;
-            width: 350px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
+        .login-card {
+            width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border-bottom: 6px solid var(--xu-gold);
         }
 
-        .xp-titlebar {
-            background: linear-gradient(to right, #0058e6, #3a93ff);
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            padding: 4px 8px;
-            border-top-left-radius: 3px;
-            border-top-right-radius: 3px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .login-header {
+            background-color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
         }
 
-        .xp-content {
-            padding: 15px;
-            display: flex;
-            gap: 15px;
+        .login-body {
+            padding: 30px;
         }
 
-        .xp-label {
-            font-size: 12px;
-            margin-bottom: 0;
-            width: 70px;
+        .form-control:focus {
+            border-color: var(--xu-blue-2);
+            box-shadow: 0 0 0 0.2rem rgba(58, 83, 164, 0.25);
         }
-
-        .xp-input {
-            height: 22px;
-            border: 1px solid #7f9db9;
-            font-size: 12px;
-            padding: 2px 4px;
-            width: 150px;
-        }
-
-        .xp-btn {
-            width: 70px;
-            height: 24px;
-            font-size: 12px;
-            background-color: #e3e3e3;
-            border: 1px solid #003c74;
-            border-radius: 3px;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
-        .xp-btn:active { background-color: #c0c0c0; }
     </style>
 </head>
 <body>
 
-    <div class="xp-modal">
-        <div class="xp-titlebar">
-            <span>Logon</span>
-            <span style="background-color: #e04343; border: 1px solid white; border-radius: 3px; padding: 0 4px; cursor: pointer;">X</span>
+    <div class="login-card">
+        <div class="login-header">
+            <img src="{% static 'images/xu_logo.png' %}" alt="XU Logo" class="xu-logo-md mb-3">
+            <h5 class="fw-bold mb-0" style="color: var(--xu-blue-1);">PREFECT INFORMATION SYSTEM</h5>
+            <p class="text-muted small">Logon to access the system</p>
         </div>
         
-<form method="POST" class="xp-content">
-    {% csrf_token %} 
-    <div>
-        <div class="d-flex align-items-center mb-2">
-            <label class="xp-label">Name:</label>
-            <input type="text" name="username" class="xp-input" required autocomplete="off" autofocus>
-        </div>
-        <div class="d-flex align-items-center mb-2">
-            <label class="xp-label">Password:</label>
-            <input type="password" name="password" class="xp-input" required>
-        </div>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div style="color: red; font-size: 11px; margin-top: 5px;">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    </div>
+        <form method="POST" class="login-body">
+            {% csrf_token %} 
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase" style="color: #666;">Username</label>
+                <input type="text" name="username" class="form-control" required autocomplete="off" autofocus placeholder="Enter your name">
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase" style="color: #666;">Password</label>
+                <input type="password" name="password" class="form-control" required placeholder="Enter your password">
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger py-2 px-3 small mb-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
 
-    <div class="d-flex flex-column">
-        <button type="submit" class="xp-btn">OK</button>
-        <button type="button" class="xp-btn" onclick="window.close()">Cancel</button>
-    </div>
-</form>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-xu-primary py-2">OK</button>
+                <button type="button" class="btn btn-light py-2 text-muted" onclick="window.close()">Cancel</button>
+            </div>
+        </form>
     </div>
 
 </body>

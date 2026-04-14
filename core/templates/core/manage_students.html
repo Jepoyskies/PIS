@@ -1,143 +1,210 @@
 {% extends 'core/maintenance_base.html' %}
+{% load static %}
 {% block maintenance_content %}
-    <div class="d-flex justify-content-between align-items-center">
-        <h5 class="m-0" style="border-bottom: 2px solid #ffcc00; padding-bottom: 5px;">Student Records</h5>
-        <button class="btn btn-sm btn-success px-3 fw-bold" style="border-radius:0; background-color: #003366;" 
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold m-0 text-uppercase" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Student Records</h4>
+        <button class="btn btn-xu-primary btn-sm px-4 rounded-pill shadow-sm" 
                 data-bs-toggle="modal" data-bs-target="#addStudentModal">
-            + ADD NEW STUDENT
+            <span class="me-1">➕</span> ADD NEW STUDENT
         </button>
     </div>
     
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-info py-1 px-3 mt-2" style="font-size: 0.8rem; border-radius: 0;">{{ message }}</div>
+            <div class="alert alert-info py-2 px-3 mb-3 small border-0 shadow-sm" style="background-color: #e7f3ff; color: #0055ea;">
+                <i class="me-2">ℹ️</i> {{ message }}
+            </div>
         {% endfor %}
     {% endif %}
 
-    <div class="mt-2" style="background: white; border: 1px solid #999; height: 380px; overflow-y: auto;">
-        <table class="table table-sm table-hover table-bordered mb-0" style="font-size: 0.8rem;">
-            <thead class="table-light" style="position: sticky; top:0; z-index: 1;">
-                <tr>
-                    <th style="background-color: #e4e4e4;">ID Number</th>
-                    <th style="background-color: #e4e4e4;">Last Name</th>
-                    <th style="background-color: #e4e4e4;">First Name</th>
-                    <th style="background-color: #e4e4e4;">Sex</th>
-                    <th style="background-color: #e4e4e4;">Section</th>
-                    <!-- INJECTED COLUMNS -->
-                    <th style="background-color: #e4e4e4;">Role</th>
-                    <th style="background-color: #e4e4e4;" class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student in students %}
-                <tr>
-                    <td class="align-middle">{{ student.student_number }}</td>
-                    <td class="align-middle fw-bold">{{ student.last_name }}</td>
-                    <td class="align-middle">{{ student.first_name }}</td>
-                    <td class="align-middle">{{ student.sex }}</td>
-                    <td class="align-middle">{{ student.section.name|default:"Unassigned" }}</td>
-                    <!-- INJECTED BADGES -->
-                    <td class="align-middle">
-                        {% if student.is_beadle %}<span class="badge bg-warning text-dark border border-dark">⭐ BEADLE</span>
-                        {% else %}<span class="badge bg-light text-dark border">Student</span>{% endif %}
-                    </td>
-                    <!-- INJECTED BUTTONS -->
-                    <td class="text-center align-middle" style="width: 220px;">
-                        <button class="btn btn-sm btn-light border edit-btn" style="font-size: 0.7rem; font-weight: bold;"
-                            data-bs-toggle="modal" data-bs-target="#editStudentModal"
-                            data-id="{{ student.student_number }}" data-fname="{{ student.first_name }}"
-                            data-lname="{{ student.last_name }}" data-mi="{{ student.middle_initial|default:'' }}"
-                            data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}"
-                            data-address="{{ student.address|default:'' }}" data-section="{{ student.section.id|default:'' }}">✏️ Edit</button>
-                        
-                        <form method="POST" style="display: inline-block; margin: 0;">
-                            {% csrf_token %}
-                            <input type="hidden" name="toggle_beadle" value="1">
-                            <input type="hidden" name="student_number" value="{{ student.student_number }}">
-                            {% if student.is_beadle %}
-                                <button type="submit" class="btn btn-sm btn-danger border" style="font-size: 0.7rem;">Revoke Beadle</button>
+    <div class="card card-xu border shadow-sm">
+        <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-xu sticky-top">
+                    <tr>
+                        <th class="ps-4">ID Number</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Sex</th>
+                        <th>Section</th>
+                        <th>Role</th>
+                        <th class="text-center pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-muted">{{ student.student_number }}</td>
+                        <td class="fw-bold" style="color: var(--xu-blue-1);">{{ student.last_name }}</td>
+                        <td>{{ student.first_name }}</td>
+                        <td>{{ student.sex }}</td>
+                        <td>
+                            {% if student.section %}
+                                <span class="badge bg-light text-dark border px-2">{{ student.section.name }}</span>
                             {% else %}
-                                <button type="submit" class="btn btn-sm btn-primary border" style="font-size: 0.7rem;" {% if not student.section %}disabled{% endif %}>⭐ Make Beadle</button>
+                                <span class="text-muted italic small">Unassigned</span>
                             {% endif %}
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7" class="text-center p-4">No students enrolled yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            {% if student.is_beadle %}
+                                <span class="badge bg-xu-gold text-white px-2">⭐ BEADLE</span>
+                            {% else %}
+                                <span class="badge bg-light text-muted border px-2">Student</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-4" style="width: 250px;">
+                            <div class="btn-group shadow-sm">
+                                <button class="btn btn-white btn-sm border edit-btn px-3" 
+                                    data-bs-toggle="modal" data-bs-target="#editStudentModal"
+                                    data-id="{{ student.student_number }}" data-fname="{{ student.first_name }}"
+                                    data-lname="{{ student.last_name }}" data-mi="{{ student.middle_initial|default:'' }}"
+                                    data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}"
+                                    data-address="{{ student.address|default:'' }}" data-section="{{ student.section.id|default:'' }}">
+                                    <span class="small">✏️ Edit</span>
+                                </button>
+                                
+                                <form method="POST" class="d-inline m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="toggle_beadle" value="1">
+                                    <input type="hidden" name="student_number" value="{{ student.student_number }}">
+                                    {% if student.is_beadle %}
+                                        <button type="submit" class="btn btn-danger btn-sm border px-3" style="border-top-left-radius:0; border-bottom-left-radius:0;">
+                                            <span class="small fw-bold">Revoke</span>
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-xu-primary btn-sm border px-3" 
+                                                style="border-top-left-radius:0; border-bottom-left-radius:0;"
+                                                {% if not student.section %}disabled title="Assign section first"{% endif %}>
+                                            <span class="small fw-bold">⭐ Make Beadle</span>
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="display-6 text-muted opacity-25 mb-2">👥</div>
+                            <p class="text-muted">No student records found in the database.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- YOUR ORIGINAL ADD MODAL -->
-    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <!-- ADD MODAL -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background-color: #d4d0c8; border: 2px solid #0055ea; border-radius: 0;">
-          <div style="background: linear-gradient(to right, #0058e6, #3a93ff); color: white; padding: 4px 10px; font-weight: bold; font-size: 0.85rem; display: flex; justify-content: space-between;">
-            <span>Register Student</span>
-            <button type="button" style="background:#e04343; border:1px solid white; color:white; font-size:10px;" data-bs-dismiss="modal">X</button>
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-xu-primary text-white py-3">
+            <h6 class="modal-title fw-bold text-uppercase small letter-spacing-1">Register New Student</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <form method="POST">
             {% csrf_token %}
-            <div class="modal-body p-3">
-                <div class="row mb-2">
-                    <div class="col"><label class="fw-bold small">Student ID:</label><input type="text" name="student_number" class="form-control form-control-sm" style="border-radius:0;" required></div>
-                    <div class="col"><label class="fw-bold small">Sex:</label><select name="sex" class="form-select form-select-sm" style="border-radius:0;"><option value="M">Male</option><option value="F">Female</option></select></div>
+            <div class="modal-body p-4 bg-light">
+                <div class="row mb-3">
+                    <div class="col-7">
+                        <label class="fw-bold small text-muted text-uppercase mb-1">Student ID Number</label>
+                        <input type="text" name="student_number" class="form-control form-control-sm border-0 shadow-sm" required placeholder="e.g. 2023-0001">
+                    </div>
+                    <div class="col-5">
+                        <label class="fw-bold small text-muted text-uppercase mb-1">Sex</label>
+                        <select name="sex" class="form-select form-select-sm border-0 shadow-sm">
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="row mb-2">
-                    <div class="col"><label class="fw-bold small">First Name:</label><input type="text" name="first_name" class="form-control form-control-sm" style="border-radius:0;" required></div>
-                    <div class="col"><label class="fw-bold small">Last Name:</label><input type="text" name="last_name" class="form-control form-control-sm" style="border-radius:0;" required></div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="fw-bold small text-muted text-uppercase mb-1">First Name</label>
+                        <input type="text" name="first_name" class="form-control form-control-sm border-0 shadow-sm" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="fw-bold small text-muted text-uppercase mb-1">Last Name</label>
+                        <input type="text" name="last_name" class="form-control form-control-sm border-0 shadow-sm" required>
+                    </div>
                 </div>
-                <label class="fw-bold small">Section:</label>
-                <select name="section" class="form-select form-select-sm" style="border-radius:0;" required>
-                    <option value="">-- Select Section --</option>
-                    {% for sec in sections %}<option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>{% endfor %}
-                </select>
+                <div class="mb-2">
+                    <label class="fw-bold small text-muted text-uppercase mb-1">Assigned Section</label>
+                    <select name="section" class="form-select form-select-sm border-0 shadow-sm" required>
+                        <option value="">-- Select Section --</option>
+                        {% for sec in sections %}
+                        <option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="modal-footer p-2" style="background-color: #e4e4e4;">
-              <button type="submit" class="btn btn-sm btn-primary">Save Record</button>
+            <div class="modal-footer bg-white py-2">
+              <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-xu-primary btn-sm px-4 fw-bold">SAVE RECORD</button>
             </div>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- INJECTED EDIT MODAL -->
+    <!-- EDIT MODAL -->
     <div class="modal fade" id="editStudentModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background-color: #d4d0c8; border: 2px solid #0055ea; border-radius: 0;">
-                <div style="background: linear-gradient(to right, #0058e6, #3a93ff); color: white; padding: 4px 10px; font-weight: bold; font-size: 0.85rem; display: flex; justify-content: space-between;">
-                    <span>Edit Student Details</span>
-                    <button type="button" style="background:#e04343; border:1px solid white; color:white; font-size:10px;" data-bs-dismiss="modal">X</button>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-xu-primary text-white py-3">
+                    <h6 class="modal-title fw-bold text-uppercase small letter-spacing-1">Update Student Information</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="edit_student" value="1">
                     <input type="hidden" name="student_number" id="edit-id">
-                    <div class="modal-body p-3">
-                        <div class="row mb-2">
-                            <div class="col"><label class="fw-bold small">First Name:</label><input type="text" name="first_name" id="edit-fname" class="form-control form-control-sm" style="border-radius:0;" required></div>
-                            <div class="col"><label class="fw-bold small">Last Name:</label><input type="text" name="last_name" id="edit-lname" class="form-control form-control-sm" style="border-radius:0;" required></div>
+                    <div class="modal-body p-4 bg-light">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-5">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">First Name</label>
+                                <input type="text" name="first_name" id="edit-fname" class="form-control border-0 shadow-sm" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Last Name</label>
+                                <input type="text" name="last_name" id="edit-lname" class="form-control border-0 shadow-sm" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">M.I.</label>
+                                <input type="text" name="middle_initial" id="edit-mi" class="form-control border-0 shadow-sm text-center">
+                            </div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label class="fw-bold small">M.I.:</label><input type="text" name="middle_initial" id="edit-mi" class="form-control form-control-sm" style="border-radius:0;"></div>
-                            <div class="col-4"><label class="fw-bold small">Sex:</label>
-                                <select name="sex" id="edit-sex" class="form-select form-select-sm" style="border-radius:0;">
-                                    <option value="M">Male</option><option value="F">Female</option>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Sex</label>
+                                <select name="sex" id="edit-sex" class="form-select border-0 shadow-sm">
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
                                 </select>
                             </div>
-                            <div class="col-4"><label class="fw-bold small">Birth Date:</label><input type="date" name="date_of_birth" id="edit-bday" class="form-control form-control-sm" style="border-radius:0;"></div>
+                            <div class="col-md-6">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Birth Date</label>
+                                <input type="date" name="date_of_birth" id="edit-bday" class="form-control border-0 shadow-sm">
+                            </div>
                         </div>
-                        <label class="fw-bold small">Address:</label>
-                        <input type="text" name="address" id="edit-address" class="form-control form-control-sm mb-2" style="border-radius:0;">
-                        <label class="fw-bold small text-primary">Assign Section:</label>
-                        <select name="section_id" id="edit-section" class="form-select form-select-sm" style="border-radius:0;">
-                            <option value="">-- Unassigned --</option>
-                            {% for sec in sections %}<option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>{% endfor %}
-                        </select>
+                        <div class="mb-3">
+                            <label class="fw-bold small text-muted text-uppercase mb-1">Current Address</label>
+                            <input type="text" name="address" id="edit-address" class="form-control border-0 shadow-sm">
+                        </div>
+                        <div class="mb-0">
+                            <label class="fw-bold small text-uppercase mb-1" style="color: var(--xu-blue-2);">Change Assigned Section</label>
+                            <select name="section_id" id="edit-section" class="form-select border-0 shadow-sm">
+                                <option value="">-- Unassigned --</option>
+                                {% for sec in sections %}
+                                <option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="modal-footer p-2" style="background-color: #e4e4e4;">
-                        <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                    <div class="modal-footer bg-white py-2">
+                        <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-xu-gold btn-sm px-4 fw-bold">SAVE CHANGES</button>
                     </div>
                 </form>
             </div>

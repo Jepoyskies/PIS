@@ -2,6 +2,11 @@ services:
   db:
     image: mysql:8.0
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     environment:
       MYSQL_DATABASE: xjhs_pis_db
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -14,7 +19,8 @@ services:
     build: .
     restart: on-failure
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "sleep 3 &&
+             python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
@@ -26,7 +32,8 @@ services:
       - DB_USER=root
       - DB_PASSWORD=rootpassword
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   xjhs_mysql_data:

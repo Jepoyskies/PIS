@@ -5,72 +5,187 @@
     <meta charset="UTF-8">
     <title>PIS - Home</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
-        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; border-bottom: 2px solid #fff; }
-        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
-        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
-        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
-        .pis-card { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; width: 850px; margin: auto; box-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
-        .pis-btn { display: block; width: 100%; text-align: left; padding: 10px 15px; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; background-color: #e4e4e4; border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; text-decoration: none; color: #333; }
-        .pis-btn:hover { background-color: #fff; color: #003366; border-left: 5px solid #ffcc00; }
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+        
+        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
+        .nav-link { 
+            color: #555; 
+            font-weight: 600; 
+            padding: 15px 20px; 
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+
+        .dashboard-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            width: 100%;
+        }
+
+        .menu-card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
+        }
+
+        .menu-header {
+            background-color: var(--xu-blue-1);
+            color: white;
+            padding: 15px 25px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 4px solid var(--xu-gold);
+        }
+
+        .pis-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            background-color: white;
+            border: 1px solid var(--xu-border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #444;
+            transition: all 0.2s;
+        }
+
+        .pis-btn:hover {
+            background-color: var(--xu-blue-1);
+            color: white;
+            border-color: var(--xu-blue-1);
+            transform: translateX(5px);
+        }
+
+        .pis-btn .btn-num {
+            width: 28px;
+            height: 28px;
+            background-color: var(--xu-light-gray);
+            color: var(--xu-blue-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .pis-btn:hover .btn-num {
+            background-color: var(--xu-gold);
+            color: white;
+        }
+
+        .notification-panel {
+            background-color: #fff9e6;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body>
-    <header class="system-header d-flex justify-content-between align-items-center">
-        <div>HOMEPAGE - Prefect Information System</div>
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0">
+            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <div class="text-white">
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Prefect Information System</div>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label style="font-size:0.8rem;">Enrolment Code:</label>
-                <select name="school_year_id" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 130px;">
+                <label class="small fw-bold text-muted mb-0">School Year:</label>
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
                     {% for sy in all_school_years %}
                     <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-danger btn-sm fw-bold text-white px-3" style="border: 1px solid #000;">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4">Log Off</a>
         </div>
     </header>
 
     <nav class="main-nav d-flex">
-        <a href="{% url 'staff_home' %}" class="nav-btn active">HOME</a>
-        <a href="{% url 'maintenance_dashboard' %}" class="nav-btn">MAINTENANCE</a>
+        <a href="{% url 'staff_home' %}" class="nav-link active">DASHBOARD</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <main class="flex-grow-1 d-flex">
-        <div class="pis-card d-flex flex-column">
-            <div style="background-color: #003366; color: white; padding: 8px; text-align: center; font-weight: bold; border-bottom: 2px solid #ffcc00;">
-                PREFECT INFORMATION SYSTEM - MAIN MENU
-            </div>
-            <div class="row m-0 flex-grow-1 p-4">
-                <div class="col-4 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
-                    <div style="width: 130px; height: 130px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: 4px solid #003366;">LOGO</div>
-                    <h5 class="mt-3 text-center" style="color: #003366; font-weight: bold;">DISCIPLINARY<br>MODULE</h5>
-                </div>
-                <div class="col-4 ps-4 d-flex flex-column justify-content-center border-end border-secondary">
-                    <a href="{% url 'staff_dashboard' %}" class="pis-btn">1. Students</a>
-                    <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn">2. Absences</a>
-                    <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn">3. Tardiness</a>
-                    <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn">4. Conduct</a>
-                    <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn">5. Suspension</a>
+    <main class="flex-grow-1">
+        <div class="dashboard-container">
+            <div class="menu-card">
+                <div class="menu-header">
+                    <span><i class="me-2">📊</i> DISCIPLINARY MODULES</span>
+                    <span class="small opacity-75">Select a category to manage records</span>
                 </div>
                 
-                <!-- INJECTED: Notification Panel -->
-                <div class="col-4 ps-4 d-flex flex-column">
-                    <h6 class="fw-bold text-danger" style="font-size: 0.8rem;">⚠️ PENDING ATTENDANCES</h6>
-                    <div style="background: white; border: 1px inset #999; flex-grow: 1; overflow-y: auto; padding: 5px;">
-                        {% for batch in pending_batches %}
-                        <div class="small border-bottom mb-2 pb-1" style="font-size: 0.75rem;">
-                            <strong>{{ batch.section.name }}</strong> ({{ batch.date }})<br>
-                            <a href="{% url 'staff_attendance_review' batch.id %}" style="text-decoration:none; color: #0055ea; font-weight: bold;">[ Review Now ]</a>
+                <div class="row g-0">
+                    <!-- LOGO & TITLE SECTION -->
+                    <div class="col-md-4 p-5 d-flex flex-column align-items-center justify-content-center bg-light border-end">
+                        <img src="{% static 'images/xu_logo.png' %}" alt="XU Logo" class="xu-logo-lg mb-4 shadow-sm rounded">
+                        <h4 class="text-center fw-bold" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">PREFECT<br>MODULES</h4>
+                        <div class="mt-3 px-3 py-1 bg-xu-gold text-white rounded-pill small fw-bold">MAIN MENU</div>
+                    </div>
+
+                    <!-- NAVIGATION BUTTONS -->
+                    <div class="col-md-4 p-4 border-end">
+                        <a href="{% url 'staff_dashboard' %}" class="pis-btn">
+                            <span class="btn-num">1</span> Student Masterlist
+                        </a>
+                        <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn">
+                            <span class="btn-num">2</span> Attendance / Absences
+                        </a>
+                        <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn">
+                            <span class="btn-num">3</span> Tardiness Records
+                        </a>
+                        <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn">
+                            <span class="btn-num">4</span> Conduct & Character
+                        </a>
+                        <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn">
+                            <span class="btn-num">5</span> Suspension Tracking
+                        </a>
+                    </div>
+                    
+                    <!-- NOTIFICATION PANEL -->
+                    <div class="col-md-4 p-4">
+                        <div class="notification-panel">
+                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
+                                <h6 class="fw-bold mb-0 text-danger">⚠️ ACTION REQUIRED</h6>
+                                <span class="badge bg-danger rounded-pill">{{ pending_batches|length }}</span>
+                            </div>
+                            <div class="p-3 flex-grow-1 overflow-auto" style="max-height: 250px;">
+                                {% for batch in pending_batches %}
+                                <div class="card mb-2 border-0 shadow-sm">
+                                    <div class="card-body p-2">
+                                        <div class="fw-bold small text-dark">{{ batch.section.name }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ batch.date }}</div>
+                                        <a href="{% url 'staff_attendance_review' batch.id %}" class="btn btn-link p-0 text-decoration-none small fw-bold mt-1" style="color: var(--xu-blue-2);">[ Review Now ]</a>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center mt-5">
+                                    <div class="display-6 text-muted opacity-25 mb-2">✔️</div>
+                                    <p class="text-muted small">All attendance reports<br>are up to date.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
-                        {% empty %}
-                        <p class="text-muted text-center mt-4" style="font-size: 0.75rem;">No pending submissions.</p>
-                        {% endfor %}
                     </div>
                 </div>
-
             </div>
         </div>
     </main>

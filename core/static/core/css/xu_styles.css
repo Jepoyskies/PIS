@@ -1,0 +1,134 @@
+:root {
+    --xu-blue-1: #283971;
+    --xu-blue-2: #3a52a3;
+    --xu-gold: #b99430;
+    --xu-red: #ec282a;
+    --xu-light-gray: #f8f9fa;
+    --xu-border-color: #dee2e6;
+}
+
+body {
+    background-color: var(--xu-light-gray);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* Navbar & Header Styles */
+.navbar-xu {
+    background-color: var(--xu-blue-1);
+    border-bottom: 4px solid var(--xu-gold);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-xu .navbar-brand, 
+.navbar-xu .nav-link {
+    color: white !important;
+    font-weight: 600;
+}
+
+.navbar-xu .nav-link:hover {
+    color: var(--xu-gold) !important;
+}
+
+/* Button Styles */
+.btn-xu-primary {
+    background-color: var(--xu-blue-1);
+    border-color: var(--xu-blue-1);
+    color: white;
+    font-weight: 600;
+}
+
+.btn-xu-primary:hover {
+    background-color: var(--xu-blue-2);
+    border-color: var(--xu-blue-2);
+    color: white;
+}
+
+.btn-xu-gold {
+    background-color: var(--xu-gold);
+    border-color: var(--xu-gold);
+    color: white;
+    font-weight: 600;
+}
+
+.btn-xu-gold:hover {
+    filter: brightness(1.1);
+    color: white;
+}
+
+.btn-xu-outline {
+    border: 2px solid var(--xu-blue-1);
+    color: var(--xu-blue-1);
+    font-weight: 600;
+}
+
+.btn-xu-outline:hover {
+    background-color: var(--xu-blue-1);
+    color: white;
+}
+
+/* Card Styles */
+.card-xu {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    background-color: white;
+}
+
+.card-xu-header {
+    background-color: var(--xu-blue-1);
+    color: white;
+    border-bottom: 2px solid var(--xu-gold);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 10px 15px;
+    font-weight: bold;
+}
+
+/* Table Styles */
+.table-xu thead th {
+    background-color: var(--xu-blue-2);
+    color: white;
+    border-color: var(--xu-blue-1);
+    font-weight: 500;
+}
+
+.table-xu-hover tbody tr:hover {
+    background-color: rgba(58, 83, 164, 0.05);
+}
+
+/* Sidebar Styles */
+.sidebar-xu {
+    background-color: white;
+    border-right: 1px solid var(--xu-border-color);
+    height: 100%;
+}
+
+.sidebar-xu .list-group-item {
+    border: none;
+    padding: 12px 20px;
+    color: #555;
+    font-weight: 500;
+}
+
+.sidebar-xu .list-group-item.active {
+    background-color: var(--xu-blue-1);
+    border-left: 5px solid var(--xu-gold);
+    color: white;
+}
+
+/* Logo Utility */
+.xu-logo-sm {
+    height: 40px;
+    width: auto;
+}
+
+.xu-logo-md {
+    height: 80px;
+    width: auto;
+}
+
+.xu-logo-lg {
+    height: 120px;
+    width: auto;
+}

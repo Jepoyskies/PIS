@@ -1,43 +1,79 @@
 {% extends 'core/maintenance_base.html' %}
+{% load static %}
 
 {% block maintenance_content %}
-    <h5 class="text-primary fw-bold mb-3">Section & Grade Management</h5>
-    <div class="row">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold m-0 text-uppercase" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Section & Grade Management</h4>
+    </div>
+
+    <div class="row g-4">
         <div class="col-md-8">
-            <div style="height: 400px; overflow-y: auto; border: 1px solid #999; background: white;">
-                <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 0.8rem;">
-                    <thead style="background-color: #e4e4e4;">
-                        <tr><th>Level</th><th>Section Name</th><th>Assigned Beadle</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for sec in sections %}
-                        <tr>
-                            <td>Grade {{ sec.grade_level }}</td>
-                            <td class="fw-bold">{{ sec.name }}</td>
-                            <td>
-                                {% if sec.beadle %}
-                                    <span class="text-success fw-bold">⭐ {{ sec.beadle.last_name }}</span>
-                                {% else %}
-                                    <span class="text-muted small">No Beadle assigned</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="card card-xu border shadow-sm">
+                <div class="table-responsive" style="max-height: 500px;">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-xu sticky-top">
+                            <tr>
+                                <th class="ps-4">Grade Level</th>
+                                <th>Section Name</th>
+                                <th class="pe-4">Assigned Classroom Beadle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sec in sections %}
+                            <tr>
+                                <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
+                                <td class="fw-bold" style="color: var(--xu-blue-1);">{{ sec.name }}</td>
+                                <td class="pe-4">
+                                    {% if sec.beadle %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-warning">⭐</span>
+                                            <span class="fw-bold text-success">{{ sec.beadle.last_name }}, {{ sec.beadle.first_name }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted italic small opacity-75">No beadle assigned to this section</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5">
+                                    <div class="display-6 text-muted opacity-25 mb-2">🏫</div>
+                                    <p class="text-muted">No sections have been created yet.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+        
         <div class="col-md-4">
-            <div class="card p-3 border-dark" style="background-color: #e4e4e4;">
-                <h6 class="fw-bold mb-3">Add New Section</h6>
-                <form method="POST">
-                    {% csrf_token %}
-                    <label class="small fw-bold">Grade Level:</label>
-                    <input type="number" name="grade_level" class="form-control form-control-sm mb-2" required>
-                    <label class="small fw-bold">Section Name:</label>
-                    <input type="text" name="name" class="form-control form-control-sm mb-3" placeholder="e.g., ST. IGNATIUS" required>
-                    <button type="submit" class="btn btn-sm btn-success w-100 fw-bold border-dark">Save Section</button>
-                </form>
+            <div class="card card-xu border shadow-sm h-100">
+                <div class="card-xu-header py-3">
+                    <span class="small fw-bold text-uppercase letter-spacing-1">➕ Create New Section</span>
+                </div>
+                <div class="card-body p-4 bg-light">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="fw-bold small text-muted text-uppercase mb-1">Grade Level</label>
+                            <input type="number" name="grade_level" class="form-control border-0 shadow-sm" required placeholder="e.g. 7, 8, 9...">
+                        </div>
+                        <div class="mb-4">
+                            <label class="fw-bold small text-muted text-uppercase mb-1">Section Name</label>
+                            <input type="text" name="name" class="form-control border-0 shadow-sm" placeholder="e.g. ST. IGNATIUS" required>
+                        </div>
+                        <button type="submit" class="btn btn-xu-primary w-100 fw-bold py-2 shadow-sm">
+                            SAVE SECTION RECORD
+                        </button>
+                    </form>
+                    
+                    <div class="mt-4 p-3 rounded border border-warning bg-warning-subtle small">
+                        <div class="fw-bold text-warning-emphasis mb-1">💡 Pro Tip:</div>
+                        <p class="mb-0 opacity-75">After creating a section, you can assign a beadle from the Student Records module.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -2,43 +2,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Take Attendance</title>
+    <meta charset="UTF-8">
+    <title>Take Attendance - Beadle Portal</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: var(--xu-light-gray); min-height: 100vh; }
+        .beadle-header {
+            background-color: var(--xu-blue-1);
+            border-bottom: 5px solid var(--xu-gold);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        .attendance-card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .attendance-header {
+            background-color: var(--xu-blue-2);
+            color: white;
+            padding: 20px 25px;
+        }
+        .table-attendance th {
+            background-color: var(--xu-light-gray);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #666;
+            padding: 15px 10px;
+            border-bottom: 2px solid var(--xu-border-color);
+        }
+        .status-radio {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .row-student:hover {
+            background-color: rgba(58, 83, 164, 0.05) !important;
+        }
+    </style>
 </head>
-<body style="background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif;">
-    <nav class="navbar navbar-dark bg-dark shadow-sm">
-        <div class="container">
-            <span class="navbar-brand text-warning fw-bold">⭐ BEADLE PORTAL</span>
-            <a href="{% url 'student_dashboard' %}" class="btn btn-sm btn-outline-light">Back to Profile</a>
+<body>
+    <header class="beadle-header shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+                <h5 class="text-white fw-bold mb-0">⭐ BEADLE ATTENDANCE PORTAL</h5>
+            </div>
+            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK TO PROFILE</a>
         </div>
-    </nav>
+    </header>
     
-    <div class="container mt-4">
-        <form method="POST" class="card shadow-sm border-0">
+    <div class="container pb-5">
+        <form method="POST" class="attendance-card bg-white shadow">
             {% csrf_token %}
-            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="m-0 fw-bold">Attendance: {{ student.section.name }}</h5>
-                <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm w-25" required>
+            <div class="attendance-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold mb-0">Class Attendance Report</h4>
+                    <p class="opacity-75 mb-0 small">Section: <span class="fw-bold">{{ student.section.name }}</span></p>
+                </div>
+                <div class="bg-white p-2 rounded shadow-sm d-flex align-items-center gap-2" style="width: 200px;">
+                    <span class="text-muted small fw-bold ms-2">DATE:</span>
+                    <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm border-0 fw-bold" required style="background: transparent;">
+                </div>
             </div>
+            
             <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Classmate</th><th class="text-center">Present</th><th class="text-center">Late</th><th class="text-center">Absent</th></tr></thead>
-                    <tbody>
-                        {% for s in section_students %}
-                        <tr>
-                            <td class="align-middle fw-bold">{{ s.last_name }}, {{ s.first_name }}</td>
-                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked></td>
-                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="LATE"></td>
-                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="ABSENT"></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover table-attendance align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Classmate Name</th>
+                                <th class="text-center" style="width: 15%;">Present</th>
+                                <th class="text-center" style="width: 15%;">Late</th>
+                                <th class="text-center" style="width: 15%;">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in section_students %}
+                            <tr class="row-student">
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold" style="color: var(--xu-blue-1);">{{ s.last_name }}, {{ s.first_name }}</div>
+                                    <div class="text-muted small">ID: {{ s.student_number }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked class="form-check-input status-radio border-success">
+                                </td>
+                                <td class="text-center">
+                                    <input type="radio" name="status_{{ s.student_number }}" value="LATE" class="form-check-input status-radio border-warning">
+                                </td>
+                                <td class="text-center">
+                                    <input type="radio" name="status_{{ s.student_number }}" value="ABSENT" class="form-check-input status-radio border-danger">
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <p class="text-muted small">No students found in this section.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-footer bg-white border-0 py-3">
-                <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow">🚀 SUBMIT TO PREFECT OFFICE</button>
+            
+            <div class="card-footer bg-light p-4 text-center border-0">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="alert alert-warning py-2 small mb-4 border-0 shadow-sm d-inline-flex align-items-center gap-2">
+                            <i class="opacity-75">ℹ️</i> Double-check all entries before final submission to the Prefect Office.
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-3 shadow-sm rounded-pill">
+                            🚀 SUBMIT FINAL ATTENDANCE REPORT
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
+    
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

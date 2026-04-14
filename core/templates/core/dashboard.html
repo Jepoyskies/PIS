@@ -5,130 +5,207 @@
     <meta charset="UTF-8">
     <title>PIS - Students List</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: #d4d0c8; font-family: 'Tahoma', sans-serif; font-size: 0.85rem; overflow: hidden; }
-        .system-header { background-color: #003366; color: white; font-weight: bold; padding: 4px 10px; border-bottom: 2px solid #fff;}
-        .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
-        .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
-        .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
-        .search-bar-container { background-color: #ffcc66; padding: 4px 10px; border-bottom: 1px solid #999; font-weight: bold; }
-        .table-container { height: 350px; overflow-y: auto; background-color: white; border: 1px solid #999; }
-        .table-ms-access th { position: sticky; top: 0; background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px 4px !important; font-size: 0.8rem; z-index: 1; }
-        .table-ms-access td { padding: 2px 4px !important; vertical-align: middle; font-size: 0.8rem; white-space: nowrap; }
-        .detail-form-container { background-color: #f0f0f0; border-top: 2px solid #a0a0a0; padding: 10px; height: calc(100vh - 460px); }
-        .form-label-custom { font-size: 0.8rem; text-align: right; font-weight: 500; }
-        .form-control-xs { height: 24px; padding: 2px 5px; font-size: 0.8rem; border-radius: 0; border: 1px solid #a0a0a0; }
-        .action-btn { font-size: 0.8rem; padding: 2px 10px; border-radius: 0; background-color: #e0e0e0; border: 1px solid #888; font-weight: bold; }
-        .modal-content-xp { background-color: #d4d0c8; border: 2px solid #003366; border-radius: 0; }
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
+        .nav-link { 
+            color: #555; 
+            font-weight: 600; 
+            padding: 15px 20px; 
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+
+        .search-bar-container { 
+            background-color: var(--xu-blue-2); 
+            padding: 12px 20px; 
+            color: white;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-container { 
+            height: calc(100vh - 480px); 
+            overflow-y: auto; 
+            background-color: white; 
+            border: 1px solid var(--xu-border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .table-xu-dashboard th { 
+            position: sticky; 
+            top: 0; 
+            background-color: var(--xu-blue-1); 
+            color: white;
+            z-index: 1; 
+            padding: 12px 10px !important;
+            font-size: 0.85rem;
+            border-bottom: 3px solid var(--xu-gold) !important;
+        }
+
+        .detail-form-container { 
+            background-color: white; 
+            border-top: 1px solid var(--xu-border-color); 
+            padding: 20px; 
+            height: 300px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.03);
+        }
+
+        .form-label-custom { font-size: 0.8rem; text-align: right; font-weight: 700; color: var(--xu-blue-1); }
+        .form-control-xu { 
+            height: 32px; 
+            padding: 5px 10px; 
+            font-size: 0.85rem; 
+            border-radius: 4px; 
+            border: 1px solid var(--xu-border-color);
+            transition: all 0.2s;
+        }
+        .form-control-xu:focus {
+            border-color: var(--xu-blue-2);
+            box-shadow: 0 0 0 0.2rem rgba(58, 83, 164, 0.1);
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <header class="system-header d-flex justify-content-between align-items-center">
-        <div>STUDENTS LIST - Prefect Information System</div>
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0">
+            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <div class="text-white">
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Student Masterlist Dashboard</div>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label style="font-size:0.8rem;">Enrolment Code:</label>
-                <select name="school_year_id" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 130px;">
+                <label class="small fw-bold text-muted mb-0">School Year:</label>
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
                     {% for sy in all_school_years %}
                     <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-danger btn-sm fw-bold text-white px-3" style="border: 1px solid #000;">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4">Log Off</a>
         </div>
     </header>
 
     <nav class="main-nav d-flex">
-        <a href="{% url 'staff_home' %}" class="nav-btn">HOME</a>
-        <a href="{% url 'staff_dashboard' %}" class="nav-btn active">CURRENTLY ENROLLED STUDENTS</a>
-        <button class="nav-btn">REPORTS</button>
-        <!-- Maintenance button removed from here -->
+        <a href="{% url 'staff_home' %}" class="nav-link">DASHBOARD</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link active">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="#" class="nav-link">REPORTS</a>
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column">
-        <div class="search-bar-container d-flex gap-4 align-items-center">
-            <form method="GET" class="d-flex align-items-center gap-2 m-0">
-                <label class="mb-0">Search Name:</label>
-                <input type="text" name="searchName" value="{{ search_name|default:'' }}" class="form-control form-control-xs" style="width: 200px;">
-                <label class="ms-3 mb-0">Student No:</label>
-                <input type="text" name="searchId" value="{{ search_id|default:'' }}" class="form-control form-control-xs" style="width: 120px;">
-                <button type="submit" class="btn action-btn bg-white">Find</button>
-                <a href="{% url 'staff_dashboard' %}" class="btn action-btn bg-white">Clear</a>
+        <div class="search-bar-container">
+            <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small fw-bold mb-0 text-uppercase opacity-75">Student Name:</label>
+                    <input type="text" name="searchName" value="{{ search_name|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search by name...">
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small fw-bold mb-0 text-uppercase opacity-75">Student ID:</label>
+                    <input type="text" name="searchId" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;" placeholder="Search ID...">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-xu-gold btn-sm px-4">FIND RECORD</button>
+                    <a href="{% url 'staff_dashboard' %}" class="btn btn-light btn-sm px-3 text-muted">CLEAR</a>
+                </div>
             </form>
         </div>
 
-        <div class="table-container m-2">
-            <table class="table table-bordered table-striped table-hover table-ms-access mb-0">
-                <thead>
-                    <tr><th>Student Number</th><th>Name</th><th>Sex</th><th>Enrolled</th><th>Bday</th><th>Address</th></tr>
-                </thead>
-                <tbody id="student-table-body">
-                    {% for student in students %}
-                    <tr class="student-row" style="cursor: pointer;" 
-                        data-id="{{ student.student_number }}" data-name="{{ student.last_name }}, {{ student.first_name }}"
-                        data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}" data-address="{{ student.address|default:'' }}">
-                        <td>{{ student.student_number }}</td>
-                        <td>{{ student.last_name }}, {{ student.first_name }}</td>
-                        <td>{{ student.sex }}</td>
-                        <td>YES</td>
-                        <td>{{ student.date_of_birth|date:"M-d-Y" }}</td>
-                        <td>{{ student.address|default:"" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center p-4 text-danger">No students found for this school year.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="flex-grow-1 p-3">
+            <div class="table-container shadow-sm bg-white">
+                <table class="table table-hover table-xu-dashboard mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">ID NUMBER</th>
+                            <th>STUDENT NAME</th>
+                            <th>SEX</th>
+                            <th>ENROLLED</th>
+                            <th>BIRTH DATE</th>
+                            <th>CURRENT ADDRESS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        {% for student in students %}
+                        <tr class="student-row align-middle" style="cursor: pointer;" 
+                            data-id="{{ student.student_number }}" data-name="{{ student.last_name }}, {{ student.first_name }}"
+                            data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}" data-address="{{ student.address|default:'' }}">
+                            <td class="ps-3 fw-bold">{{ student.student_number }}</td>
+                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ student.last_name }}, {{ student.first_name }}</td>
+                            <td>{{ student.sex }}</td>
+                            <td><span class="badge bg-success rounded-pill px-3 small">YES</span></td>
+                            <td>{{ student.date_of_birth|date:"M-d-Y" }}</td>
+                            <td class="text-muted">{{ student.address|default:"" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center p-5 text-danger fw-bold">No student records matching your search were found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="detail-form-container mx-2 mb-2 border">
-            <div class="row g-2">
-                <div class="col-7">
-                    <div class="row mb-1 align-items-center">
-                        <div class="col-3 form-label-custom">Student Number</div>
-                        <div class="col-3"><input type="text" id="det-id" class="form-control form-control-xs bg-light" readonly></div>
-                        <div class="col-2 form-label-custom">Date Enrolled</div>
-                        <div class="col-4"><input type="text" class="form-control form-control-xs" value="{% now 'm-d-Y' %}"></div>
-                    </div>
-                    <div class="row mb-1 align-items-center">
-                        <div class="col-3 form-label-custom">Name</div>
-                        <div class="col-6"><input type="text" id="det-name" class="form-control form-control-xs bg-light" readonly></div>
-                        <div class="col-2 form-label-custom">Enrolled</div>
-                        <div class="col-1"><input type="checkbox" checked disabled></div>
-                    </div>
-                    <div class="row mb-1 align-items-center">
-                        <div class="col-3 form-label-custom">Sex</div>
-                        <div class="col-2"><input type="text" id="det-sex" class="form-control form-control-xs bg-light" readonly></div>
-                        <div class="col-3 form-label-custom">Bday</div>
-                        <div class="col-4"><input type="text" id="det-bday" class="form-control form-control-xs bg-light" readonly></div>
-                    </div>
-                    <div class="row mb-1 align-items-center">
-                        <div class="col-3 form-label-custom">Address</div>
-                        <div class="col-9"><input type="text" id="det-address" class="form-control form-control-xs bg-light" readonly></div>
-                    </div>
-                </div>
-                <div class="col-5">
-                    <div class="d-flex flex-column h-100">
-                        <label class="form-label-custom text-start mb-1">Remarks</label>
-                        <textarea class="form-control flex-grow-1 mb-2" style="font-size: 0.8rem; border-radius:0;"></textarea>
-                        <div class="row g-1 align-items-center">
-                            <div class="col-2 form-label-custom">Edited by</div>
-                            <div class="col-4"><input type="text" class="form-control form-control-xs bg-light" value="{{ request.user.username }}" readonly></div>
-                            <div class="col-2 form-label-custom">Date</div>
-                            <div class="col-4"><input type="text" class="form-control form-control-xs bg-light" value="{% now 'm-d-Y' %}" readonly></div>
+        <div class="detail-form-container">
+            <div class="row h-100">
+                <div class="col-8 border-end">
+                    <h6 class="fw-bold mb-4 text-uppercase small text-muted letter-spacing-1">Student Quick Details</h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">ID NUMBER</div>
+                                <div class="col-8"><input type="text" id="det-id" class="form-control-xu w-100 bg-light fw-bold" readonly></div>
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">FULL NAME</div>
+                                <div class="col-8"><input type="text" id="det-name" class="form-control-xu w-100 bg-light fw-bold" style="color: var(--xu-blue-1);" readonly></div>
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">SEX</div>
+                                <div class="col-4"><input type="text" id="det-sex" class="form-control-xu w-100 bg-light" readonly></div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">BIRTH DATE</div>
+                                <div class="col-8"><input type="text" id="det-bday" class="form-control-xu w-100 bg-light" readonly></div>
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">ADDRESS</div>
+                                <div class="col-8"><input type="text" id="det-address" class="form-control-xu w-100 bg-light" readonly></div>
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-4 form-label-custom">ENROLLED</div>
+                                <div class="col-2"><input type="checkbox" checked disabled class="form-check-input"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="col-4 d-flex flex-column ps-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="fw-bold small text-muted text-uppercase">Internal Remarks</label>
+                        <span class="small text-muted">{{ request.user.username }} | {% now "M-d-Y" %}</span>
+                    </div>
+                    <textarea class="form-control flex-grow-1 mb-3 shadow-sm border-0 bg-light" placeholder="Enter disciplinary notes or administrative remarks..."></textarea>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-xu-primary btn-sm px-4">SAVE REMARKS</button>
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 d-flex gap-2">
-                <button class="btn action-btn" data-bs-toggle="modal" data-bs-target="#addStudentModal">Add New Student</button>
-                <button class="btn action-btn text-success" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
-                <button class="btn action-btn">View Student Information</button>
-                <button class="btn action-btn">View Transcript of Records</button>
-                <div class="ms-auto d-flex gap-2">
-                    <button class="btn action-btn text-primary">Unserved CS: 0 Hrs</button>
-                    <button class="btn action-btn text-danger">Delete Student</button>
+            
+            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                <button class="btn btn-xu-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addStudentModal">➕ Add New</button>
+                <button class="btn btn-success btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
+                <button class="btn btn-xu-outline btn-sm px-3">View Profile</button>
+                <button class="btn btn-xu-outline btn-sm px-3">Transcript</button>
+                <div class="ms-auto d-flex gap-2 align-items-center">
+                    <span class="small fw-bold text-muted me-2">UNSERVED CS: <span class="text-danger">0 HRS</span></span>
+                    <button class="btn btn-danger btn-sm px-3 fw-bold">DELETE RECORD</button>
                 </div>
             </div>
         </div>
@@ -136,19 +213,36 @@
 
     <!-- MODALS -->
     <div class="modal fade" id="importExcelModal" tabindex="-1">
-        <div class="modal-dialog"><div class="modal-content modal-content-xp">
-            <div class="system-header d-flex justify-content-between"><span>Import Excel</span><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-            <form method="POST" enctype="multipart/form-data">{% csrf_token %}<div class="modal-body">
-                <input type="file" name="import_excel" class="form-control form-control-sm" required>
-            </div><div class="modal-footer"><button type="submit" class="btn action-btn">Import Now</button></div></form>
-        </div></div>
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h6 class="modal-title fw-bold">IMPORT STUDENT MASTERLIST</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-body p-4 text-center">
+                        <div class="display-4 text-success mb-3">📁</div>
+                        <p class="text-muted">Select an Excel file (.xlsx) containing student data to bulk import into the system.</p>
+                        <input type="file" name="import_excel" class="form-control" required>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4 fw-bold">PROCEED WITH IMPORT</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script>
         document.querySelectorAll('.student-row').forEach(row => {
             row.addEventListener('click', () => {
-                document.querySelectorAll('.student-row').forEach(r => r.classList.remove('table-primary'));
-                row.classList.add('table-primary');
+                document.querySelectorAll('.student-row').forEach(r => {
+                    r.classList.remove('table-primary');
+                    r.style.backgroundColor = '';
+                });
+                row.style.backgroundColor = 'rgba(58, 83, 164, 0.1)';
                 document.getElementById('det-id').value = row.dataset.id;
                 document.getElementById('det-name').value = row.dataset.name;
                 document.getElementById('det-sex').value = row.dataset.sex;
