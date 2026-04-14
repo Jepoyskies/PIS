@@ -11,7 +11,7 @@
         .main-nav { background-color: #e4e4e4; border-bottom: 2px solid #808080; padding: 2px; }
         .nav-btn { border: 1px solid #ccc; background-color: #f0f0f0; color: #333; font-size: 0.8rem; font-weight: bold; padding: 4px 12px; margin-right: 2px; border-radius: 2px; text-decoration: none; display: inline-block;}
         .nav-btn:hover, .nav-btn.active { background-color: #c0c0c0; border-color: #808080; color: #333;}
-        .pis-card { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; width: 700px; margin: auto; box-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
+        .pis-card { background-color: #f0f0f0; border: 2px solid #fff; border-right-color: #808080; border-bottom-color: #808080; width: 850px; margin: auto; box-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
         .pis-btn { display: block; width: 100%; text-align: left; padding: 10px 15px; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; background-color: #e4e4e4; border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; text-decoration: none; color: #333; }
         .pis-btn:hover { background-color: #fff; color: #003366; border-left: 5px solid #ffcc00; }
     </style>
@@ -35,7 +35,6 @@
 
     <nav class="main-nav d-flex">
         <a href="{% url 'staff_home' %}" class="nav-btn active">HOME</a>
-        <!-- Maintenance is kept here in the upper left navigation -->
         <a href="{% url 'maintenance_dashboard' %}" class="nav-btn">MAINTENANCE</a>
     </nav>
 
@@ -45,18 +44,33 @@
                 PREFECT INFORMATION SYSTEM - MAIN MENU
             </div>
             <div class="row m-0 flex-grow-1 p-4">
-                <div class="col-5 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
+                <div class="col-4 d-flex flex-column align-items-center justify-content-center border-end border-secondary">
                     <div style="width: 130px; height: 130px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: 4px solid #003366;">LOGO</div>
                     <h5 class="mt-3 text-center" style="color: #003366; font-weight: bold;">DISCIPLINARY<br>MODULE</h5>
                 </div>
-                <div class="col-7 ps-4 d-flex flex-column justify-content-center">
+                <div class="col-4 ps-4 d-flex flex-column justify-content-center border-end border-secondary">
                     <a href="{% url 'staff_dashboard' %}" class="pis-btn">1. Students</a>
                     <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn">2. Absences</a>
                     <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn">3. Tardiness</a>
                     <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn">4. Conduct</a>
                     <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn">5. Suspension</a>
-                    <!-- Button 6 has been removed from here -->
                 </div>
+                
+                <!-- INJECTED: Notification Panel -->
+                <div class="col-4 ps-4 d-flex flex-column">
+                    <h6 class="fw-bold text-danger" style="font-size: 0.8rem;">⚠️ PENDING ATTENDANCES</h6>
+                    <div style="background: white; border: 1px inset #999; flex-grow: 1; overflow-y: auto; padding: 5px;">
+                        {% for batch in pending_batches %}
+                        <div class="small border-bottom mb-2 pb-1" style="font-size: 0.75rem;">
+                            <strong>{{ batch.section.name }}</strong> ({{ batch.date }})<br>
+                            <a href="{% url 'staff_attendance_review' batch.id %}" style="text-decoration:none; color: #0055ea; font-weight: bold;">[ Review Now ]</a>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center mt-4" style="font-size: 0.75rem;">No pending submissions.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>

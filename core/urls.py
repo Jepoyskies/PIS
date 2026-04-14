@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 
-urlpatterns =[
+urlpatterns = [
     # Auth & Routing
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -18,7 +18,10 @@ urlpatterns =[
     path('staff/home/', views.staff_home, name='staff_home'),
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
     path('staff/discipline/<str:category>/', views.disciplinary_module, name='disciplinary_module'),
-    path('staff/attendance-review/', views.staff_attendance_review, name='staff_attendance_review'),
+    
+    # INJECTED FIX: Added <int:batch_id>
+    path('staff/attendance-review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
+    path('staff/attendance-confirm/<int:batch_id>/', views.staff_attendance_confirm, name='staff_attendance_confirm'),
 
     # Portals
     path('beadle/dashboard/', views.beadle_dashboard, name='beadle_dashboard'),

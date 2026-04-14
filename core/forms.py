@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import Student, DisciplinaryRecord, Section
-from .models import Student, Section
 
 # Used in the Staff Dashboard (XP UI)
 class StudentForm(forms.ModelForm):
@@ -49,4 +48,5 @@ class SectionForm(forms.ModelForm):
 class StudentMaintenanceForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = ['student_number', 'first_name', 'last_name', 'sex', 'section']
+        # INJECTED: Added all fields so Staff can edit student details completely
+        fields = ['student_number', 'last_name', 'first_name', 'middle_initial', 'sex', 'date_of_birth', 'address', 'section']

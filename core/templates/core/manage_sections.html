@@ -1,39 +1,44 @@
 {% extends 'core/maintenance_base.html' %}
+
 {% block maintenance_content %}
-    <div class="d-flex justify-content-between align-items-center">
-        <h5 class="m-0" style="border-bottom: 2px solid #ffcc00; padding-bottom: 5px;">Section Management</h5>
-        <!-- FIX: Added the data-bs attributes -->
-        <button class="btn btn-sm btn-primary px-3 fw-bold" style="border-radius:0; background-color: #003366;" 
-                data-bs-toggle="modal" data-bs-target="#addSectionModal">
-            + CREATE SECTION
-        </button>
-    </div>
-
-    <div class="row g-3 mt-2">
-        {% for section in sections %}
+    <h5 class="text-primary fw-bold mb-3">Section & Grade Management</h5>
+    <div class="row">
+        <div class="col-md-8">
+            <div style="height: 400px; overflow-y: auto; border: 1px solid #999; background: white;">
+                <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 0.8rem;">
+                    <thead style="background-color: #e4e4e4;">
+                        <tr><th>Level</th><th>Section Name</th><th>Assigned Beadle</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for sec in sections %}
+                        <tr>
+                            <td>Grade {{ sec.grade_level }}</td>
+                            <td class="fw-bold">{{ sec.name }}</td>
+                            <td>
+                                {% if sec.beadle %}
+                                    <span class="text-success fw-bold">⭐ {{ sec.beadle.last_name }}</span>
+                                {% else %}
+                                    <span class="text-muted small">No Beadle assigned</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="col-md-4">
-            <div style="background: #fff; border: 1px solid #888; padding: 10px; box-shadow: 2px 2px 0px #bbb;">
-                <div style="font-weight: bold; color: #003366;">{{ section.name }}</div>
-                <div style="font-size: 0.75rem;">Grade {{ section.grade_level }}</div>
+            <div class="card p-3 border-dark" style="background-color: #e4e4e4;">
+                <h6 class="fw-bold mb-3">Add New Section</h6>
+                <form method="POST">
+                    {% csrf_token %}
+                    <label class="small fw-bold">Grade Level:</label>
+                    <input type="number" name="grade_level" class="form-control form-control-sm mb-2" required>
+                    <label class="small fw-bold">Section Name:</label>
+                    <input type="text" name="name" class="form-control form-control-sm mb-3" placeholder="e.g., ST. IGNATIUS" required>
+                    <button type="submit" class="btn btn-sm btn-success w-100 fw-bold border-dark">Save Section</button>
+                </form>
             </div>
         </div>
-        {% endfor %}
-    </div>
-
-    <!-- MODAL -->
-    <div class="modal fade" id="addSectionModal" tabindex="-1">
-      <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content" style="background-color: #d4d0c8; border: 2px solid #0055ea; border-radius: 0;">
-          <div style="background: linear-gradient(to right, #0058e6, #3a93ff); color: white; padding: 4px 10px; font-weight: bold; font-size: 0.85rem;">Add Section</div>
-          <form method="POST">
-            {% csrf_token %}
-            <div class="modal-body p-3">
-                <label class="fw-bold small">Grade Level:</label><input type="number" name="grade_level" class="form-control form-control-sm mb-2" required>
-                <label class="fw-bold small">Section Name:</label><input type="text" name="name" class="form-control form-control-sm" required>
-            </div>
-            <div class="modal-footer p-2"><button type="submit" class="btn btn-sm btn-primary">Save</button></div>
-          </form>
-        </div>
-      </div>
     </div>
 {% endblock %}

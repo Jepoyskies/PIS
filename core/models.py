@@ -40,7 +40,10 @@ class Student(TimeStampedModel):
     student_number = models.CharField(max_length=20, unique=True)
     last_name = models.CharField(max_length=100)
     first_name = models.CharField(max_length=100)
+    middle_initial = models.CharField(max_length=10, blank=True, null=True)
     sex = models.CharField(max_length=1, choices=[('M', 'Male'), ('F', 'Female')])
+    date_of_birth = models.DateField(null=True, blank=True)
+    address = models.TextField(blank=True, null=True)
     section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     parent_signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
     is_beadle = models.BooleanField(default=False) # Fallback boolean
@@ -59,14 +62,27 @@ class DisciplinaryRecord(TimeStampedModel):
     date_of_incident = models.DateField()
     remarks = models.TextField(blank=True, null=True)
     demerits = models.IntegerField(default=0)
+    action_taken = models.CharField(max_length=255, blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.CASCADE, null=True)
+
+# ---> NEW FEATURE INJECTED: AttendanceBatch for Workflow 3 & 4
+class AttendanceBatch(TimeStampedModel):
+    section = models.ForeignKey(Section, on_delete=models.CASCADE)
+    date = models.DateField()
+    submitted_by = models.ForeignKey(Student, on_delete=models.CASCADE)
+    is_confirmed = models.BooleanField(default=False)
+    def __str__(self): return f"{self.section.name} - {self.date}"
 
 class AttendanceRecord(TimeStampedModel):
+    STATUS_CHOICES = [('PRESENT', 'Present'), ('ABSENT', 'Absent'), ('LATE', 'Late')]
+    # Linked to Batch
+    batch = models.ForeignKey(AttendanceBatch, on_delete=models.CASCADE, related_name='records', null=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
     date = models.DateField()
-    morning_status = models.CharField(max_length=10, default='PRESENT')
-    afternoon_status = models.CharField(max_length=10, default='PRESENT')
-    dismissal_status = models.CharField(max_length=10, default='PRESENT')
+    
+    # Updated to a single status for simplicity in the UI
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PRESENT')
     is_excused = models.BooleanField(default=False)
 
 class ExcuseLetter(TimeStampedModel):

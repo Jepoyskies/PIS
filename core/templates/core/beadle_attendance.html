@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Attendance - {{ student.section.name }}</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="card shadow border-dark" style="border-radius:0;">
+            <div class="card-header text-white" style="background:#003366;">
+                Attendance Input: {{ student.section.name }} (Gr {{ student.section.grade_level }})
+            </div>
+            <form method="POST" class="card-body bg-white p-3">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="fw-bold small">Select Date:</label>
+                    <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm w-25" required>
+                </div>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-secondary"><tr><th>Classmate Name</th><th>Present</th><th>Late</th><th>Absent</th></tr></thead>
+                    <tbody>
+                        {% for s in section_students %}
+                        <tr>
+                            <td class="fw-bold">{{ s.last_name }}, {{ s.first_name }}</td>
+                            <td><input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked></td>
+                            <td><input type="radio" name="status_{{ s.student_number }}" value="LATE"></td>
+                            <td><input type="radio" name="status_{{ s.student_number }}" value="ABSENT"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="btn btn-primary w-100 fw-bold border-dark">🚀 SUBMIT TO OFFICE</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

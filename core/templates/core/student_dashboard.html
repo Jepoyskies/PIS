@@ -1,3 +1,76 @@
-<h1>Welcome to the Student Portal</h1>
-<p>Hello, {{ request.user.student_profile.first_name }}!</p>
-<a href="{% url 'logout' %}">Log Off</a>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>XJHS Portal</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar-custom { background-color: #003366; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .navbar-brand { color: #ffcc00 !important; font-weight: bold; }
+        .card-header-xp { background-color: #003366; color: white; font-weight: bold; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-custom px-4 mb-4">
+        <span class="navbar-brand">XJHS STUDENT PORTAL</span>
+        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Log Off</a>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <!-- Profile Column -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4" style="border-left: 5px solid #ffcc00;">
+                    <div class="card-body">
+                        <h4 class="fw-bold m-0">{{ student.first_name }} {{ student.last_name }}</h4>
+                        <p class="text-muted small">Student No: {{ student.student_number }}</p>
+                        <hr>
+                        {% if student.is_beadle %}
+                            <div class="alert alert-warning p-2 small">⭐ <strong>CLASSROOM BEADLE</strong></div>
+                            <a href="{% url 'beadle_dashboard' %}" class="btn btn-primary w-100 fw-bold">📝 TAKE ATTENDANCE</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Column -->
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header card-header-xp">My Disciplinary History</div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="table-light"><tr><th>Date</th><th>Category</th><th>Remarks</th></tr></thead>
+                            <tbody>
+                                {% for rec in discipline_history %}
+                                <tr><td>{{ rec.date_of_incident }}</td><td>{{ rec.category }}</td><td>{{ rec.remarks }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center py-4 text-success fw-bold">Clean Record!</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-xp bg-secondary">My Attendance Records</div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="table-light"><tr><th>Date</th><th>Status</th><th>Excused?</th></tr></thead>
+                            <tbody>
+                                {% for att in attendance_history %}
+                                <tr>
+                                    <td>{{ att.date }}</td>
+                                    <td><strong>{{ att.status }}</strong></td>
+                                    <td>{% if att.is_excused %}✅ Yes{% else %}❌ No{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

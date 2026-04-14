@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Review Submission</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        .violation-row { background-color: #ffcccc !important; color: #990000; font-weight: bold; }
+    </style>
+</head>
+<body style="background-color: #d4d0c8; font-family: Tahoma;">
+    <div class="container mt-5">
+        <div class="card border-dark shadow" style="border-radius:0;">
+            <div class="card-header text-white fw-bold" style="background:#003366;">
+                REVIEW: {{ batch.section.name }} ({{ batch.date }})
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light"><tr><th>ID Number</th><th>Name</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr class="{% if r.status != 'PRESENT' %}violation-row{% endif %}">
+                            <td>{{ r.student.student_number }}</td>
+                            <td>{{ r.student.last_name }}, {{ r.student.first_name }}</td>
+                            <td>{{ r.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <a href="{% url 'staff_home' %}" class="btn btn-sm btn-secondary border-dark">Cancel</a>
+                <a href="{% url 'staff_attendance_confirm' batch.id %}" class="btn btn-sm btn-danger border-dark fw-bold">CONFIRM & LOG VIOLATIONS</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -2,7 +2,6 @@
 {% block maintenance_content %}
     <div class="d-flex justify-content-between align-items-center">
         <h5 class="m-0" style="border-bottom: 2px solid #ffcc00; padding-bottom: 5px;">Student Records</h5>
-        <!-- FIX: Added the data-bs-target and data-bs-toggle -->
         <button class="btn btn-sm btn-success px-3 fw-bold" style="border-radius:0; background-color: #003366;" 
                 data-bs-toggle="modal" data-bs-target="#addStudentModal">
             + ADD NEW STUDENT
@@ -24,25 +23,53 @@
                     <th style="background-color: #e4e4e4;">First Name</th>
                     <th style="background-color: #e4e4e4;">Sex</th>
                     <th style="background-color: #e4e4e4;">Section</th>
+                    <!-- INJECTED COLUMNS -->
+                    <th style="background-color: #e4e4e4;">Role</th>
+                    <th style="background-color: #e4e4e4;" class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
                 <tr>
-                    <td>{{ student.student_number }}</td>
-                    <td>{{ student.last_name }}</td>
-                    <td>{{ student.first_name }}</td>
-                    <td>{{ student.sex }}</td>
-                    <td>{{ student.section.name|default:"Unassigned" }}</td>
+                    <td class="align-middle">{{ student.student_number }}</td>
+                    <td class="align-middle fw-bold">{{ student.last_name }}</td>
+                    <td class="align-middle">{{ student.first_name }}</td>
+                    <td class="align-middle">{{ student.sex }}</td>
+                    <td class="align-middle">{{ student.section.name|default:"Unassigned" }}</td>
+                    <!-- INJECTED BADGES -->
+                    <td class="align-middle">
+                        {% if student.is_beadle %}<span class="badge bg-warning text-dark border border-dark">⭐ BEADLE</span>
+                        {% else %}<span class="badge bg-light text-dark border">Student</span>{% endif %}
+                    </td>
+                    <!-- INJECTED BUTTONS -->
+                    <td class="text-center align-middle" style="width: 220px;">
+                        <button class="btn btn-sm btn-light border edit-btn" style="font-size: 0.7rem; font-weight: bold;"
+                            data-bs-toggle="modal" data-bs-target="#editStudentModal"
+                            data-id="{{ student.student_number }}" data-fname="{{ student.first_name }}"
+                            data-lname="{{ student.last_name }}" data-mi="{{ student.middle_initial|default:'' }}"
+                            data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}"
+                            data-address="{{ student.address|default:'' }}" data-section="{{ student.section.id|default:'' }}">✏️ Edit</button>
+                        
+                        <form method="POST" style="display: inline-block; margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="toggle_beadle" value="1">
+                            <input type="hidden" name="student_number" value="{{ student.student_number }}">
+                            {% if student.is_beadle %}
+                                <button type="submit" class="btn btn-sm btn-danger border" style="font-size: 0.7rem;">Revoke Beadle</button>
+                            {% else %}
+                                <button type="submit" class="btn btn-sm btn-primary border" style="font-size: 0.7rem;" {% if not student.section %}disabled{% endif %}>⭐ Make Beadle</button>
+                            {% endif %}
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center p-4">No students enrolled yet.</td></tr>
+                <tr><td colspan="7" class="text-center p-4">No students enrolled yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- THE MODAL (The Pop-up Window) -->
+    <!-- YOUR ORIGINAL ADD MODAL -->
     <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background-color: #d4d0c8; border: 2px solid #0055ea; border-radius: 0;">
@@ -74,4 +101,62 @@
         </div>
       </div>
     </div>
+
+    <!-- INJECTED EDIT MODAL -->
+    <div class="modal fade" id="editStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #d4d0c8; border: 2px solid #0055ea; border-radius: 0;">
+                <div style="background: linear-gradient(to right, #0058e6, #3a93ff); color: white; padding: 4px 10px; font-weight: bold; font-size: 0.85rem; display: flex; justify-content: space-between;">
+                    <span>Edit Student Details</span>
+                    <button type="button" style="background:#e04343; border:1px solid white; color:white; font-size:10px;" data-bs-dismiss="modal">X</button>
+                </div>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="edit_student" value="1">
+                    <input type="hidden" name="student_number" id="edit-id">
+                    <div class="modal-body p-3">
+                        <div class="row mb-2">
+                            <div class="col"><label class="fw-bold small">First Name:</label><input type="text" name="first_name" id="edit-fname" class="form-control form-control-sm" style="border-radius:0;" required></div>
+                            <div class="col"><label class="fw-bold small">Last Name:</label><input type="text" name="last_name" id="edit-lname" class="form-control form-control-sm" style="border-radius:0;" required></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><label class="fw-bold small">M.I.:</label><input type="text" name="middle_initial" id="edit-mi" class="form-control form-control-sm" style="border-radius:0;"></div>
+                            <div class="col-4"><label class="fw-bold small">Sex:</label>
+                                <select name="sex" id="edit-sex" class="form-select form-select-sm" style="border-radius:0;">
+                                    <option value="M">Male</option><option value="F">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-4"><label class="fw-bold small">Birth Date:</label><input type="date" name="date_of_birth" id="edit-bday" class="form-control form-control-sm" style="border-radius:0;"></div>
+                        </div>
+                        <label class="fw-bold small">Address:</label>
+                        <input type="text" name="address" id="edit-address" class="form-control form-control-sm mb-2" style="border-radius:0;">
+                        <label class="fw-bold small text-primary">Assign Section:</label>
+                        <select name="section_id" id="edit-section" class="form-select form-select-sm" style="border-radius:0;">
+                            <option value="">-- Unassigned --</option>
+                            {% for sec in sections %}<option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer p-2" style="background-color: #e4e4e4;">
+                        <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to populate the edit modal -->
+    <script>
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('edit-id').value = this.dataset.id;
+                document.getElementById('edit-fname').value = this.dataset.fname;
+                document.getElementById('edit-lname').value = this.dataset.lname;
+                document.getElementById('edit-mi').value = this.dataset.mi;
+                document.getElementById('edit-sex').value = this.dataset.sex;
+                document.getElementById('edit-bday').value = this.dataset.bday;
+                document.getElementById('edit-address').value = this.dataset.address;
+                document.getElementById('edit-section').value = this.dataset.section;
+            });
+        });
+    </script>
 {% endblock %}

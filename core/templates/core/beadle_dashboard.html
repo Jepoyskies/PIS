@@ -1,3 +1,44 @@
-<h1>Welcome to the Beadle Attendance Portal</h1>
-<p>Hello, {{ request.user.student_profile.first_name }}!</p>
-<a href="{% url 'logout' %}">Log Off</a>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Take Attendance</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body style="background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif;">
+    <nav class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <span class="navbar-brand text-warning fw-bold">⭐ BEADLE PORTAL</span>
+            <a href="{% url 'student_dashboard' %}" class="btn btn-sm btn-outline-light">Back to Profile</a>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <form method="POST" class="card shadow-sm border-0">
+            {% csrf_token %}
+            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold">Attendance: {{ student.section.name }}</h5>
+                <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm w-25" required>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>Classmate</th><th class="text-center">Present</th><th class="text-center">Late</th><th class="text-center">Absent</th></tr></thead>
+                    <tbody>
+                        {% for s in section_students %}
+                        <tr>
+                            <td class="align-middle fw-bold">{{ s.last_name }}, {{ s.first_name }}</td>
+                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked></td>
+                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="LATE"></td>
+                            <td class="text-center align-middle"><input type="radio" name="status_{{ s.student_number }}" value="ABSENT"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow">🚀 SUBMIT TO PREFECT OFFICE</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
