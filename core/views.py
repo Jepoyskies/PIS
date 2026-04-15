@@ -34,7 +34,17 @@ def get_staff_context(request):
     # INJECTED: Fetch Pending Attendances for the Notification Panel
     pending_batches = AttendanceBatch.objects.filter(is_confirmed=False).order_by('-date')
         
-    return {'all_school_years': all_school_years, 'active_sy': active_sy, 'pending_batches': pending_batches}
+    context = {
+        'all_school_years': all_school_years, 
+        'active_sy': active_sy, 
+        'pending_batches': pending_batches,
+        'is_admin': request.user.is_superuser # Unify Sidebar Logic
+    }
+    
+    # Task 1: Unify Sidebar Logic - Merge Maintenance Stats
+    context.update(get_maintenance_stats())
+    
+    return context
 
 # ==========================================
 # AUTH & ROUTING
@@ -227,12 +237,18 @@ def staff_attendance_confirm(request, batch_id):
     batch = get_object_or_404(AttendanceBatch, id=batch_id)
     active_sy = SchoolYear.objects.filter(is_active=True).first()
     
+    # Mapping for Disciplinary Module categories
+    CATEGORY_MAP = {
+        'ABSENT': 'ABSENCES',
+        'LATE': 'TARDINESS'
+    }
+    
     with transaction.atomic():
         for record in batch.records.all():
-            if record.status in ['ABSENT', 'LATE']:
+            if record.status in CATEGORY_MAP:
                 DisciplinaryRecord.objects.create(
                     student=record.student,
-                    category=record.status,
+                    category=CATEGORY_MAP[record.status],
                     date_of_incident=batch.date,
                     remarks=f"Auto-logged from Beadle report ({batch.section.name})",
                     demerits=1 if record.status == 'LATE' else 5,

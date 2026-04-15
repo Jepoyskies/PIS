@@ -2,97 +2,147 @@
 {% load static %}
 
 {% block maintenance_content %}
-<div class="d-flex flex-column h-100">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold m-0 text-uppercase" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">{{ module_name }} Records</h4>
-        {% if student %}
-        <div class="px-3 py-2 bg-light border rounded fw-bold text-muted small">
-            Student: <span style="color: var(--xu-blue-1);">{{ student.last_name }}, {{ student.first_name }} ({{ student.student_number }})</span>
-        </div>
-        {% endif %}
-    </div>
+<div style="background-color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; height: 100%; color: #333;">
+    <!-- Top Ribbon Navigation (Fast-Switch) -->
+    <nav style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">
+        <style>
+            .nav-ribbon-btn {
+                padding: 8px 20px;
+                font-size: 13px;
+                font-weight: 600;
+                text-decoration: none;
+                border-radius: 4px;
+                transition: all 0.2s;
+                border: none;
+                text-transform: uppercase;
+            }
+            .nav-ribbon-btn-inactive {
+                background-color: #e9ecef;
+                color: #495057;
+            }
+            .nav-ribbon-btn-inactive:hover {
+                background-color: #dee2e6;
+                color: #212529;
+            }
+            .nav-ribbon-btn-active {
+                background-color: #1a3a5f;
+                color: #ffffff;
+            }
+        </style>
+        <a href="{% url 'disciplinary_module' 'Conduct' %}" class="nav-ribbon-btn {% if module_name == 'Conduct' %}nav-ribbon-btn-active{% else %}nav-ribbon-btn-inactive{% endif %}">CONDUCT</a>
+        <a href="{% url 'disciplinary_module' 'Absences' %}" class="nav-ribbon-btn {% if module_name == 'Absences' %}nav-ribbon-btn-active{% else %}nav-ribbon-btn-inactive{% endif %}">ABSENCES</a>
+        <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="nav-ribbon-btn {% if module_name == 'Tardiness' %}nav-ribbon-btn-active{% else %}nav-ribbon-btn-inactive{% endif %}">TARDINESS</a>
+        <a href="{% url 'disciplinary_module' 'Suspension' %}" class="nav-ribbon-btn {% if module_name == 'Suspension' %}nav-ribbon-btn-active{% else %}nav-ribbon-btn-inactive{% endif %}">SUSPENSION</a>
+    </nav>
 
-    <!-- Search Bar -->
-    <div class="bg-light p-3 rounded mb-4 border shadow-sm">
-        <form method="GET" class="d-flex align-items-center gap-3">
-            <label class="small fw-bold text-uppercase text-muted mb-0">Find Student ID:</label>
-            <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 200px;" placeholder="e.g. 2024-0001">
-            <button type="submit" class="btn btn-xu-primary btn-sm px-4 fw-bold">SEARCH</button>
-            <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light btn-sm px-3 text-muted">CLEAR</a>
+    {% if student %}
+    <div style="background-color: #ffffcc; border: 1px solid #000; padding: 5px; margin-bottom: 10px; font-weight: bold; font-size: 12px;">
+        CURRENT STUDENT: {{ student.last_name }}, {{ student.first_name }} ({{ student.student_number }})
+    </div>
+    {% endif %}
+
+    <!-- Search Bar (Flat Yellow) -->
+    <div style="background-color: #ffcc66; border-radius: 4px; padding: 12px; margin-bottom: 20px;">
+        <form method="GET" style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-size: 13px; font-weight: bold; color: #333;">FIND STUDENT ID:</label>
+            <input type="text" name="search_id" value="{{ search_id|default:'' }}" 
+                   style="border: 1px solid #ccc; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; width: 180px; padding: 5px 10px;">
+            <button type="submit" 
+                    style="background-color: #1a3a5f; color: white; border: none; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; font-weight: bold; padding: 6px 15px; cursor: pointer;">
+                SEARCH
+            </button>
+            <a href="{% url 'disciplinary_module' module_name %}" 
+               style="background-color: #6c757d; color: white; border: none; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; text-decoration: none; padding: 6px 15px; text-align: center;">
+                CLEAR
+            </a>
         </form>
     </div>
 
-    <!-- History Table -->
-    <div class="card card-xu border shadow-sm flex-grow-1 mb-4" style="max-height: 350px;">
-        <div class="card-xu-header bg-secondary">
-            <span class="small fw-bold text-uppercase">Incident History</span>
+    <!-- Incident History Table (Top Pane) -->
+    <div style="border: 1px solid #dee2e6; border-radius: 4px; background-color: #ffffff; margin-bottom: 20px; height: 300px; overflow-y: scroll;">
+        <div style="background-color: #f8f9fa; color: #1a3a5f; border-bottom: 1px solid #dee2e6; padding: 8px 12px; font-size: 13px; font-weight: bold; position: sticky; top: 0;">
+            INCIDENT HISTORY
         </div>
-        <div class="table-responsive h-100">
-            <table class="table table-hover align-middle mb-0 small">
-                <thead class="table-xu">
-                    <tr>
-                        <th class="ps-4">Date</th>
-                        <th>Category</th>
-                        <th>Remarks/Details</th>
-                        <th>Demerits</th>
-                        <th class="pe-4">Reported By</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in records %}
-                    <tr>
-                        <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident }}</td>
-                        <td><span class="badge bg-light text-dark border">{{ record.category }}</span></td>
-                        <td>{{ record.remarks }}</td>
-                        <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ record.demerits }}</span></td>
-                        <td class="pe-4">{{ record.recorded_by.username }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">No records found for this student.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+                <tr style="background-color: #f1f3f5; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 10px; text-align: left;">DATE</th>
+                    <th style="padding: 10px; text-align: left;">CATEGORY</th>
+                    <th style="padding: 10px; text-align: left;">REMARKS/DETAILS</th>
+                    <th style="padding: 10px; text-align: left;">DEMERITS</th>
+                    <th style="padding: 10px; text-align: left;">RECORDED BY</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">{{ record.date_of_incident|date:"m/d/Y" }}</td>
+                    <td style="padding: 10px;">{{ record.category }}</td>
+                    <td style="padding: 10px;">{{ record.remarks }}</td>
+                    <td style="padding: 10px; font-weight: bold; color: #dc3545;">{{ record.demerits }}</td>
+                    <td style="padding: 10px;">{{ record.recorded_by.username }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #808080;">No records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- New Entry Form -->
-    <div class="card card-xu border shadow-sm p-4 bg-light">
-        <h6 class="fw-bold mb-3 text-uppercase text-muted small letter-spacing-1">Log New {{ module_name }} Record</h6>
+    <!-- Log New Record Form (Bottom Pane) -->
+    <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; background-color: #f8f9fa;">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #1a3a5f; text-transform: uppercase; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">LOG NEW RECORD</div>
         <form method="POST">
             {% csrf_token %}
             <input type="hidden" name="save_record" value="1">
             <input type="hidden" name="student_number" value="{{ student.student_number }}">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted text-uppercase mb-1">Date</label>
-                    <input type="date" name="date_of_incident" class="form-control border-0 shadow-sm" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
-                    <input type="number" name="demerits" class="form-control border-0 shadow-sm" value="0">
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted text-uppercase mb-1">Offense Level</label>
-                    <select name="offense_level" class="form-select border-0 shadow-sm">
-                        <option>Minor</option>
-                        <option>Major</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
-                    <input type="text" class="form-control border-0 shadow-sm bg-white" value="{{ request.user.username }}" readonly>
-                </div>
-                <div class="col-12">
-                    <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details</label>
-                    <textarea name="details" class="form-control border-0 shadow-sm" rows="2"></textarea>
-                </div>
-                <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-xu-primary px-5 fw-bold" {% if not student %}disabled{% endif %}>SAVE RECORD</button>
-                </div>
-            </div>
+            
+            <table style="width: 100%; font-size: 13px; border-spacing: 10px; border-collapse: separate;">
+                <tr>
+                    <td style="width: 15%; font-weight: bold;">DATE:</td>
+                    <td style="width: 35%;">
+                        <input type="date" name="date_of_incident" required 
+                               style="width: 100%; border: 1px solid #ccc; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; padding: 5px;">
+                    </td>
+                    <td style="width: 15%; font-weight: bold;">DEMERITS:</td>
+                    <td style="width: 35%;">
+                        <input type="number" name="demerits" value="0" 
+                               style="width: 100%; border: 1px solid #ccc; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; padding: 5px;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">OFFENSE LEVEL:</td>
+                    <td>
+                        <select name="offense_level" style="width: 100%; border: 1px solid #ccc; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; padding: 5px;">
+                            <option>Minor</option>
+                            <option>Major</option>
+                            <option>Grave</option>
+                        </select>
+                    </td>
+                    <td style="font-weight: bold;">RECORDED BY:</td>
+                    <td>
+                        <input type="text" value="{{ request.user.username }}" readonly 
+                               style="width: 100%; border: 1px solid #ccc; border-radius: 4px; background-color: #e9ecef; font-family: 'Segoe UI', Arial; font-size: 13px; padding: 5px; color: #495057;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold; vertical-align: top; padding-top: 5px;">SPECIFIC DETAILS:</td>
+                    <td colspan="3">
+                        <textarea name="details" rows="3" 
+                                  style="width: 100%; border: 1px solid #ccc; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 13px; padding: 8px; resize: none;"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align: right; padding-top: 15px;">
+                        <button type="submit" {% if not student %}disabled{% endif %}
+                                style="background-color: #1a3a5f; color: white; border: none; border-radius: 4px; font-family: 'Segoe UI', Arial; font-size: 14px; font-weight: bold; padding: 10px 30px; cursor: pointer;">
+                            SAVE RECORD
+                        </button>
+                    </td>
+                </tr>
+            </table>
         </form>
     </div>
 </div>

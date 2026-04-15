@@ -34,8 +34,8 @@
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
-                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Maintenance System</div>
+                <div class="fw-bold mb-0">PIO SYSTEM - XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Central Management & Monitoring</div>
             </div>
         </div>
         <a href="{% url 'staff_home' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">BACK TO DASHBOARD</a>
@@ -48,10 +48,10 @@
                 <div class="sidebar-xu">
                     <div class="nav-section-title">General Maintenance</div>
                     <div class="list-group list-group-flush">
-                        <a href="{% url 'manage_students' %}" class="list-group-item list-group-item-action {% if 'students' in request.path %}active{% endif %}">
+                        <a href="{% url 'manage_students' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
                             <i class="me-2">👥</i> Student Records
                         </a>
-                        <a href="{% url 'manage_sections' %}" class="list-group-item list-group-item-action {% if 'sections' in request.path %}active{% endif %}">
+                        <a href="{% url 'manage_sections' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'manage_sections' %}active{% endif %}">
                             <i class="me-2">🏫</i> Section Management
                         </a>
                         <a href="#" class="list-group-item list-group-item-action text-muted">
@@ -62,7 +62,7 @@
                     {% if is_admin %}
                     <div class="nav-section-title">System Admin</div>
                     <div class="list-group list-group-flush">
-                        <a href="{% url 'manage_staff' %}" class="list-group-item list-group-item-action {% if 'staff' in request.path %}active{% endif %}">
+                        <a href="{% url 'manage_staff' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'manage_staff' %}active{% endif %}">
                             <i class="me-2">🔑</i> Manage Staff
                         </a>
                         <a href="/admin/" target="_blank" class="list-group-item list-group-item-action" style="color: var(--xu-red);">
