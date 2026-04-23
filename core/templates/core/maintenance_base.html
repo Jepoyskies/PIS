@@ -48,12 +48,6 @@
                 <div class="sidebar-xu">
                     <div class="nav-section-title">General Maintenance</div>
                     <div class="list-group list-group-flush">
-                        <a href="{% url 'manage_students' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
-                            <i class="me-2">👥</i> Student Records
-                        </a>
-                        <a href="{% url 'manage_sections' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'manage_sections' %}active{% endif %}">
-                            <i class="me-2">🏫</i> Section Management
-                        </a>
                         <a href="#" class="list-group-item list-group-item-action text-muted">
                             <i class="me-2">📅</i> School Year Settings
                         </a>

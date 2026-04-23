@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from datetime import date
+from django.http import JsonResponse
+from django.db.models import Count
 
 from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, AttendanceBatch, AttendanceRecord
 from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm
@@ -138,8 +140,11 @@ def manage_sections(request):
             return redirect('manage_sections')
     
     sections = Section.objects.all().order_by('grade_level')
-    context = get_maintenance_stats()
-    context.update({'sections': sections, 'is_admin': request.user.is_superuser})
+    
+    # CHANGED: Use get_staff_context so the School Year dropdown works
+    context = get_staff_context(request) 
+    context.update({'sections': sections})
+    
     return render(request, 'core/manage_sections.html', context)
 
 @login_required
@@ -199,10 +204,81 @@ def staff_home(request):
 @login_required
 def staff_dashboard(request):
     if not request.user.is_staff: return redirect('home')
+    
+    # ==========================================
+    # 1. HANDLE POST REQUESTS (Add, Edit, Beadle)
+    # ==========================================
+    if request.method == 'POST':
+        # TOGGLE BEADLE
+        if 'toggle_beadle' in request.POST:
+            student = get_object_or_404(Student, student_number=request.POST.get('student_number'))
+            student.is_beadle = not student.is_beadle
+            student.save()
+            
+            # If made a beadle, assign them to their section
+            if student.is_beadle and student.section:
+                Section.objects.filter(id=student.section.id).update(beadle=student)
+                
+            status = "assigned as Beadle" if student.is_beadle else "revoked from Beadle"
+            messages.success(request, f"{student.first_name} {student.last_name} was {status}!")
+            return redirect('staff_dashboard')
+            
+        # EDIT STUDENT
+        elif 'edit_student' in request.POST:
+            student = get_object_or_404(Student, student_number=request.POST.get('student_number'))
+            student.last_name = request.POST.get('last_name').upper()
+            student.first_name = request.POST.get('first_name').upper()
+            student.middle_initial = request.POST.get('middle_initial', '').upper()
+            student.sex = request.POST.get('sex')
+            student.date_of_birth = request.POST.get('date_of_birth') or None
+            student.address = request.POST.get('address')
+            student.section_id = request.POST.get('section_id') or None
+            student.save()
+            messages.success(request, "Student details updated successfully!")
+            return redirect('staff_dashboard')
+            
+        # ADD STUDENT
+        elif 'add_student' in request.POST:
+            student_number = request.POST.get('student_number')
+            if not Student.objects.filter(student_number=student_number).exists():
+                Student.objects.create(
+                    student_number=student_number,
+                    first_name=request.POST.get('first_name').upper(),
+                    last_name=request.POST.get('last_name').upper(),
+                    sex=request.POST.get('sex'),
+                    section_id=request.POST.get('section') or None
+                )
+                messages.success(request, "New student registered successfully!")
+            else:
+                messages.error(request, "A student with that ID Number already exists!")
+            return redirect('staff_dashboard')
+
+    # ==========================================
+    # 2. HANDLE GET REQUESTS & RENDER PAGE
+    # ==========================================
     context = get_staff_context(request)
     active_sy = context.get('active_sy')
+    
+    # Grab search parameters if they exist
+    search_name = request.GET.get('searchName', '')
+    search_id = request.GET.get('searchId', '')
+    
+    # Base Queryset
     students = Student.objects.filter(enrollments__school_year=active_sy, is_deleted=False)
-    context['students'] = students
+    
+    # Apply Search Filters
+    if search_name:
+        students = students.filter(last_name__icontains=search_name) | students.filter(first_name__icontains=search_name)
+    if search_id:
+        students = students.filter(student_number__icontains=search_id)
+        
+    context['students'] = students.distinct()
+    context['search_name'] = search_name
+    context['search_id'] = search_id
+    
+    # Pass sections so the Add/Edit dropdowns work
+    context['sections'] = Section.objects.all().order_by('grade_level')
+    
     return render(request, 'core/dashboard.html', context)
 
 @login_required
@@ -237,7 +313,6 @@ def staff_attendance_confirm(request, batch_id):
     batch = get_object_or_404(AttendanceBatch, id=batch_id)
     active_sy = SchoolYear.objects.filter(is_active=True).first()
     
-    # Mapping for Disciplinary Module categories
     CATEGORY_MAP = {
         'ABSENT': 'ABSENCES',
         'LATE': 'TARDINESS'
@@ -245,13 +320,16 @@ def staff_attendance_confirm(request, batch_id):
     
     with transaction.atomic():
         for record in batch.records.all():
-            if record.status in CATEGORY_MAP:
+            # FIX: Convert the status to UPPERCASE so it perfectly matches the dictionary
+            status_upper = str(record.status).upper() 
+            
+            if status_upper in CATEGORY_MAP:
                 DisciplinaryRecord.objects.create(
                     student=record.student,
-                    category=CATEGORY_MAP[record.status],
+                    category=CATEGORY_MAP[status_upper],
                     date_of_incident=batch.date,
                     remarks=f"Auto-logged from Beadle report ({batch.section.name})",
-                    demerits=1 if record.status == 'LATE' else 5,
+                    demerits=1 if status_upper == 'LATE' else 5,
                     recorded_by=request.user,
                     school_year=active_sy
                 )
@@ -259,6 +337,42 @@ def staff_attendance_confirm(request, batch_id):
         batch.save()
     messages.success(request, f"Attendance Confirmed and Violations Logged!")
     return redirect('staff_home')
+
+@login_required
+def api_student_offenses(request, student_id):
+    active_sy_id = request.session.get('active_sy_id')
+    sy_filter = {'school_year_id': active_sy_id} if active_sy_id else {'school_year__is_active': True}
+    
+    # Get all records for this student in the active school year
+    records = DisciplinaryRecord.objects.filter(student__student_number=student_id, **sy_filter).order_by('-date_of_incident')
+    
+    # 1. Format data for the detailed modal
+    detailed_records =[]
+    for r in records:
+        detailed_records.append({
+            'date': r.date_of_incident.strftime('%m/%d/%Y'),
+            'category': r.category,
+            'offense': r.remarks, # You can change this later when you add specific dropdowns
+            'demerits': r.demerits,
+        })
+        
+    # 2. Format data for the "Offenses By Type" Modal (Groups them and counts them)
+    summary = records.values('category').annotate(count=Count('id')).order_by('category')
+    summary_list = [{'category': s['category'], 'count': s['count']} for s in summary]
+    
+    return JsonResponse({
+        'records': detailed_records,
+        'summary': summary_list
+    })
+
+@login_required
+def reports_dashboard(request):
+    if not request.user.is_staff: return redirect('home')
+    
+    # Leverages your existing helper to load school years, active_sy, etc.
+    context = get_staff_context(request)
+    
+    return render(request, 'core/reports_dashboard.html', context)
 
 # ==========================================
 # PORTALS

@@ -2,15 +2,24 @@
 {% load static %}
 
 {% block maintenance_content %}
+
+<style>
+    .bg-xu-blue { background-color: var(--xu-blue-1) !important; color: white; }
+    .btn-xu-blue { background-color: var(--xu-blue-1) !important; color: white; border: none; }
+    .btn-xu-blue:hover { filter: brightness(90%); color: white; }
+    .text-xu-blue { color: var(--xu-blue-1) !important; }
+</style>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold m-0 text-uppercase text-danger" style="letter-spacing: -0.5px;">Staff Account Management</h4>
+        <!-- Changed text-danger to text-primary -->
+        <h4 class="fw-bold m-0 text-uppercase text-xu-blue" style="letter-spacing: -0.5px;">Staff Account Management</h4>
     </div>
 
     <div class="row g-4">
         <!-- List of Current Staff -->
         <div class="col-md-7">
             <div class="card card-xu border shadow-sm h-100">
-                <div class="card-xu-header py-3 bg-secondary border-0">
+                <div class="card-xu-header py-3 bg-xu-blue border-0">
                     <span class="small fw-bold text-uppercase letter-spacing-1">Current System Staff</span>
                 </div>
                 <div class="table-responsive" style="max-height: 500px;">
@@ -28,7 +37,7 @@
                                 <td class="ps-4 fw-bold" style="color: var(--xu-blue-1);">{{ staff.username }}</td>
                                 <td>{{ staff.first_name }} {{ staff.last_name }}</td>
                                 <td class="pe-4">
-                                    <span class="badge bg-light text-primary border border-primary-subtle px-3 py-1">PIO Staff</span>
+                                    <span class="badge bg-light text-xu-blue border border-xu-blue-subtle px-3 py-1">PIO Staff</span>
                                 </td>
                             </tr>
                             {% empty %}
@@ -48,7 +57,8 @@
         <!-- Add Staff Form -->
         <div class="col-md-5">
             <div class="card card-xu border shadow-sm h-100">
-                <div class="card-xu-header py-3 bg-danger border-0">
+                <!-- Changed bg-danger to bg-primary -->
+                <div class="card-xu-header py-3 bg-xu-blue border-0">
                     <span class="small fw-bold text-uppercase letter-spacing-1">🔑 Create New Staff Account</span>
                 </div>
                 <div class="card-body p-4 bg-light">
@@ -80,14 +90,16 @@
                             <input type="password" name="password" class="form-control border-0 shadow-sm" required placeholder="••••••••">
                         </div>
 
-                        <button type="submit" class="btn btn-danger w-100 fw-bold py-2 shadow-sm">
+                        <!-- Changed btn-danger to btn-primary -->
+                        <button type="submit" class="btn btn-xu-blue w-100 fw-bold py-2 shadow-sm">
                             AUTHORIZE & CREATE ACCOUNT
-                        </button>
+                        </button>   
                     </form>
                     
-                    <div class="mt-4 p-3 rounded border border-danger-subtle bg-danger-subtle small">
-                        <div class="fw-bold text-danger mb-1 small">⚠️ SECURITY NOTICE:</div>
-                        <p class="mb-0 text-danger opacity-75 small">Newly created accounts will have standard PIO Staff permissions. Administrators must use the Django Admin panel for higher privilege levels.</p>
+                    <!-- Changed danger-subtle classes to primary-subtle -->
+                    <div class="mt-4 p-3 rounded border border-xu-blue-subtle bg-xu-blue-subtle small">
+                        <div class="fw-bold text-xu-blue mb-1 small">⚠️ SECURITY NOTICE:</div>
+                        <p class="mb-0 text-xu-blue opacity-75 small">Newly created accounts will have standard PIO Staff permissions. Administrators must use the Django Admin panel for higher privilege levels.</p>
                     </div>
                 </div>
             </div>
