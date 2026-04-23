@@ -131,23 +131,28 @@
             <div class="table-container mb-4">
                 <table class="table table-hover mb-0 small align-middle">
                     <thead class="table-xu">
-                        <tr>
-                            <th class="ps-4">DATE</th>
-                            <th>CATEGORY</th>
-                            <th>REMARKS/DETAILS</th>
-                            <th>DEMERITS</th>
-                            <th class="pe-4">RECORDED BY</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for record in records %}
-                        <tr>
-                            <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
-                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ record.category }}</td>
-                            <td>{{ record.remarks }}</td>
-                            <td><span class="badge bg-danger rounded-pill px-3">{{ record.demerits }}</span></td>
-                            <td class="pe-4">{{ record.recorded_by.username }}</td>
-                        </tr>
+    <tr>
+        <th class="ps-4">DATE</th>
+        <th>STUDENT</th> <!-- ADD THIS COLUMN -->
+        <th>CATEGORY</th>
+        <th>REMARKS/DETAILS</th>
+        <th>DEMERITS</th>
+        <th class="pe-4">RECORDED BY</th>
+    </tr>
+</thead>
+<tbody>
+    {% for record in records %}
+    <tr>
+        <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
+        <!-- ADD THIS CELL -->
+        <td class="fw-bold">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
+        
+        <td class="fw-bold" style="color: var(--xu-blue-1);">{{ record.category }}</td>
+        <td>{{ record.remarks }}</td>
+        <td><span class="badge bg-danger rounded-pill px-3">{{ record.demerits }}</span></td>
+        <td class="pe-4">{{ record.recorded_by.username }}</td>
+    </tr>
+    ...
                         {% empty %}
                         <tr>
                             <td colspan="5" class="text-center py-5">

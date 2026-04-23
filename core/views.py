@@ -288,12 +288,30 @@ def disciplinary_module(request, category):
     active_sy = context.get('active_sy')
     category = category.upper()
     search_id = request.GET.get('search_id', '')
+    
+    # 1. Try to find a specific student if an ID was entered
     student = Student.objects.filter(student_number=search_id).first() if search_id else None
     
-    records = DisciplinaryRecord.objects.filter(student=student, category=category, school_year=active_sy) if student else []
+    # 2. UPDATED LOGIC:
+    if student:
+        # If a student is searched, show only their records
+        records = DisciplinaryRecord.objects.filter(
+            student=student, 
+            category=category, 
+            school_year=active_sy
+        ).order_by('-date_of_incident')
+    else:
+        # If NO search, show the 50 most recent records for this category school-wide
+        records = DisciplinaryRecord.objects.filter(
+            category=category, 
+            school_year=active_sy
+        ).order_by('-date_of_incident')[:50] 
     
     context.update({
-        'module_name': category, 'student': student, 'records': records, 'search_id': search_id
+        'module_name': category, 
+        'student': student, 
+        'records': records, 
+        'search_id': search_id
     })
     return render(request, 'core/conduct.html', context)
 
