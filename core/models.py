@@ -2,38 +2,48 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import Sum
 
 class TimeStampedModel(models.Model):
+    """Abstract base class ensuring every table has audit timestamps."""
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    class Meta: abstract = True
+
+    class Meta:
+        abstract = True
 
 class SchoolYear(TimeStampedModel):
-    code = models.CharField(max_length=9, unique=True)
+    code = models.CharField(max_length=9, unique=True, help_text="e.g., 2025-2026")
     is_active = models.BooleanField(default=False)
-    def __str__(self): return self.code
+
+    def __str__(self):
+        return self.code
 
 class Teacher(TimeStampedModel):
-    prefix = models.CharField(max_length=10)
+    prefix = models.CharField(max_length=10, help_text="e.g., Mr., Ms., Bro., Fr.")
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
-    def __str__(self): return f"{self.prefix} {self.last_name}"
+
+    def __str__(self):
+        return f"{self.prefix} {self.last_name}, {self.first_name}"
 
 class Section(TimeStampedModel):
     grade_level = models.IntegerField()
     name = models.CharField(max_length=100)
     moderator = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True)
-    # RBAC Fix: Link the Beadle directly to the Section
     beadle = models.ForeignKey('Student', on_delete=models.SET_NULL, null=True, blank=True, related_name='beadle_of')
-    def __str__(self): return f"Gr {self.grade_level} - {self.name}"
 
-# NEW: Staff Profile for non-admin Staff
+    def __str__(self):
+        return f"Gr {self.grade_level} - {self.name}"
+
 class StaffProfile(TimeStampedModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
     employee_id = models.CharField(max_length=20, unique=True)
     department = models.CharField(max_length=100, default="Prefect Office")
-    def __str__(self): return self.user.username
+
+    def __str__(self):
+        return self.user.username
 
 class Student(TimeStampedModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='student_profile')
@@ -44,65 +54,81 @@ class Student(TimeStampedModel):
     sex = models.CharField(max_length=1, choices=[('M', 'Male'), ('F', 'Female')])
     date_of_birth = models.DateField(null=True, blank=True)
     address = models.TextField(blank=True, null=True)
-    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    
+    # UPDATED FIELDS
+    status = models.CharField(max_length=20, choices=[('OLD', 'Old'), ('NEW', 'New'), ('TRANSFEREE', 'Transferee')], default='NEW')
+    photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
     parent_signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
-    is_beadle = models.BooleanField(default=False) # Fallback boolean
+    
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    is_beadle = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-    def __str__(self): return f"{self.last_name}, {self.first_name}"
+
+    @property
+    def unserved_cs_hours(self):
+        demerits = self.disciplinary_records.aggregate(total=models.Sum('demerits'))['total'] or 0
+        served = self.community_service_records.aggregate(total=models.Sum('hours_served'))['total'] or 0
+        return demerits - served
+
+    def __str__(self):
+        return f"{self.last_name}, {self.first_name} ({self.student_number})"
 
 class Enrollment(TimeStampedModel):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
     school_year = models.ForeignKey(SchoolYear, on_delete=models.RESTRICT)
     is_enrolled = models.BooleanField(default=True)
-    class Meta: unique_together = ('student', 'school_year')
+
+    class Meta:
+        unique_together = ('student', 'school_year')
 
 class DisciplinaryRecord(TimeStampedModel):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='disciplinary_records')
     category = models.CharField(max_length=20) 
     date_of_incident = models.DateField()
-    remarks = models.TextField(blank=True, null=True)
+    
+    # POPUP FIELDS
+    time_of_incident = models.TimeField(null=True, blank=True)
+    offense_name = models.CharField(max_length=255, null=True, blank=True)
     demerits = models.IntegerField(default=0)
-    action_taken = models.CharField(max_length=255, blank=True, null=True)
+    is_excused = models.BooleanField(default=False)
+    sanction = models.CharField(max_length=255, blank=True, null=True)
+    is_served = models.BooleanField(default=False)
+    record_count = models.IntegerField(default=1)
+    
+    remarks = models.TextField(blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     school_year = models.ForeignKey(SchoolYear, on_delete=models.CASCADE, null=True)
 
-# ---> NEW FEATURE INJECTED: AttendanceBatch for Workflow 3 & 4
+class CommunityServiceRecord(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='community_service_records')
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.RESTRICT)
+    date_served = models.DateField()
+    hours_served = models.IntegerField()
+    remarks = models.TextField(blank=True)
+
 class AttendanceBatch(TimeStampedModel):
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
     date = models.DateField()
     submitted_by = models.ForeignKey(Student, on_delete=models.CASCADE)
     is_confirmed = models.BooleanField(default=False)
-    def __str__(self): return f"{self.section.name} - {self.date}"
 
 class AttendanceRecord(TimeStampedModel):
-    STATUS_CHOICES = [('PRESENT', 'Present'), ('ABSENT', 'Absent'), ('LATE', 'Late')]
-    # Linked to Batch
     batch = models.ForeignKey(AttendanceBatch, on_delete=models.CASCADE, related_name='records', null=True)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
     date = models.DateField()
-    
-    # Updated to a single status for simplicity in the UI
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PRESENT')
+    status = models.CharField(max_length=10, default='PRESENT')
     is_excused = models.BooleanField(default=False)
 
 class ExcuseLetter(TimeStampedModel):
     attendance_record = models.OneToOneField(AttendanceRecord, on_delete=models.CASCADE, related_name='excuse_letter')
     letter_image = models.ImageField(upload_to='excuse_letters/')
-    status = models.CharField(max_length=15, default='PENDING') # PENDING, APPROVED, REJECTED
+    status = models.CharField(max_length=15, default='PENDING')
 
-# ==========================================
-# THE AUTO-ACCOUNT ENGINE (SIGNAL)
-# ==========================================
 @receiver(post_save, sender=Student)
 def create_student_login(sender, instance, created, **kwargs):
-    """ Whenever a student is created, automatically create a Django User """
     if created and not instance.user:
-        username = instance.student_number
-        password = instance.student_number
-        new_user = User.objects.create_user(username=username, password=password)
-        # Students are NOT staff
-        new_user.is_staff = False
-        new_user.save()
-        
-        instance.user = new_user
+        u = User.objects.create_user(username=instance.student_number, password=instance.student_number)
+        u.is_staff = False
+        u.save()
+        instance.user = u
         instance.save()

@@ -16,6 +16,7 @@
             padding: 15px 20px; 
             border-bottom: 3px solid transparent;
             transition: all 0.2s;
+            text-decoration: none;
         }
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
@@ -28,7 +29,7 @@
         }
 
         .table-container { 
-            height: calc(100vh - 480px); 
+            height: calc(100vh - 250px); /* Adjusted height since detail form is gone */
             overflow-y: auto; 
             background-color: white; 
             border: 1px solid var(--xu-border-color);
@@ -47,14 +48,6 @@
             border-bottom: 3px solid var(--xu-gold) !important;
         }
 
-        .detail-form-container { 
-            background-color: white; 
-            border-top: 1px solid var(--xu-border-color); 
-            padding: 20px; 
-            height: 300px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.03);
-        }
-
         .form-label-custom { font-size: 0.8rem; text-align: right; font-weight: 700; color: var(--xu-blue-1); }
         .form-control-xu { 
             height: 32px; 
@@ -67,6 +60,28 @@
         .form-control-xu:focus {
             border-color: var(--xu-blue-2);
             box-shadow: 0 0 0 0.2rem rgba(58, 83, 164, 0.1);
+        }
+        .selected-row {
+            background-color: rgba(58, 83, 164, 0.1) !important;
+        }
+
+        /* Modal Header Gradient to match your screenshot */
+        .modal-legacy-header {
+            background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%);
+            color: rgb(0, 0, 0);
+            border-bottom: 3px solid #283971;
+        }
+        .student-photo-placeholder {
+            width: 120px;
+            height: 140px;
+            border: 2px solid #283971;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #ccc;
         }
     </style>
 </head>
@@ -95,9 +110,11 @@
     </header>
 
     <nav class="main-nav d-flex">
-        <a href="{% url 'staff_home' %}" class="nav-link">DASHBOARD</a>
+        <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link active">CURRENTLY ENROLLED STUDENTS</a>
         <a href="#" class="nav-link">REPORTS</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column">
@@ -123,25 +140,32 @@
                 <table class="table table-hover table-xu-dashboard mb-0">
                     <thead>
                         <tr>
-                            <th class="ps-3">ID NUMBER</th>
-                            <th>STUDENT NAME</th>
-                            <th>SEX</th>
-                            <th>ENROLLED</th>
-                            <th>BIRTH DATE</th>
-                            <th>CURRENT ADDRESS</th>
+                            <th class="ps-3">Student No.</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Section</th>
+                            <th>Active</th>
+                            <th>Address</th>
                         </tr>
                     </thead>
                     <tbody id="student-table-body">
                         {% for student in students %}
                         <tr class="student-row align-middle" style="cursor: pointer;" 
-                            data-id="{{ student.student_number }}" data-name="{{ student.last_name }}, {{ student.first_name }}"
-                            data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}" data-address="{{ student.address|default:'' }}">
+                            data-id="{{ student.student_number }}"
+                            data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
+                            data-sex="{{ student.sex }}">
                             <td class="ps-3 fw-bold">{{ student.student_number }}</td>
-                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ student.last_name }}, {{ student.first_name }}</td>
-                            <td>{{ student.sex }}</td>
-                            <td><span class="badge bg-success rounded-pill px-3 small">YES</span></td>
-                            <td>{{ student.date_of_birth|date:"M-d-Y" }}</td>
-                            <td class="text-muted">{{ student.address|default:"" }}</td>
+                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ student.last_name|upper }}, {{ student.first_name|upper }}</td>
+                            <td>{{ student.status|default:"OLD" }}</td>
+                            <td>{{ student.section.name|default:"--" }}</td>
+                            <td>
+                                {% if not student.is_deleted %}
+                                    <span class="badge bg-success rounded-pill px-3 small">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-danger rounded-pill px-3 small">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted text-truncate" style="max-width: 300px;">{{ student.address|default:"" }}</td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="6" class="text-center p-5 text-danger fw-bold">No student records matching your search were found.</td></tr>
@@ -149,69 +173,69 @@
                     </tbody>
                 </table>
             </div>
-        </div>
 
-        <div class="detail-form-container">
-            <div class="row h-100">
-                <div class="col-8 border-end">
-                    <h6 class="fw-bold mb-4 text-uppercase small text-muted letter-spacing-1">Student Quick Details</h6>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">ID NUMBER</div>
-                                <div class="col-8"><input type="text" id="det-id" class="form-control-xu w-100 bg-light fw-bold" readonly></div>
-                            </div>
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">FULL NAME</div>
-                                <div class="col-8"><input type="text" id="det-name" class="form-control-xu w-100 bg-light fw-bold" style="color: var(--xu-blue-1);" readonly></div>
-                            </div>
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">SEX</div>
-                                <div class="col-4"><input type="text" id="det-sex" class="form-control-xu w-100 bg-light" readonly></div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">BIRTH DATE</div>
-                                <div class="col-8"><input type="text" id="det-bday" class="form-control-xu w-100 bg-light" readonly></div>
-                            </div>
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">ADDRESS</div>
-                                <div class="col-8"><input type="text" id="det-address" class="form-control-xu w-100 bg-light" readonly></div>
-                            </div>
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-4 form-label-custom">ENROLLED</div>
-                                <div class="col-2"><input type="checkbox" checked disabled class="form-check-input"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4 d-flex flex-column ps-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="fw-bold small text-muted text-uppercase">Internal Remarks</label>
-                        <span class="small text-muted">{{ request.user.username }} | {% now "M-d-Y" %}</span>
-                    </div>
-                    <textarea class="form-control flex-grow-1 mb-3 shadow-sm border-0 bg-light" placeholder="Enter disciplinary notes or administrative remarks..."></textarea>
-                    <div class="d-flex gap-2 justify-content-end">
-                        <button class="btn btn-xu-primary btn-sm px-4">SAVE REMARKS</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-4 pt-3 border-top d-flex gap-2">
-                <button class="btn btn-xu-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addStudentModal">➕ Add New</button>
-                <button class="btn btn-success btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
-                <button class="btn btn-xu-outline btn-sm px-3">View Profile</button>
-                <button class="btn btn-xu-outline btn-sm px-3">Transcript</button>
-                <div class="ms-auto d-flex gap-2 align-items-center">
-                    <span class="small fw-bold text-muted me-2">UNSERVED CS: <span class="text-danger">0 HRS</span></span>
-                    <button class="btn btn-danger btn-sm px-3 fw-bold">DELETE RECORD</button>
-                </div>
+            <!-- ACTION BUTTONS ROW -->
+            <div class="d-flex gap-2 mt-3 align-items-center">
+                <div class="small text-muted me-auto">Record 1 of {{ students|length }}</div>
+                
+                <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
+                <button class="btn btn-light border btn-sm fw-bold">Preview Letter</button>
+                <button class="btn btn-light border btn-sm fw-bold">Student Offenses by Type</button>
+                
+                <!-- FIXED BUTTON: Added ID and Modal Trigger -->
+                <button type="button" id="btn-view-offenses" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal" disabled>View Student Offenses</button>
+                
+                <button class="btn btn-light border btn-sm fw-bold">View in Datasheet Format</button>
+                
+                <button class="btn btn-success btn-sm px-3 fw-bold ms-4" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
+                <button class="btn btn-xu-primary btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">➕ Add Student</button>
             </div>
         </div>
     </main>
 
-    <!-- MODALS -->
+    <!-- STUDENT OFFENSES POPUP MODAL (NEW) -->
+    <div class="modal fade" id="offenseModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header modal-legacy-header p-3">
+                    <div>
+                        <div class="small fw-bold opacity-75">Student Number: <span id="modal-id-display">---</span></div>
+                        <h4 class="fw-bold m-0" id="modal-name-display">STUDENT NAME</h4>
+                        <div class="small opacity-75">Gender: <span id="modal-sex-display">---</span></div>
+                    </div>
+                    <div class="ms-auto d-flex align-items-center gap-3">
+                        <div class="student-photo-placeholder">PHOTO</div>
+                        <div class="d-flex flex-column gap-1">
+                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Take a Picture</button>
+                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Load a Picture</button>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <ul class="nav nav-tabs px-3 pt-2" id="offenseTabs">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab">Offenses this School Year</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Personal Information</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Summary of Offenses</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Unserved CS</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Signature</button></li>
+                    </ul>
+                    <div class="p-3 bg-white" style="min-height: 300px;">
+                        <table class="table table-bordered table-sm small">
+                            <thead class="table-dark">
+                                <tr><th>Date</th><th>Time</th><th>Offense</th><th>Demerits</th><th>Status</th><th>Sanction</th><th>Served</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="7" class="text-center p-5 text-muted">No records found for this student.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS (IMPORT & ADD) -->
     <div class="modal fade" id="importExcelModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content border-0 shadow-lg">
@@ -222,15 +246,19 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="modal-body p-4 text-center">
-                        <div class="display-4 text-success mb-3">📁</div>
-                        <p class="text-muted">Select an Excel file (.xlsx) containing student data to bulk import into the system.</p>
                         <input type="file" name="import_excel" class="form-control" required>
                     </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success px-4 fw-bold">PROCEED WITH IMPORT</button>
-                    </div>
+                    <div class="modal-footer bg-light"><button type="submit" class="btn btn-success px-4 fw-bold">PROCEED WITH IMPORT</button></div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white"><h6 class="modal-title fw-bold">ADD NEW STUDENT RECORD</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <form method="POST">{% csrf_token %}<input type="hidden" name="add_student" value="1"><div class="modal-body p-4"><div class="row g-3"><div class="col-md-6"><label class="small fw-bold">ID Number</label><input type="text" name="student_number" class="form-control" required></div><div class="col-md-6"><label class="small fw-bold">Sex</label><select name="sex" class="form-select"><option value="M">Male</option><option value="F">Female</option></select></div><div class="col-md-6"><label class="small fw-bold">First Name</label><input type="text" name="first_name" class="form-control" required></div><div class="col-md-6"><label class="small fw-bold">Last Name</label><input type="text" name="last_name" class="form-control" required></div></div></div><div class="modal-footer bg-light"><button type="submit" class="btn btn-primary px-4 fw-bold">SAVE STUDENT</button></div></form>
             </div>
         </div>
     </div>
@@ -238,16 +266,18 @@
     <script>
         document.querySelectorAll('.student-row').forEach(row => {
             row.addEventListener('click', () => {
-                document.querySelectorAll('.student-row').forEach(r => {
-                    r.classList.remove('table-primary');
-                    r.style.backgroundColor = '';
-                });
-                row.style.backgroundColor = 'rgba(58, 83, 164, 0.1)';
-                document.getElementById('det-id').value = row.dataset.id;
-                document.getElementById('det-name').value = row.dataset.name;
-                document.getElementById('det-sex').value = row.dataset.sex;
-                document.getElementById('det-bday').value = row.dataset.bday;
-                document.getElementById('det-address').value = row.dataset.address;
+                // Highlight row
+                document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                
+                // Enable the button
+                const btn = document.getElementById('btn-view-offenses');
+                btn.disabled = false;
+
+                // Update Modal Header
+                document.getElementById('modal-id-display').innerText = row.dataset.id;
+                document.getElementById('modal-name-display').innerText = row.dataset.name;
+                document.getElementById('modal-sex-display').innerText = row.dataset.sex;
             });
         });
     </script>
