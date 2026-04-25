@@ -23,6 +23,14 @@
         .action-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--xu-border-color); }
         .action-btn-group .btn { border: none; border-radius: 0; padding: 2px 8px; font-size: 0.75rem; }
         .action-btn-group .btn:not(:last-child) { border-right: 1px solid var(--xu-border-color); }
+
+        /* Detail Modal Tab Styles */
+        .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
+        .info-group-box { border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px; }
+        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
+        .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
+        .bg-legacy-yellow { background-color: #fcf4a3 !important; }
+        .signature-box { height: 160px; border: 1px solid #999; background: #fff; margin-bottom: 5px; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -341,55 +349,303 @@
         </div>
     </div>
     
-    <!-- DETAILED OFFENSES MODAL -->
+    <!-- DETAILED OFFENSES MODAL (WITH TABS) -->
     <div class="modal fade" id="offenseModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header modal-legacy-header p-3">
                     <div>
-                        <div class="small fw-bold opacity-75">Student Number: <span id="modal-id-display">---</span></div>
-                        <h4 class="fw-bold m-0" id="modal-name-display">STUDENT NAME</h4>
-                        <div class="small opacity-75">Gender: <span id="modal-sex-display">---</span></div>
+                        <div class="small fw-bold opacity-75 text-white">Student Number: <span id="modal-id-display">---</span></div>
+                        <h4 class="fw-bold m-0 text-white" id="modal-name-display">STUDENT NAME</h4>
+                        <div class="small opacity-75 text-white">Gender: <span id="modal-sex-display">---</span></div>
                     </div>
                     <div class="ms-auto d-flex align-items-center gap-3">
                         <div class="student-photo-placeholder">PHOTO</div>
                         <div class="d-flex flex-column gap-1">
                             <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Take a Picture</button>
                             <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Load a Picture</button>
+                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Clear Picture</button>
                         </div>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
                     </div>
                 </div>
-                <div class="modal-body p-0">
-                    <ul class="nav nav-tabs px-3 pt-2" id="offenseTabs">
-                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab">Offenses this School Year</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Personal Information</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Summary of Offenses</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Unserved CS</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab">Signature</button></li>
+                <div class="modal-body p-0" style="background-color: #f8f9fa;">
+                    
+                    <!-- Bootstrap Nav Tabs -->
+                    <ul class="nav nav-tabs px-3 pt-2 bg-white" id="offenseTabs" role="tablist" style="border-bottom: none;">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold small" id="tab-personal-info" data-bs-toggle="tab" data-bs-target="#pane-personal" type="button" role="tab" style="color: #444;">Personal Information</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold small" id="tab-offenses-this-year" data-bs-toggle="tab" data-bs-target="#pane-offenses" type="button" role="tab" style="color: #444;">Offenses this School Year</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold small" id="tab-summary-year" data-bs-toggle="tab" data-bs-target="#pane-summary-year" type="button" role="tab" style="color: #444;">Summary of Offenses this Year</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold small" id="tab-summary-hs" data-bs-toggle="tab" data-bs-target="#pane-summary-hs" type="button" role="tab" style="color: #444;">Summary throughout HS</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold small" id="tab-unserved-cs" data-bs-toggle="tab" data-bs-target="#pane-unserved-cs" type="button" role="tab" style="color: #444;">Unserved CS</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold small" id="tab-signature" data-bs-toggle="tab" data-bs-target="#pane-signature" type="button" role="tab" style="color: #444;">Signature</button>
+                        </li>
                     </ul>
-                    <div class="p-3 bg-white" style="min-height: 400px;">
-                        <table class="table table-bordered table-sm small align-middle" id="editable-offense-table">
-                            <thead class="table-light text-center">
-                                <tr style="font-size: 11px;">
-                                    <th style="width: 100px;">Date (mm/dd/yy)</th>
-                                    <th style="width: 90px;">Time</th>
-                                    <th>Offense</th>
-                                    <th style="width: 60px;">Dem</th>
-                                    <th style="width: 100px;">Status</th>
-                                    <th style="width: 90px;">Sanction</th>
-                                    <th>Notes</th>
-                                    <th style="width: 50px;">Served</th>
-                                    <th style="width: 50px;">Count</th>
-                                </tr>
-                            </thead>
-                            <tbody id="detailed-offenses-body">
-                                <!-- Populated dynamically by JavaScript -->
-                            </tbody>
-                        </table>
+
+                    <!-- Tab Content Container -->
+                    <div class="tab-content legacy-tab-content" id="offenseTabsContent">
+                        
+                        <!-- TAB 1: PERSONAL INFORMATION -->
+                        <div class="tab-pane fade" id="pane-personal" role="tabpanel">
+                            <div class="row g-3">
+                                <!-- Left Column -->
+                                <div class="col-md-5">
+                                    <div class="info-group-box pt-3">
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
+                                            <div class="col-sm-8"><textarea class="form-control form-control-sm" rows="2" style="resize: none;"></textarea></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Home Phone #:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                    </div>
+                                    <div class="info-group-box pt-3 bg-legacy-blue">
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthday:</label>
+                                            <div class="col-sm-8"><input type="date" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthplace:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Nationality:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Religion:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Brothers:</label>
+                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Sisters:</label>
+                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
+                                        </div>
+                                    </div>
+                                    <div class="info-group-box pt-3">
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Guardian Name:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                        <div class="row mb-1 align-items-center">
+                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Contact Number:</label>
+                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column -->
+                                <div class="col-md-7">
+                                    <div class="info-group-box mt-2 bg-legacy-blue">
+                                        <span class="info-group-title">FATHER</span>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                    </div>
+                                    <div class="info-group-box mt-3">
+                                        <span class="info-group-title">MOTHER</span>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: OFFENSES THIS SCHOOL YEAR -->
+                        <div class="tab-pane fade show active" id="pane-offenses" role="tabpanel">
+                            <table class="table table-bordered table-sm small align-middle" id="editable-offense-table">
+                                <thead class="table-light text-center">
+                                    <tr style="font-size: 11px;">
+                                        <th style="width: 100px;">Date (mm/dd/yy)</th>
+                                        <th style="width: 90px;">Time</th>
+                                        <th>Offense</th>
+                                        <th style="width: 60px;">Dem</th>
+                                        <th style="width: 100px;">Status</th>
+                                        <th style="width: 90px;">Sanction</th>
+                                        <th>Notes</th>
+                                        <th style="width: 50px;">Served</th>
+                                        <th style="width: 50px;">Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailed-offenses-body">
+                                    <!-- Populated dynamically by JavaScript -->
+                                </tbody>
+                            </table>
                             <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-2" onclick="addNewOffenseRow()">
                                 + Add Manual Entry
                             </button>
+                        </div>
+
+                        <!-- TAB 3: SUMMARY OF OFFENSES THIS YEAR -->
+                        <div class="tab-pane fade h-100" id="pane-summary-year" role="tabpanel">
+                            <div class="row g-3" style="min-height: 400px;">
+                                <div class="col-md-5 d-flex flex-column bg-legacy-blue p-2 rounded border">
+                                    <table class="table table-bordered table-sm small bg-legacy-yellow mb-3 shadow-sm">
+                                        <thead class="table-light"><tr><th>Offense Type</th><th>Demerits</th><th>Counts</th></tr></thead>
+                                        <tbody>
+                                            <!-- Example row, usually populated by JS -->
+                                            <tr><td>Absence</td><td></td><td>0.5</td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="mt-auto text-center bg-white p-3 border rounded shadow-sm">
+                                        <div class="mb-2 text-muted fw-bold">Total Number of Demerits: <br><span class="fs-3 fw-bold text-success">0</span></div>
+                                        <div class="mb-3 text-muted fw-bold">Total Count of Offenses: <br><span class="fs-3 fw-bold" style="color: #0d6efd;">0</span></div>
+                                        <button class="btn btn-light border btn-sm fw-bold w-50 shadow-sm">Preview Report</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-7 d-flex flex-column gap-2 bg-legacy-blue p-2 rounded border">
+                                    <div class="h-50 overflow-auto border shadow-sm">
+                                        <table class="table table-bordered table-sm small bg-legacy-yellow mb-0">
+                                            <thead class="table-light sticky-top"><tr><th>Offense</th><th>Demerits</th><th>Counts</th></tr></thead>
+                                            <tbody>
+                                                <!-- Example row -->
+                                                <tr><td>Absent-Whole Afternoon</td><td></td><td>0.5</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="h-50 overflow-auto border shadow-sm">
+                                        <table class="table table-bordered table-sm small bg-legacy-yellow mb-0">
+                                            <thead class="table-light sticky-top"><tr><th>Details</th><th>Status</th><th>Date</th><th>Served</th></tr></thead>
+                                            <tbody>
+                                                <!-- Example row -->
+                                                <tr><td></td><td></td><td></td><td></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: SUMMARY OF OFFENSES THROUGHOUT HS -->
+                        <div class="tab-pane fade h-100" id="pane-summary-hs" role="tabpanel">
+                            <div class="row g-3" style="min-height: 400px;">
+                                <div class="col-md-5 d-flex flex-column bg-legacy-blue p-2 rounded border">
+                                    <table class="table table-bordered table-sm small bg-legacy-yellow mb-3 shadow-sm">
+                                        <thead class="table-light"><tr><th>Offense Type</th><th>Demerits</th><th>Counts</th></tr></thead>
+                                        <tbody>
+                                            <tr><td colspan="3" class="text-center text-muted fst-italic">No Historical Data</td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="mt-auto text-center bg-white p-3 border rounded shadow-sm">
+                                        <div class="mb-2 text-muted fw-bold">Total Number of Demerits (HS): <br><span class="fs-3 fw-bold text-success">0</span></div>
+                                        <div class="mb-3 text-muted fw-bold">Total Count of Offenses (HS): <br><span class="fs-3 fw-bold" style="color: #0d6efd;">0</span></div>
+                                        <button class="btn btn-light border btn-sm fw-bold w-50 shadow-sm">Preview Report</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-7 d-flex flex-column gap-2 bg-legacy-blue p-2 rounded border">
+                                    <div class="h-50 overflow-auto border shadow-sm">
+                                        <table class="table table-bordered table-sm small bg-legacy-yellow mb-0">
+                                            <thead class="table-light sticky-top"><tr><th>Offense</th><th>Demerits</th><th>Counts</th></tr></thead>
+                                            <tbody>
+                                                <tr><td colspan="3" class="text-center text-muted fst-italic">No Historical Data</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="h-50 overflow-auto border shadow-sm">
+                                        <table class="table table-bordered table-sm small bg-legacy-yellow mb-0">
+                                            <thead class="table-light sticky-top"><tr><th>Details</th><th>Status</th><th>Date</th><th>Served</th></tr></thead>
+                                            <tbody>
+                                                <tr><td colspan="4" class="text-center text-muted fst-italic">No Historical Data</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5: UNSERVED CS -->
+                        <div class="tab-pane fade" id="pane-unserved-cs" role="tabpanel">
+                            <div class="p-3 bg-light border rounded">
+                                <h6 class="fw-bold text-xu-blue mb-3">Pending Community Service Records</h6>
+                                <table class="table table-bordered table-sm small bg-white align-middle shadow-sm">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Date of Offense</th>
+                                            <th>Offense Detail</th>
+                                            <th>Demerits</th>
+                                            <th>Sanction Assigned</th>
+                                            <th>Status</th>
+                                            <th style="width: 120px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="6" class="text-center p-4 text-muted fw-bold">No unserved community service pending.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 6: SIGNATURE -->
+                        <div class="tab-pane fade" id="pane-signature" role="tabpanel">
+                            <div class="row g-4 p-3 bg-light rounded border">
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Father</div>
+                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
+                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    </div>
+                                    <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Mother</div>
+                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
+                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    </div>
+                                    <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Guardian</div>
+                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
+                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    </div>
+                                    <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
+                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -444,15 +700,15 @@
         });
     });
 
-    // Function to create a row with inputs
+    // The core function that builds the editable row
     function createOffenseRow(data = {}) {
         const tbody = document.getElementById('detailed-offenses-body');
         const row = document.createElement('tr');
         
         row.innerHTML = `
             <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" placeholder="00:00 AM" value="${data.time || '12:00 PM'}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
+            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"</td>
             <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" oninput="calculateRow(this)"></td>
             <td>
                 <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
@@ -461,88 +717,61 @@
                 </select>
             </td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value=""></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.offense || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm border-0" value="${data.offense || ''}" placeholder="Details..."></td>
             <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count" readonly value="0"></td>
         `;
         
         tbody.appendChild(row);
-        calculateRow(row.querySelector('.val-dem')); // Run initial calculation
+        // Trigger the math immediately for the new row
+        calculateRow(row.querySelector('.val-dem'));
     }
 
     // Function to add a completely empty row for manual input
-function addNewOffenseRow() {
-    const tbody = document.getElementById('detailed-offenses-body');
-    
-    // Remove the "No records" message if it's there
-    if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
-        tbody.innerHTML = '';
+    function addNewOffenseRow() {
+        const tbody = document.getElementById('detailed-offenses-body');
+        
+        // Remove the "No records" message if it's there
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
+            tbody.innerHTML = '';
+        }
+
+        // Use today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        
+        createOffenseRow({
+            date_raw: today,
+            time: '12:00 PM',
+            demerits: 0,
+            status: 'Unexcused',
+            offense: '',
+            served: false
+        });
     }
-
-    // Use today's date as default
-    const today = new Date().toISOString().split('T')[0];
-    
-    createOffenseRow({
-        date_raw: today,
-        time: '12:00 PM',
-        demerits: 0,
-        status: 'Unexcused',
-        offense: '',
-        served: false
-    });
-}
-
-
-    // The core function that builds the editable row
-function createOffenseRow(data = {}) {
-    const tbody = document.getElementById('detailed-offenses-body');
-    const row = document.createElement('tr');
-    
-    row.innerHTML = `
-        <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
-        <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-        <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"</td>
-        <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" oninput="calculateRow(this)"></td>
-        <td>
-            <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
-                <option value="Unexcused" ${data.status == 'Unexcused' ? 'selected' : ''}>Unexcused</option>
-                <option value="Excused" ${data.status == 'Excused' ? 'selected' : ''}>Excused</option>
-            </select>
-        </td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value=""></td>
-        <td><input type="text" class="form-control form-control-sm border-0" value="${data.offense || ''}" placeholder="Details..."></td>
-        <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count" readonly value="0"></td>
-    `;
-    
-    tbody.appendChild(row);
-    // Trigger the math immediately for the new row
-    calculateRow(row.querySelector('.val-dem'));
-}
 
     // AUTOMATIC CALCULATION LOGIC
     function calculateRow(input) {
-    const row = input.closest('tr');
-    const demerits = parseInt(row.querySelector('.val-dem').value) || 0;
-    const status = row.querySelector('.val-status').value;
-    
-    const sanctionField = row.querySelector('.val-sanction');
-    const countField = row.querySelector('.val-count');
+        const row = input.closest('tr');
+        const demerits = parseInt(row.querySelector('.val-dem').value) || 0;
+        const status = row.querySelector('.val-status').value;
+        
+        const sanctionField = row.querySelector('.val-sanction');
+        const countField = row.querySelector('.val-count');
 
-    // 1. Sanction Logic (Calculates based on demerits)
-    if (demerits >= 50) {
-        sanctionField.value = "2 Hrs CS";
-    } else if (demerits >= 8) {
-        sanctionField.value = "1 Hr CS";
-    } else if (demerits > 0) {
-        sanctionField.value = "Warning";
-    } else {
-        sanctionField.value = "N/A";
+        // 1. Sanction Logic (Calculates based on demerits)
+        if (demerits >= 50) {
+            sanctionField.value = "2 Hrs CS";
+        } else if (demerits >= 8) {
+            sanctionField.value = "1 Hr CS";
+        } else if (demerits > 0) {
+            sanctionField.value = "Warning";
+        } else {
+            sanctionField.value = "N/A";
+        }
+
+        // 2. Count Logic (Only counts towards summary if Unexcused)
+        countField.value = (status === "Unexcused") ? "1" : "0";
     }
-
-    // 2. Count Logic (Only counts towards summary if Unexcused)
-    countField.value = (status === "Unexcused") ? "1" : "0";
-}
 
     function saveOffenseChanges() {
         alert("Saving student record modifications... (Backend sync pending)");
@@ -562,6 +791,6 @@ function createOffenseRow(data = {}) {
             document.getElementById('edit-section').value = this.dataset.section;
         });
     });
-</script>
+    </script>
 </body>
 </html>
