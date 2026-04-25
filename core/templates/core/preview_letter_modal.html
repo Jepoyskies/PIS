@@ -1,0 +1,134 @@
+<!-- PREVIEW LETTER MODAL -->
+<style>
+    .pl-panel { border: 1px solid var(--xu-border-color); background-color: #f0f3f7; margin-bottom: 15px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
+    .pl-panel-header { background-color: var(--xu-blue-1); color: white; padding: 4px 10px; font-size: 0.8rem; font-weight: bold; }
+    .pl-panel-body { padding: 10px 15px; }
+    .pl-label { font-size: 0.75rem; color: #444; font-weight: bold; }
+</style>
+
+<div class="modal fade" id="previewLetterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background-color: #e4e9f0;">
+            
+            <!-- Header -->
+            <div class="modal-header p-2" style="background-color: #bacbe6; border-bottom: 1px solid #9aaecb;">
+                <div class="d-flex align-items-center gap-2 ms-2">
+                    <span class="fs-6">📄</span>
+                    <h6 class="modal-title fw-bold text-dark small m-0">Preview Letter</h6>
+                </div>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-3">
+                
+                <!-- Top Panel: Student Details -->
+                <div class="pl-panel">
+                    <div class="pl-panel-header">Student Details</div>
+                    <div class="pl-panel-body">
+                        <div class="row">
+                            <!-- Left Details -->
+                            <div class="col-md-6">
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-3 col-form-label pl-label">Student ID</label>
+                                    <div class="col-sm-9"><input type="text" id="pl-student-id" class="form-control form-control-sm shadow-sm bg-white" readonly></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-3 col-form-label pl-label">Name</label>
+                                    <div class="col-sm-9"><input type="text" id="pl-name" class="form-control form-control-sm shadow-sm bg-white" readonly></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-3 col-form-label pl-label">Section</label>
+                                    <div class="col-sm-9"><input type="text" id="pl-section" class="form-control form-control-sm shadow-sm bg-white" readonly></div>
+                                </div>
+                                <div class="row mb-1">
+                                    <label class="col-sm-3 col-form-label pl-label pt-1">Address</label>
+                                    <div class="col-sm-9"><textarea id="pl-address" class="form-control form-control-sm shadow-sm bg-white" rows="2" style="resize: none;" readonly></textarea></div>
+                                </div>
+                            </div>
+                            <!-- Right Details -->
+                            <div class="col-md-6">
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Father's Name</label>
+                                    <div class="col-sm-8"><input type="text" id="pl-father" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Mother's Name</label>
+                                    <div class="col-sm-8"><input type="text" id="pl-mother" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Guardian's Name</label>
+                                    <div class="col-sm-8"><input type="text" id="pl-guardian" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Bottom Left Panel: Inside Address -->
+                    <div class="col-md-6">
+                        <div class="pl-panel h-100 mb-0">
+                            <div class="pl-panel-header">Inside Address</div>
+                            <div class="pl-panel-body">
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-2 col-form-label pl-label">Line 1</label>
+                                    <div class="col-sm-10"><input type="text" id="pl-line1" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-2 col-form-label pl-label">Line 2</label>
+                                    <div class="col-sm-10"><input type="text" id="pl-line2" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-2 col-form-label pl-label">Line 3</label>
+                                    <div class="col-sm-10"><input type="text" id="pl-line3" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-2 col-form-label pl-label">Line 4</label>
+                                    <div class="col-sm-10"><input type="text" id="pl-line4" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Right Panel: Additional Information -->
+                    <div class="col-md-6">
+                        <div class="pl-panel h-100 mb-0 d-flex flex-column">
+                            <div class="pl-panel-header">Additional Information</div>
+                            <div class="pl-panel-body flex-grow-1 position-relative">
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Salutation</label>
+                                    <div class="col-sm-8"><input type="text" id="pl-salutation" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                <div class="row mb-2 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Date of Letter</label>
+                                    <div class="col-sm-8"><span id="pl-current-date" class="small fw-bold text-muted"></span></div>
+                                </div>
+                                <div class="row mb-1 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Note</label>
+                                    <div class="col-sm-8">
+                                        <select id="pl-note" class="form-select form-select-sm shadow-sm">
+                                            <option value="1st letter">1st letter</option>
+                                            <option value="2nd letter">2nd letter</option>
+                                            <option value="3rd letter">3rd letter</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 col-form-label pl-label">Due date</label>
+                                    <div class="col-sm-8"><input type="date" id="pl-due-date" class="form-control form-control-sm shadow-sm"></div>
+                                </div>
+                                
+                                <!-- Preview Button aligned to bottom right of this specific box -->
+                                <div class="text-end position-absolute" style="bottom: 10px; right: 15px;">
+                                    <button type="button" class="btn btn-light border btn-sm shadow-sm fw-bold px-4" style="background: linear-gradient(180deg, #fff 0%, #e9ecef 100%);">Preview Letter</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

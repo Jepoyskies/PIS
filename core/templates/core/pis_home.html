@@ -9,100 +9,30 @@
     <style>
         body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
         
+        /* Standard Navigation Styles */
         .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { 
-            color: #555; 
-            font-weight: 600; 
-            padding: 15px 20px; 
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
 
-        .dashboard-container {
-            max-width: 1100px;
-            margin: 40px auto;
-            width: 100%;
-        }
-
-        .menu-card {
-            background-color: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: none;
-        }
-
-        .menu-header {
-            background-color: var(--xu-blue-1);
-            color: white;
-            padding: 15px 25px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 4px solid var(--xu-gold);
-        }
-
-        .pis-btn {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 15px 20px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            background-color: white;
-            border: 1px solid var(--xu-border-color);
-            border-radius: 8px;
-            text-decoration: none;
-            color: #444;
-            transition: all 0.2s;
-        }
-
-        .pis-btn:hover {
-            background-color: var(--xu-blue-1);
-            color: white;
-            border-color: var(--xu-blue-1);
-            transform: translateX(5px);
-        }
-
-        .pis-btn .btn-num {
-            width: 28px;
-            height: 28px;
-            background-color: var(--xu-light-gray);
-            color: var(--xu-blue-1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-
-        .pis-btn:hover .btn-num {
-            background-color: var(--xu-gold);
-            color: white;
-        }
-
-        .notification-panel {
-            background-color: #fff9e6;
-            border: 1px solid #ffeeba;
-            border-radius: 8px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
+        .dashboard-container { max-width: 1100px; margin: 40px auto; width: 100%; }
+        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; }
+        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); }
+        .pis-btn { display: flex; align-items: center; width: 100%; padding: 15px 20px; margin-bottom: 12px; font-weight: 600; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; text-decoration: none; color: #444; transition: all 0.2s; }
+        .pis-btn:hover { background-color: var(--xu-blue-1); color: white; border-color: var(--xu-blue-1); transform: translateX(5px); }
+        .pis-btn .btn-num { width: 28px; height: 28px; background-color: var(--xu-light-gray); color: var(--xu-blue-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 0.85rem; transition: all 0.2s; }
+        .pis-btn:hover .btn-num { background-color: var(--xu-gold); color: white; }
+        .notification-panel { background-color: #fff9e6; border: 1px solid #ffeeba; border-radius: 8px; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column vh-100">
+    <!-- Standard Header -->
     <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Prefect Information System</div>
+                <div class="small opacity-75">Prefect Information System Dashboard</div>
             </div>
         </div>
         
@@ -120,12 +50,16 @@
         </div>
     </header>
 
-    <nav class="main-nav d-flex">
-        <a href="{% url 'staff_home' %}" class="nav-link active">DASHBOARD</a>
+    <!-- Standard 5-Tab Navigation -->
+    <nav class="main-nav d-flex z-1 shadow-sm">
+        <a href="{% url 'staff_home' %}" class="nav-link active">HOME</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <main class="flex-grow-1">
+    <main class="flex-grow-1 overflow-auto">
         <div class="dashboard-container">
             <div class="menu-card">
                 <div class="menu-header">

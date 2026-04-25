@@ -7,8 +7,16 @@
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+        
+        /* Standard Navigation Styles */
+        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
+        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+
         .sidebar-wrapper {
-            min-height: calc(100vh - 65px);
+            height: 100%;
             background-color: white;
             border-right: 1px solid var(--xu-border-color);
         }
@@ -30,22 +38,44 @@
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
+    <!-- Standard Header (Replaced Custom Header) -->
     <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
-                <div class="fw-bold mb-0">PIO SYSTEM - XAVIER HIGH SCHOOL</div>
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Central Management & Monitoring</div>
             </div>
         </div>
-        <a href="{% url 'staff_home' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">BACK TO DASHBOARD</a>
+        
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
+                {% csrf_token %}
+                <label class="small fw-bold text-muted mb-0">School Year:</label>
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                    {% for sy in all_school_years %}
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4">Log Off</a>
+        </div>
     </header>
 
-    <div class="container-fluid flex-grow-1">
-        <div class="row h-100">
+    <!-- Standard 5-Tab Navigation -->
+    <nav class="main-nav d-flex z-1 shadow-sm">
+        <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link active">MAINTENANCE</a>
+    </nav>
+
+    <div class="container-fluid flex-grow-1 p-0 overflow-hidden">
+        <div class="row h-100 g-0">
             <!-- LEFT SIDEBAR -->
-            <div class="col-md-3 col-lg-2 p-0 sidebar-wrapper shadow-sm">
-                <div class="sidebar-xu">
+            <div class="col-md-3 col-lg-2 p-0 sidebar-wrapper shadow-sm d-flex flex-column">
+                <div class="sidebar-xu flex-grow-1">
                     <div class="nav-section-title">General Maintenance</div>
                     <div class="list-group list-group-flush">
                         <a href="#" class="list-group-item list-group-item-action text-muted">
@@ -88,8 +118,8 @@
             </div>
 
             <!-- RIGHT CONTENT AREA -->
-            <div class="col-md-9 col-lg-10 p-4 bg-light overflow-auto">
-                <div class="card card-xu shadow-sm" style="min-height: calc(100vh - 120px);">
+            <div class="col-md-9 col-lg-10 p-4 bg-light overflow-auto h-100">
+                <div class="card card-xu shadow-sm h-100">
                     <div class="card-body p-4">
                         {% block maintenance_content %}
                         {% endblock %}

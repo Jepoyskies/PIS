@@ -111,9 +111,11 @@
                     <tbody id="student-table-body">
                         {% for student in students %}
                         <tr class="student-row align-middle" style="cursor: pointer;" 
-                            data-id="{{ student.student_number }}"
-                            data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
-                            data-sex="{{ student.sex }}">
+    data-id="{{ student.student_number }}"
+    data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
+    data-sex="{{ student.sex }}"
+    data-section="{{ student.section.name|default:'' }}"
+    data-address="{{ student.address|default:'' }}">
                             
                             <td class="ps-3 fw-bold">{{ student.student_number }}</td>
                             <td class="fw-bold" style="color: var(--xu-blue-1);">
@@ -171,7 +173,7 @@
                 <div class="small text-muted me-auto">Record 1 of {{ students|length }}</div>
                 
                 <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
-                <button class="btn btn-light border btn-sm fw-bold">Preview Letter</button>
+                <button type="button" id="btn-preview-letter" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal" disabled>Preview Letter</button>
                 
                 <!-- Fixed Buttons connected to modals -->
                 <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
@@ -652,6 +654,11 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- INCLUDED: PREVIEW LETTER MODAL             -->
+    <!-- ========================================== -->
+    {% include 'core/preview_letter_modal.html' %}
+
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
     // 1. Logic for Row Selection and Data Fetching
@@ -661,19 +668,43 @@
 
             const studentId = row.dataset.id;
             const studentName = row.dataset.name;
+            const studentSection = row.dataset.section;
+            const studentAddress = row.dataset.address;
 
             document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
             
+            // Enable buttons
             const btnView = document.getElementById('btn-view-offenses');
             const btnType = document.getElementById('btn-offenses-by-type');
+            const btnPreviewLetter = document.getElementById('btn-preview-letter');
+            
             if(btnView) btnView.disabled = false;
             if(btnType) btnType.disabled = false;
+            if(btnPreviewLetter) btnPreviewLetter.disabled = false;
 
+            // Populate Detailed Modal Identifiers
             document.getElementById('modal-id-display').innerText = studentId;
             document.getElementById('modal-name-display').innerText = studentName;
             document.getElementById('modal-sex-display').innerText = row.dataset.sex;
             document.getElementById('type-modal-name').innerText = studentName;
+
+            // Populate Preview Letter fields automatically
+            const plId = document.getElementById('pl-student-id');
+            const plName = document.getElementById('pl-name');
+            const plSec = document.getElementById('pl-section');
+            const plAdd = document.getElementById('pl-address');
+            
+            if(plId) plId.value = studentId;
+            if(plName) plName.value = studentName;
+            if(plSec) plSec.value = studentSection;
+            if(plAdd) plAdd.value = studentAddress;
+
+            // Format Today's Date like: "Wednesday, April 22, 2026"
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const todayStr = new Date().toLocaleDateString('en-US', options);
+            const plDate = document.getElementById('pl-current-date');
+            if(plDate) plDate.innerText = todayStr;
 
             fetch(`/api/student/${studentId}/offenses/`)
                 .then(response => response.json())
