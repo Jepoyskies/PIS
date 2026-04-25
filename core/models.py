@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Sum
+from django.utils import timezone
 
 class TimeStampedModel(models.Model):
     """Abstract base class ensuring every table has audit timestamps."""
@@ -106,21 +107,60 @@ class CommunityServiceRecord(TimeStampedModel):
     hours_served = models.IntegerField()
     remarks = models.TextField(blank=True)
 
-class AttendanceBatch(TimeStampedModel):
+
+class DailyAttendance(TimeStampedModel):
+    date = models.DateField(default=timezone.now)
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
-    date = models.DateField()
-    submitted_by = models.ForeignKey(Student, on_delete=models.CASCADE)
-    is_confirmed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('date', 'section')
+        
+    def __str__(self):
+        return f"{self.section.name} - {self.date}"
 
-class AttendanceRecord(TimeStampedModel):
-    batch = models.ForeignKey(AttendanceBatch, on_delete=models.CASCADE, related_name='records', null=True)
+class PeriodAttendance(TimeStampedModel):
+    PERIOD_CHOICES =[(1, "1st Period"), (2, "2nd Period"), (3, "3rd Period"), 
+                      (4, "4th Period"), (5, "5th Period"), (6, "6th Period"), (7, "7th Period")]
+    
+    daily_attendance = models.ForeignKey(DailyAttendance, related_name='periods', on_delete=models.CASCADE)
+    period_number = models.IntegerField(choices=PERIOD_CHOICES)
+    is_locked = models.BooleanField(default=False)
+    submitted_by = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, help_text="Beadle who submitted")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ('daily_attendance', 'period_number')
+
+class StudentPeriodRecord(TimeStampedModel):
+    CODE_CHOICES =[
+        ('P', 'Present'),
+        ('A', 'Absent'),
+        ('L', 'Late'),
+        ('UU', 'Unprescribed Uniform'),
+        ('UH', 'Unprescribed Haircut'),
+        ('ID', 'No ID'),
+        ('CL', 'Campus Leave')
+    ]
+    
+    period = models.ForeignKey(PeriodAttendance, related_name='records', on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    date = models.DateField()
-    status = models.CharField(max_length=10, default='PRESENT')
-    is_excused = models.BooleanField(default=False)
+    code = models.CharField(max_length=2, choices=CODE_CHOICES, default='P')
+    
+    # --- ADD THESE TWO LINES ---
+    original_code = models.CharField(max_length=50, blank=True, null=True)
+    note = models.TextField(blank=True, null=True)
 
+class AttendanceAuditLog(TimeStampedModel):
+    """ The 'Digital Correction Tape' to prevent cheating """
+    record = models.ForeignKey(StudentPeriodRecord, related_name='audit_logs', on_delete=models.CASCADE)
+    old_code = models.CharField(max_length=2)
+    new_code = models.CharField(max_length=2)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    
 class ExcuseLetter(TimeStampedModel):
-    attendance_record = models.OneToOneField(AttendanceRecord, on_delete=models.CASCADE, related_name='excuse_letter')
+    # Changed from AttendanceRecord to DailyAttendance (excuses the whole day)
+    daily_attendance = models.ForeignKey(DailyAttendance, on_delete=models.CASCADE, related_name='excuse_letters', null=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
     letter_image = models.ImageField(upload_to='excuse_letters/')
     status = models.CharField(max_length=15, default='PENDING')
 

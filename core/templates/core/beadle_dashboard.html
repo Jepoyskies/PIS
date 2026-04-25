@@ -3,46 +3,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Take Attendance - Beadle Portal</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: var(--xu-light-gray); min-height: 100vh; }
-        .beadle-header {
-            background-color: var(--xu-blue-1);
-            border-bottom: 5px solid var(--xu-gold);
-            padding: 15px 0;
-            margin-bottom: 30px;
+        body { background-color: var(--xu-light-gray); min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .beadle-header { background-color: var(--xu-blue-1); border-bottom: 5px solid var(--xu-gold); padding: 15px 0; margin-bottom: 20px; }
+        .nav-tabs .nav-link { color: #555; font-weight: 600; border: none; padding: 12px 20px; }
+        .nav-tabs .nav-link.active { color: var(--xu-blue-1); border-bottom: 3px solid var(--xu-gold); background-color: transparent; }
+        
+        /* Mobile-Friendly Toggle Buttons */
+        .code-btn-group { display: flex; flex-wrap: wrap; gap: 5px; }
+        .code-btn { flex: 1; min-width: 40px; border-radius: 6px !important; font-size: 0.8rem; font-weight: bold; transition: all 0.2s;}
+        .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
+        .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        .btn-check:checked + .btn-outline-warning { background-color: #ffc107; color: black; }
+        .btn-check:checked + .btn-outline-dark { background-color: #212529; color: white; }
+        
+        /* Locked State */
+        .btn-check:disabled + .code-btn { opacity: 0.3; cursor: not-allowed; }
+
+        /* Teacher Review Overlay */
+        #review-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.98); z-index: 1050; overflow-y: auto;
         }
-        .attendance-card {
-            border: none;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
-        .attendance-header {
-            background-color: var(--xu-blue-2);
-            color: white;
-            padding: 20px 25px;
-        }
-        .table-attendance th {
-            background-color: var(--xu-light-gray);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            color: #666;
-            padding: 15px 10px;
-            border-bottom: 2px solid var(--xu-border-color);
-        }
-        .status-radio {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        .row-student:hover {
-            background-color: rgba(58, 83, 164, 0.05) !important;
-        }
+        .review-card { max-width: 700px; margin: 40px auto; border: 2px solid var(--xu-blue-1); border-radius: 12px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .violation-row { background-color: #fff3cd !important; border-left: 5px solid #dc3545 !important; }
+        
+        /* Edit Note Styles */
+        .edit-note-container { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -50,81 +42,313 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
                 <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-                <h5 class="text-white fw-bold mb-0">⭐ BEADLE ATTENDANCE PORTAL</h5>
+                <h5 class="text-white fw-bold mb-0">⭐ BEADLE ATTENDANCE</h5>
             </div>
-            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK TO PROFILE</a>
+            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK</a>
         </div>
     </header>
-    
+
     <div class="container pb-5">
-        <form method="POST" class="attendance-card bg-white shadow">
-            {% csrf_token %}
-            <div class="attendance-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="fw-bold mb-0">Class Attendance Report</h4>
-                    <p class="opacity-75 mb-0 small">Section: <span class="fw-bold">{{ student.section.name }}</span></p>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} fw-bold shadow-sm mb-3 border-0">
+                    {{ message }}
                 </div>
-                <div class="bg-white p-2 rounded shadow-sm d-flex align-items-center gap-2" style="width: 200px;">
-                    <span class="text-muted small fw-bold ms-2">DATE:</span>
-                    <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm border-0 fw-bold" required style="background: transparent;">
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow-sm border-0" style="border-radius: 12px;">
+            <div class="card-header bg-white pt-3 px-4 border-0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">Section: {{ student.section.name }}</h4>
+                        <div class="text-muted small fw-bold">{{ today|date:'l, F j, Y' }}</div>
+                    </div>
                 </div>
+                
+                <ul class="nav nav-tabs" id="beadleTabs">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#roster">📋 Today's Roster</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">🕒 Submission History</a></li>
+                </ul>
             </div>
-            
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-attendance align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th class="ps-4">Classmate Name</th>
-                                <th class="text-center" style="width: 15%;">Present</th>
-                                <th class="text-center" style="width: 15%;">Late</th>
-                                <th class="text-center" style="width: 15%;">Absent</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for s in section_students %}
-                            <tr class="row-student">
-                                <td class="ps-4 py-3">
-                                    <div class="fw-bold" style="color: var(--xu-blue-1);">{{ s.last_name }}, {{ s.first_name }}</div>
-                                    <div class="text-muted small">ID: {{ s.student_number }}</div>
-                                </td>
-                                <td class="text-center">
-                                    <input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked class="form-check-input status-radio border-success">
-                                </td>
-                                <td class="text-center">
-                                    <input type="radio" name="status_{{ s.student_number }}" value="LATE" class="form-check-input status-radio border-warning">
-                                </td>
-                                <td class="text-center">
-                                    <input type="radio" name="status_{{ s.student_number }}" value="ABSENT" class="form-check-input status-radio border-danger">
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <p class="text-muted small">No students found in this section.</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="card-footer bg-light p-4 text-center border-0">
-                <div class="row justify-content-center">
-                    <div class="col-md-6">
-                        <div class="alert alert-warning py-2 small mb-4 border-0 shadow-sm d-inline-flex align-items-center gap-2">
-                            <i class="opacity-75">ℹ️</i> Double-check all entries before final submission to the Prefect Office.
+
+            <div class="tab-content card-body p-0">
+                <!-- TAB 1: ROSTER & INPUT -->
+                <div class="tab-pane fade show active" id="roster">
+                    <form method="POST" id="attendanceForm" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="attendance_date" value="{{ today|date:'Y-m-d' }}">
+                        
+                        <div class="bg-light p-3 border-bottom d-flex align-items-center justify-content-between">
+                            <label class="fw-bold text-uppercase small mb-0" style="color: var(--xu-blue-1);">Current Period:</label>
+                            <select name="period_number" id="periodSelect" class="form-select form-select-sm fw-bold border-dark w-50 shadow-sm">
+                                <option value="1">1st Period (7:30 - 8:25)</option>
+                                <option value="2">2nd Period (8:30 - 9:25)</option>
+                                <option value="3">3rd Period (9:50 - 10:45)</option>
+                                <option value="4">4th Period (10:50 - 11:45)</option>
+                                <option value="5">5th Period (1:00 - 1:55)</option>
+                                <option value="6">6th Period (2:00 - 2:55)</option>
+                                <option value="7">7th Period (3:00 - 3:55)</option>
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-success w-100 fw-bold py-3 shadow-sm rounded-pill">
-                            🚀 SUBMIT FINAL ATTENDANCE REPORT
-                        </button>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <tbody id="student-list">
+                                    {% for s in section_students %}
+                                    <tr class="student-row" data-name="{{ s.last_name }}, {{ s.first_name }}">
+                                        <td class="ps-4 py-3" style="width: 30%;">
+                                            <div class="fw-bold text-dark">{{ s.last_name }}, {{ s.first_name }}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">ID: {{ s.student_number }}</div>
+                                        </td>
+                                        <td class="pe-4">
+                                            <div class="code-btn-group w-100">
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="p_{{ s.id }}" value="P" data-student-id="{{ s.id }}" checked>
+                                                <label class="btn btn-outline-success code-btn" for="p_{{ s.id }}">P</label>
+
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="a_{{ s.id }}" value="A" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-danger code-btn" for="a_{{ s.id }}">A</label>
+
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="l_{{ s.id }}" value="L" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-warning code-btn" for="l_{{ s.id }}">L</label>
+
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="uu_{{ s.id }}" value="UU" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-dark code-btn" for="uu_{{ s.id }}">UU</label>
+
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="uh_{{ s.id }}" value="UH" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-dark code-btn" for="uh_{{ s.id }}">UH</label>
+
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="id_{{ s.id }}" value="ID" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-dark code-btn" for="id_{{ s.id }}">ID</label>
+                                                
+                                                <input type="radio" class="btn-check lock-trigger" name="code_{{ s.id }}" id="cl_{{ s.id }}" value="CL" data-student-id="{{ s.id }}">
+                                                <label class="btn btn-outline-dark code-btn" for="cl_{{ s.id }}">CL</label>
+                                            </div>
+
+                                            <!-- Pre-Submission Edit Note -->
+                                            <div id="note_container_{{ s.id }}" class="mt-2 edit-note-container" style="display: none;">
+                                                <input type="hidden" name="original_code_{{ s.id }}" id="orig_code_{{ s.id }}" value="">
+                                                <input type="text" name="note_{{ s.id }}" class="form-control form-control-sm border-warning shadow-sm" style="background-color: #fffdf5;" placeholder="📝 State reason for changing this attendance...">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bg-white p-3 text-center border-top">
+                            <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm" onclick="showReviewMode()">
+                                👨‍🏫 REVIEW WITH TEACHER
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TAB 2: HISTORY (READ-ONLY) -->
+                <div class="tab-pane fade p-4" id="history">
+                    <h6 class="fw-bold mb-3 text-muted">Today's Period Submissions</h6>
+                    
+                    <div class="accordion" id="historyAccordion">
+                        {% for period in today_periods %}
+                        <div class="accordion-item mb-2 border-0 shadow-sm rounded">
+                            <h2 class="accordion-header" id="heading{{ period.period_number }}">
+                                <button class="accordion-button collapsed fw-bold text-xu-blue" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ period.period_number }}">
+                                    Period {{ period.period_number }} — (Submitted at {{ period.submitted_at|time:"h:i A" }})
+                                </button>
+                            </h2>
+                            <div id="collapse{{ period.period_number }}" class="accordion-collapse collapse" data-bs-parent="#historyAccordion">
+                                <div class="accordion-body p-0">
+                                    <ul class="list-group list-group-flush small">
+                                        {% for rec in period.records.all %}
+                                        
+                                        <!-- Note: flex-column allows the yellow box to drop perfectly below the name -->
+                                        <li class="list-group-item d-flex flex-column align-items-start py-3 {% if rec.code != 'P' %}violation-row{% endif %}">
+                                            
+                                            <!-- TOP ROW: Name & Badge -->
+                                            <div class="d-flex justify-content-between align-items-center w-100">
+                                                <span class="fw-bold">{{ rec.student.last_name }}, {{ rec.student.first_name }}</span>
+                                                <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} rounded-pill px-3 py-2 border shadow-sm">
+                                                    {{ rec.get_code_display }}
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- BOTTOM ROW: Edit Note (Only shows if rec.note exists in database) -->
+                                            {% if rec.note %}
+                                            <div class="mt-2 w-100" style="background-color: #fffdf5; border: 1px solid #ffc107; border-radius: 4px; padding: 8px 12px;">
+                                                <span class="text-warning fw-bold" style="font-size: 0.85rem;">
+                                                    ⚠️ Edited{% if rec.original_code %} from {{ rec.original_code }}{% endif %}:
+                                                </span> 
+                                                <span class="text-muted fst-italic" style="font-size: 0.85rem;">{{ rec.note }}</span>
+                                            </div>
+                                            {% endif %}
+                                            
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="display-4 opacity-25">📂</div>
+                            <p class="text-muted mt-2">No attendance submitted yet today.</p>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
-    
+
+    <!-- TEACHER REVIEW OVERLAY -->
+    <div id="review-overlay">
+        <div class="container">
+            <div class="review-card bg-white mt-5 p-0">
+                <div class="bg-xu-primary text-white p-4 text-center" style="border-radius: 10px 10px 0 0;">
+                    <h3 class="fw-bold mb-0">TEACHER REVIEW MODE</h3>
+                    <p class="mb-0 text-white-50">Please verify the full roster below before signing.</p>
+                </div>
+                
+                <div class="p-4">
+                    <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                        <span class="fw-bold text-muted">Currently Reviewing:</span>
+                        <span class="fw-bold fs-5 text-xu-blue" id="review-period-display">1st Period</span>
+                    </div>
+
+                    <ul id="review-full-list" class="list-group list-group-flush mb-4 border rounded shadow-sm" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Populated by JS -->
+                    </ul>
+
+                    <hr>
+                    <div class="alert alert-warning small border-0 text-center">
+                        <strong>Notice:</strong> Once you click Confirm, this period will be <b>LOCKED</b> and permanently logged to the Prefect Office.
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn btn-light w-50 fw-bold border" onclick="hideReviewMode()">Cancel / Edit</button>
+                        <button type="button" class="btn btn-success w-50 fw-bold shadow-sm" onclick="submitFinalForm()">CONFIRM & LOCK PERIOD</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        const fullNames = {
+            'P': 'Present', 'A': 'Absent', 'L': 'Late', 'UU': 'Unprescribed Uniform',
+            'UH': 'Unprescribed Haircut', 'ID': 'No ID', 'CL': 'Campus Leave'
+        };
+
+        const studentOriginalChoices = {};
+        let reviewModeAccessed = false;
+
+        document.querySelectorAll('.lock-trigger').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const group = this.closest('.code-btn-group');
+                const studentId = this.dataset.studentId;
+                const noteContainer = document.getElementById(`note_container_${studentId}`);
+                
+                // Track first choice before going to review
+                if (!reviewModeAccessed && !studentOriginalChoices.hasOwnProperty(studentId)) {
+                    studentOriginalChoices[studentId] = this.value;
+                } else if (reviewModeAccessed || studentOriginalChoices.hasOwnProperty(studentId)) {
+                    // Check if choice differs from the original
+                    const originalVal = studentOriginalChoices[studentId];
+                    if (this.value !== originalVal) {
+                        noteContainer.style.display = 'block';
+                        noteContainer.querySelector('input[type="text"]').required = true;
+                        // Map "P" to "Present" so it saves clearly in the database history
+                        document.getElementById(`orig_code_${studentId}`).value = fullNames[originalVal]; 
+                    } else {
+                        noteContainer.style.display = 'none';
+                        noteContainer.querySelector('input[type="text"]').required = false;
+                        noteContainer.querySelector('input[type="text"]').value = '';
+                        document.getElementById(`orig_code_${studentId}`).value = '';
+                    }
+                }
+
+                // Lock the other options
+                group.querySelectorAll('.btn-check').forEach(r => {
+                    if (r !== this) { r.disabled = true; }
+                });
+            });
+        });
+
+        function showReviewMode() {
+            reviewModeAccessed = true; 
+            const periodSelect = document.getElementById('periodSelect');
+            document.getElementById('review-period-display').innerText = periodSelect.options[periodSelect.selectedIndex].text;
+
+            const list = document.getElementById('review-full-list');
+            list.innerHTML = '';
+            
+            const rows = document.querySelectorAll('.student-row');
+            rows.forEach(row => {
+                const selectedRadio = row.querySelector('input[type="radio"]:checked');
+                const studentId = selectedRadio.dataset.studentId;
+                const name = row.dataset.name;
+                const selectedCode = selectedRadio.value;
+
+                if (!studentOriginalChoices.hasOwnProperty(studentId)) {
+                    studentOriginalChoices[studentId] = selectedCode;
+                }
+
+                let rowClass = "list-group-item flex-column align-items-start py-3";
+                let textClass = "fw-bold text-dark";
+                let badgeClass = "bg-success";
+
+                if (selectedCode !== 'P') {
+                    rowClass += " violation-row"; 
+                    textClass = "fw-bold text-danger";
+                    badgeClass = selectedCode === 'A' ? 'bg-danger' : 'bg-dark';
+                }
+
+                let editNoteHtml = '';
+                const noteContainer = document.getElementById(`note_container_${studentId}`);
+                if (noteContainer && noteContainer.style.display === 'block') {
+                    const noteText = noteContainer.querySelector('input[type="text"]').value;
+                    const origCode = studentOriginalChoices[studentId];
+                    editNoteHtml = `
+                        <div class="mt-2 w-100" style="background-color: #fffdf5; border: 1px solid #ffc107; border-radius: 4px; padding: 8px 12px;">
+                            <span class="text-warning fw-bold" style="font-size: 0.85rem;">
+                                ⚠️ Edited from ${fullNames[origCode]}:
+                            </span> 
+                            <span class="text-muted fst-italic" style="font-size: 0.85rem;">${noteText || '<span class="text-danger">No reason provided!</span>'}</span>
+                        </div>
+                    `;
+                }
+
+                list.innerHTML += `
+                    <li class="${rowClass}">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <span class="${textClass}">${name}</span>
+                            <span class="badge ${badgeClass} rounded-pill px-3 py-2 border shadow-sm">${fullNames[selectedCode]}</span>
+                        </div>
+                        ${editNoteHtml}
+                    </li>
+                `;
+            });
+
+            document.getElementById('review-overlay').style.display = 'block';
+        }
+
+        function hideReviewMode() {
+            document.getElementById('review-overlay').style.display = 'none';
+            document.querySelectorAll('.btn-check').forEach(r => r.disabled = false);
+        }
+
+        function submitFinalForm() {
+            const form = document.getElementById('attendanceForm');
+            if (!form.checkValidity()) {
+                hideReviewMode();
+                form.reportValidity(); // Highlight the missing note to the user
+                return;
+            }
+            document.querySelectorAll('.btn-check').forEach(r => r.disabled = false);
+            form.submit();
+        }
+    </script>
 </body>
 </html>

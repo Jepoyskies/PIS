@@ -4,11 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
-from datetime import date
+from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Count
 
-from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, AttendanceBatch, AttendanceRecord
+from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, DailyAttendance, PeriodAttendance, StudentPeriodRecord
 from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm
 
 # ==========================================
@@ -33,8 +33,8 @@ def get_staff_context(request):
     if not active_sy:
         active_sy = SchoolYear.objects.filter(is_active=True).first()
         
-    # INJECTED: Fetch Pending Attendances for the Notification Panel
-    pending_batches = AttendanceBatch.objects.filter(is_confirmed=False).order_by('-date')
+    # INJECTED: Temporarily empty while we rebuild the Staff Review Module
+    pending_batches =[]
         
     context = {
         'all_school_years': all_school_years, 
@@ -318,43 +318,11 @@ def disciplinary_module(request, category):
 # INJECTED: Review & Confirm Attendance Logic
 @login_required
 def staff_attendance_review(request, batch_id):
-    if not request.user.is_staff: return redirect('home')
-    batch = get_object_or_404(AttendanceBatch, id=batch_id)
-    records = batch.records.all().select_related('student')
-    context = get_staff_context(request)
-    context.update({'batch': batch, 'records': records})
-    return render(request, 'core/staff_review.html', context)
+    pass
 
 @login_required
 def staff_attendance_confirm(request, batch_id):
-    if not request.user.is_staff: return redirect('home')
-    batch = get_object_or_404(AttendanceBatch, id=batch_id)
-    active_sy = SchoolYear.objects.filter(is_active=True).first()
-    
-    CATEGORY_MAP = {
-        'ABSENT': 'ABSENCES',
-        'LATE': 'TARDINESS'
-    }
-    
-    with transaction.atomic():
-        for record in batch.records.all():
-            # FIX: Convert the status to UPPERCASE so it perfectly matches the dictionary
-            status_upper = str(record.status).upper() 
-            
-            if status_upper in CATEGORY_MAP:
-                DisciplinaryRecord.objects.create(
-                    student=record.student,
-                    category=CATEGORY_MAP[status_upper],
-                    date_of_incident=batch.date,
-                    remarks=f"Auto-logged from Beadle report ({batch.section.name})",
-                    demerits=1 if status_upper == 'LATE' else 5,
-                    recorded_by=request.user,
-                    school_year=active_sy
-                )
-        batch.is_confirmed = True
-        batch.save()
-    messages.success(request, f"Attendance Confirmed and Violations Logged!")
-    return redirect('staff_home')
+    pass
 
 @login_required
 def api_student_offenses(request, student_id):
@@ -401,25 +369,76 @@ def student_dashboard(request):
     if not hasattr(request.user, 'student_profile'): return redirect('login')
     student = request.user.student_profile
     disc = DisciplinaryRecord.objects.filter(student=student).order_by('-date_of_incident')
-    att = AttendanceRecord.objects.filter(student=student).order_by('-date')
-    return render(request, 'core/student_dashboard.html', {'student': student, 'discipline_history': disc, 'attendance_history': att})
+    
+    # Safely load the new attendance format for the student dashboard
+    att_history = StudentPeriodRecord.objects.filter(student=student).order_by('-period__daily_attendance__date', '-period__period_number')[:20]
+    
+    return render(request, 'core/student_dashboard.html', {
+        'student': student, 
+        'discipline_history': disc, 
+        'attendance_history': att_history
+    })
 
 # INJECTED: Beadle Logic
 @login_required
-def beadle_dashboard(request): 
-    student = getattr(request.user, 'student_profile', None)
-    if not student or not student.is_beadle or not student.section: 
+def beadle_dashboard(request):
+    student = get_object_or_404(Student, user=request.user)
+    if not student.is_beadle or not student.section:
         return redirect('student_dashboard')
-        
-    classmates = student.section.students.filter(is_deleted=False).order_by('last_name')
-    
+
+    section = student.section
+    section_students = section.students.filter(is_deleted=False).order_by('last_name', 'first_name')
+    today = timezone.now().date()
+
     if request.method == 'POST':
-        input_date = request.POST.get('attendance_date')
-        with transaction.atomic():
-            batch = AttendanceBatch.objects.create(section=student.section, date=input_date, submitted_by=student)
-            for s in classmates:
-                status = request.POST.get(f'status_{s.student_number}', 'PRESENT')
-                AttendanceRecord.objects.create(batch=batch, student=s, date=input_date, status=status)
-        return redirect('student_dashboard')
+        attendance_date = request.POST.get('attendance_date')
+        period_number = int(request.POST.get('period_number'))
         
-    return render(request, 'core/beadle_dashboard.html', {'student': student, 'section_students': classmates, 'today': date.today()})
+        daily_att, created = DailyAttendance.objects.get_or_create(date=attendance_date, section=section)
+        
+        period_att, p_created = PeriodAttendance.objects.get_or_create(
+            daily_attendance=daily_att,
+            period_number=period_number,
+            defaults={'submitted_by': student, 'submitted_at': timezone.now()}
+        )
+        
+        if not period_att.is_locked:
+            period_att.records.all().delete() 
+            for s in section_students:
+                code = request.POST.get(f'code_{s.id}', 'P') 
+                
+                # --- PULL THE HIDDEN DATA FROM THE HTML ---
+                original_code = request.POST.get(f'original_code_{s.id}')
+                note = request.POST.get(f'note_{s.id}')
+                
+                # --- SAVE EVERYTHING TO THE DATABASE ---
+                StudentPeriodRecord.objects.create(
+                    period=period_att, 
+                    student=s, 
+                    code=code,
+                    original_code=original_code,
+                    note=note
+                )
+            
+            period_att.is_locked = True
+            period_att.save()
+            messages.success(request, f"Period {period_number} attendance confirmed and locked!")
+            return redirect('beadle_dashboard')
+        else:
+            messages.error(request, f"Period {period_number} is already locked. Go to the Prefect Office for changes.")
+
+    # Fetch History for the History Tab
+    daily_att = DailyAttendance.objects.filter(date=today, section=section).first()
+    today_periods = daily_att.periods.all().prefetch_related('records__student').order_by('period_number') if daily_att else []
+    
+    # NEW: Create a quick list of numbers (e.g.,[1, 2]) that are already locked today
+    submitted_period_numbers =[p.period_number for p in today_periods if p.is_locked]
+
+    context = {
+        'student': student,
+        'section_students': section_students,
+        'today': today,
+        'today_periods': today_periods,
+        'submitted_period_numbers': submitted_period_numbers, # NEW: Pass it to the template
+    }
+    return render(request, 'core/beadle_dashboard.html', context)
