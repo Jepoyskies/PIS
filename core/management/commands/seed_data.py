@@ -1,10 +1,12 @@
 import random
 from datetime import date, timedelta
+from django.utils import timezone  # Added for timezone.now()
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from core.models import (
     SchoolYear, Teacher, Section, Student, Enrollment, 
-    DisciplinaryRecord, AttendanceBatch, AttendanceRecord, StaffProfile
+    DailyAttendance, PeriodAttendance, StudentPeriodRecord,
+    StaffProfile, DisciplinaryRecord  # Added these missing models
 )
 
 class Command(BaseCommand):
@@ -13,12 +15,18 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Seeding data...')
 
-        # 1. Clear existing data (optional, but good for a clean slate)
-        # Note: Clearing data is dangerous in production, but okay for a dev seed.
-        User.objects.filter(is_superuser=False).delete()
-        SchoolYear.objects.all().delete()
-        Teacher.objects.all().delete()
+        # 1. Clear existing data
+        # Order matters because of Foreign Key constraints
+        StudentPeriodRecord.objects.all().delete()
+        PeriodAttendance.objects.all().delete()
+        DailyAttendance.objects.all().delete()
+        DisciplinaryRecord.objects.all().delete()
+        Enrollment.objects.all().delete()
+        Student.objects.all().delete()
         Section.objects.all().delete()
+        Teacher.objects.all().delete()
+        SchoolYear.objects.all().delete()
+        User.objects.filter(is_superuser=False).delete()
 
         # 2. Create Superuser (if not exists)
         if not User.objects.filter(username='admin').exists():
@@ -114,8 +122,8 @@ class Command(BaseCommand):
 
         # 8. Assign Beadles
         for sec in sections:
-            sec_students = [s for s in all_students if s.section == sec]
-            if sec_students:
+            sec_students = Student.objects.filter(section=sec)
+            if sec_students.exists():
                 beadle = random.choice(sec_students)
                 beadle.is_beadle = True
                 beadle.save()
@@ -126,6 +134,8 @@ class Command(BaseCommand):
         # 9. Create Disciplinary Records
         categories = ['Absences', 'Tardiness', 'Conduct', 'Suspension']
         remarks_list = ['Unruly behavior during assembly.', 'Frequent tardiness in the morning.', 'Cutting classes.', 'Disrespectful towards teacher.']
+        prefect_user = User.objects.get(username='prefect_staff')
+        
         for i in range(15):
             student = random.choice(all_students)
             DisciplinaryRecord.objects.create(
@@ -134,35 +144,46 @@ class Command(BaseCommand):
                 date_of_incident=date.today() - timedelta(days=random.randint(1, 30)),
                 remarks=random.choice(remarks_list),
                 demerits=random.randint(5, 20),
-                recorded_by=User.objects.get(username='prefect_staff'),
+                recorded_by=prefect_user,
                 school_year=sy2
             )
         self.stdout.write('Disciplinary Records created.')
 
         # 10. Create Attendance Batches & Records
+        self.stdout.write("Seeding sample attendance...")
+        today = timezone.now().date()
+        
         for sec in sections:
-            if not sec.beadle: continue
+            if not sec.beadle:
+                continue
             
-            # Create a few days of attendance
-            for d in range(5):
-                att_date = date.today() - timedelta(days=d)
-                batch = AttendanceBatch.objects.create(
-                    section=sec,
-                    date=att_date,
-                    submitted_by=sec.beadle,
-                    is_confirmed=(d > 1) # Older ones are confirmed
+            # 1. Create Daily record for this section
+            daily, _ = DailyAttendance.objects.get_or_create(
+                date=today, 
+                section=sec
+            )
+            
+            # 2. Create Period 1 record
+            period, _ = PeriodAttendance.objects.get_or_create(
+                daily_attendance=daily,
+                period_number=1,
+                defaults={
+                    'submitted_by': sec.beadle,
+                    'submitted_at': timezone.now(),
+                    'is_locked': True
+                }
+            )
+            
+            # 3. Create records for every student in this section
+            sec_students = Student.objects.filter(section=sec)
+            for student in sec_students:
+                # Randomize status code
+                status_code = random.choices(['P', 'A', 'L'], weights=[85, 5, 10])[0]
+                StudentPeriodRecord.objects.create(
+                    period=period,
+                    student=student,
+                    code=status_code
                 )
                 
-                sec_students = [s for s in all_students if s.section == sec]
-                for s in sec_students:
-                    status = random.choices(['PRESENT', 'ABSENT', 'LATE'], weights=[85, 5, 10])[0]
-                    AttendanceRecord.objects.create(
-                        batch=batch,
-                        student=s,
-                        date=att_date,
-                        status=status,
-                        is_excused=False
-                    )
         self.stdout.write('Attendance data created.')
-
         self.stdout.write(self.style.SUCCESS('Successfully seeded database.'))
