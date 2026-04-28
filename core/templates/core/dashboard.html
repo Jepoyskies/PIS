@@ -751,6 +751,24 @@
         }
     };
 
+    // Filter by Section if URL param exists
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterSection = urlParams.get('sectionName');
+    if (filterSection) {
+        let visibleCount = 0;
+        document.querySelectorAll('.student-row').forEach(row => {
+            if (row.dataset.section !== filterSection) {
+                row.style.display = 'none'; // Hide non-matching sections
+            } else {
+                visibleCount++;
+            }
+        });
+        const countElement = document.querySelector('.small.text-muted.me-auto');
+        if (countElement) {
+            countElement.innerHTML = `Showing <b>${visibleCount}</b> students in <b>${filterSection}</b>`;
+        }
+    }
+
     // Run on load
     window.addEventListener('load', () => attemptAutoSelect(5));
 

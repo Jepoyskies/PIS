@@ -111,8 +111,7 @@
                         </thead>
                         <tbody>
                             {% for sec in sections %}
-                            <tr style="cursor: pointer;" onclick="window.location.href='{% url 'staff_dashboard' %}'" title="Click to view students in this section">
-                                <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
+<tr style="cursor: pointer;" onclick="window.location.href='{% url 'staff_dashboard' %}?sectionName={{ sec.name|urlencode }}'" title="Click to view students in this section">                                <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
                                 <td class="fw-bold" style="color: var(--xu-blue-1);">{{ sec.name }}</td>
                                 <td class="pe-4">
                                     {% if sec.beadle %}
