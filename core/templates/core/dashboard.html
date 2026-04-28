@@ -65,7 +65,7 @@
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <main class="flex-grow-1 d-flex flex-column">
+    <main class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
         <div class="search-bar-container">
             <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
                 <div class="d-flex align-items-center gap-2">
@@ -83,7 +83,7 @@
             </form>
         </div>
 
-        <div class="flex-grow-1 p-3 d-flex flex-column">
+        <div class="flex-grow-1 p-3 d-flex flex-column" style="min-height: 0;">
             <!-- Dynamic Messages Display -->
             {% if messages %}
             <div class="mb-2">
@@ -169,7 +169,7 @@
             </div>
 
             <!-- ACTION BUTTONS ROW -->
-            <div class="d-flex gap-2 mt-3 align-items-center">
+            <div class="d-flex gap-2 mt-3 align-items-center flex-shrink-0">
                 <div class="small text-muted me-auto">Record 1 of {{ students|length }}</div>
                 
                 <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>

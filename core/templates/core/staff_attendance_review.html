@@ -3,74 +3,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Review Attendance - {{ batch.section.name }}</title>
+    <title>Review Attendance - {{ batch.daily_attendance.section.name }}</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: var(--xu-light-gray); min-height: 100vh; }
-        .beadle-header { background-color: var(--xu-blue-1); border-bottom: 5px solid var(--xu-gold); padding: 15px 0; margin-bottom: 20px; }
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
+        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
         .violation-row { background-color: #fff3cd !important; border-left: 5px solid #dc3545 !important; }
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body>
-    <header class="beadle-header shadow-sm">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-                <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-                <h5 class="text-white fw-bold mb-0">STAFF REVIEW: ATTENDANCE</h5>
+<body class="d-flex flex-column vh-100">
+    <!-- Standard Header -->
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <div class="text-white">
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Staff Attendance Review</div>
             </div>
-            <a href="{% url 'staff_attendance_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK TO LIST</a>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
+                {% csrf_token %}
+                <label class="small fw-bold text-muted mb-0">School Year:</label>
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                    {% for sy in all_school_years %}
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
         </div>
     </header>
 
-    <div class="container pb-5">
-        <div class="card shadow border-0 rounded-3">
-            <div class="card-header bg-white p-4 border-bottom">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h4 class="fw-bold mb-1 text-xu-blue">{{ batch.daily_attendance.section.name }} - Period {{ batch.period_number }}</h4>
-                        <p class="text-muted mb-0 small fw-bold">
-                            📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
-                            🕒 Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
-                            ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        {% if batch.is_approved %}
-                            <div class="alert alert-success m-0 p-2 fw-bold text-center">✅ Approved & Logged</div>
-                        {% else %}
-                            <div class="alert alert-warning m-0 p-2 fw-bold text-center text-dark">⚠️ Pending Admin Approval</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+    <!-- Standard 5-Tab Navigation -->
+    <nav class="main-nav d-flex z-1 shadow-sm">
+        <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link active">ATTENDANCE</a>
+        <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
+    </nav>
 
-            <div class="card-body p-0">
-                <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}">
-                    {% csrf_token %}
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+    <!-- Review Header Bar -->
+    <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
+        <div class="d-flex flex-column">
+            <div class="fw-bold fs-5 mb-0">REVIEW: {{ batch.daily_attendance.section.name }} - Period {{ batch.period_number }}</div>
+            <div class="small opacity-75 fw-bold">
+                📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
+                🕒 Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
+                ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            {% if batch.is_approved %}
+                <div class="badge bg-success fs-6 px-3 py-2 fw-bold shadow-sm border border-light">✅ Approved & Logged</div>
+            {% else %}
+                <div class="badge bg-warning text-dark fs-6 px-3 py-2 fw-bold shadow-sm border border-dark">⚠️ Pending Admin Approval</div>
+            {% endif %}
+            <a href="{% url 'staff_attendance_list' %}" class="btn btn-light btn-sm fw-bold px-4 shadow-sm text-xu-blue">⬅️ BACK TO LIST</a>
+        </div>
+    </div>
+
+    <main class="flex-grow-1 p-3 d-flex flex-column">
+        <div class="container-fluid d-flex flex-column flex-grow-1" style="min-height: 0; max-width: 1400px; margin: 0 auto; width: 100%;">
+            <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" class="d-flex flex-column h-100">
+                {% csrf_token %}
+                <div class="table-container shadow-sm bg-white mb-3">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead style="position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1;">
                             <tr>
-                                <th class="ps-4">Student Name</th>
-                                <th>Submitted Status</th>
-                                <th>Beadle Notes</th>
-                                <th class="pe-4">Admin Override (Optional)</th>
+                                <th class="ps-4 py-3" style="border-bottom: 3px solid var(--xu-gold); width: 30%;">Student Name</th>
+                                <th class="py-3" style="border-bottom: 3px solid var(--xu-gold); width: 15%;">Submitted Status</th>
+                                <th class="py-3" style="border-bottom: 3px solid var(--xu-gold); width: 30%;">Beadle Notes</th>
+                                <th class="pe-4 py-3" style="border-bottom: 3px solid var(--xu-gold); width: 25%;">Admin Override (Optional)</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for rec in batch.records.all %}
                             <tr class="{% if rec.code != 'P' %}violation-row{% endif %}">
                                 <td class="ps-4 py-3">
-    <div class="d-flex align-items-center">
-        <span class="fw-bold">{{ rec.student.last_name }}, {{ rec.student.first_name }}</span>
-        <a href="{% url 'staff_dashboard' %}?searchId={{ rec.student.student_number }}" target="_blank" class="btn btn-outline-secondary py-0 px-2 ms-2 shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" title="Open profile in new tab">
-            🔍 View Profile
-        </a>
-    </div>
-    <div class="text-muted" style="font-size: 0.7rem;">ID: {{ rec.student.student_number }}</div>
-</td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-xu-blue" style="font-size: 1rem;">{{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}</span>
+                                        <div class="d-flex align-items-center mt-1 gap-2">
+                                            <span class="text-muted small fw-bold">ID: {{ rec.student.student_number }}</span>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 fw-bold shadow-sm" style="font-size: 0.7rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ rec.student.student_number }}', '{{ rec.student.last_name|escapejs }}, {{ rec.student.first_name|escapejs }}', '{{ rec.student.sex|default:'-' }}')" title="View Student Offenses">
+                                                🔍 View Offenses
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td>
-                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} rounded-pill px-3 py-2 border shadow-sm">
+                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} rounded-pill px-3 py-2 border shadow-sm" style="font-size: 0.8rem;">
                                         {{ rec.get_code_display }}
                                     </span>
                                 </td>
@@ -83,7 +114,7 @@
                                 </td>
                                 <td class="pe-4">
                                     {% if not batch.is_approved %}
-                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark">
+                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark shadow-sm fw-bold">
                                             <option value="">-- Keep Submitted Status --</option>
                                             <option value="P">Override to Present (P)</option>
                                             <option value="A">Override to Absent (A)</option>
@@ -92,24 +123,78 @@
                                             <option value="ID">Override to No ID (ID)</option>
                                         </select>
                                     {% else %}
-                                        <span class="text-muted small">Locked</span>
+                                        <span class="badge bg-light text-muted border px-3 py-2">Locked</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
 
-                    {% if not batch.is_approved %}
-                    <div class="bg-light p-4 text-end border-top rounded-bottom">
-                        <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
-                            ✅ APPROVE & LOG TO SYSTEM
-                        </button>
+                {% if not batch.is_approved %}
+                <div class="bg-white p-3 border rounded shadow-sm d-flex justify-content-end align-items-center">
+                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides before saving.</span>
+                    <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm">
+                        ✅ APPROVE & LOG TO SYSTEM
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </main>
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- DETAILED OFFENSES MODAL (EMBEDDED) -->
+    <div class="modal fade" id="offenseModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header p-3" style="background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971;">
+                    <div>
+                        <div class="small fw-bold opacity-75 text-black">Student Number: <span id="modal-id-display">---</span></div>
+                        <h4 class="fw-bold m-0 text-black" id="modal-name-display">STUDENT NAME</h4>
+                        <div class="small opacity-75 text-black">Gender: <span id="modal-sex-display">---</span></div>
                     </div>
-                    {% endif %}
-                </form>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="background-color: #f8f9fa;">
+                    <ul class="nav nav-tabs px-3 pt-2 bg-white" role="tablist" style="border-bottom: none;">
+                        <li class="nav-item"><button class="nav-link active fw-bold small" data-bs-toggle="tab" data-bs-target="#pane-offenses" type="button" style="color: #444;">Offenses this School Year</button></li>
+                    </ul>
+                    <div class="tab-content" style="border: 1px solid #dee2e6; border-top: none; min-height: 400px; background: #fff; padding: 15px;">
+                        <div class="tab-pane fade show active" id="pane-offenses">
+                            <table class="table table-bordered table-sm small align-middle">
+                                <thead class="table-light text-center">
+                                    <tr style="font-size: 11px;"><th>Date</th><th>Time</th><th>Offense</th><th>Dem</th><th>Status</th><th>Sanction</th><th>Notes</th><th>Served</th></tr>
+                                </thead>
+                                <tbody id="detailed-offenses-body"><tr><td colspan="8" class="text-center p-5 text-muted fw-bold">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    <script>
+    function openStudentModal(studentId, studentName, studentSex) {
+        document.getElementById('modal-id-display').innerText = studentId;
+        document.getElementById('modal-name-display').innerText = studentName;
+        document.getElementById('modal-sex-display').innerText = studentSex;
+        document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted fw-bold">Loading records...</td></tr>';
+
+        fetch(`/api/student/${studentId}/offenses/`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('detailed-offenses-body');
+                tbody.innerHTML = ''; 
+                if (!data.records || data.records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                } else {
+                    data.records.forEach(rec => {
+                        tbody.innerHTML += `<tr><td>${rec.date_raw || ''}</td><td>${rec.time || '12:00 PM'}</td><td>${rec.category || ''}</td><td class="text-center fw-bold text-danger">${rec.demerits || 0}</td><td>${rec.status || 'Unexcused'}</td><td>${rec.sanction || ''}</td><td>${rec.notes || ''}</td><td class="text-center">${rec.served ? 'Yes' : 'No'}</td></tr>`;
+                    });
+                }
+            }).catch(e => { document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="8" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; });
+    }
+    </script>
 </body>
 </html>

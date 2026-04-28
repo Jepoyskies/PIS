@@ -91,6 +91,7 @@
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link active">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
@@ -110,7 +111,7 @@
                         </thead>
                         <tbody>
                             {% for sec in sections %}
-                            <tr>
+                            <tr style="cursor: pointer;" onclick="window.location.href='{% url 'staff_dashboard' %}'" title="Click to view students in this section">
                                 <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
                                 <td class="fw-bold" style="color: var(--xu-blue-1);">{{ sec.name }}</td>
                                 <td class="pe-4">

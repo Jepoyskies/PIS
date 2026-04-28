@@ -7,17 +7,18 @@
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; }
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; text-decoration: none; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
-        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; }
+        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <!-- Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
+    <!-- Standard Header -->
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
@@ -25,36 +26,50 @@
                 <div class="small opacity-75">Staff Attendance Review</div>
             </div>
         </div>
-        <a href="{% url 'staff_home' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK TO HOME</a>
+        
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
+                {% csrf_token %}
+                <label class="small fw-bold text-muted mb-0">School Year:</label>
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                    {% for sy in all_school_years %}
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
+        </div>
     </header>
 
+    <!-- Standard 5-Tab Navigation -->
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
-        <a href="#" class="nav-link active">ATTENDANCE SUBMISSIONS</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link active">ATTENDANCE</a>
+        <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
     <!-- Date Filter Bar -->
-    <!-- Date Filter Bar -->
-    <div class="search-bar-container shadow-sm">
+    <div class="search-bar-container shadow-sm z-1">
         <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between m-0 gap-3">
-            
             <!-- Quick Filters -->
-            <div class="d-flex gap-2">
-    <!-- Date Ranges -->
-    <div class="btn-group me-3 shadow-sm">
-        <a href="?filter_range=today&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'today' %}active{% endif %}">Today</a>
-        <a href="?filter_range=yesterday&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'yesterday' %}active{% endif %}">Yesterday</a>
-        <a href="?filter_range=this_week&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'this_week' %}active{% endif %}">This Week</a>
-        <a href="?filter_range=all&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'all' %}active{% endif %}">All Dates</a>
-    </div>
+            <div class="d-flex gap-3">
+                <!-- Date Ranges -->
+                <div class="btn-group shadow-sm">
+                    <a href="?filter_range=today&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'today' %}active{% endif %}">Today</a>
+                    <a href="?filter_range=yesterday&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'yesterday' %}active{% endif %}">Yesterday</a>
+                    <a href="?filter_range=this_week&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'this_week' %}active{% endif %}">This Week</a>
+                    <a href="?filter_range=all&status={{ status_filter }}" class="btn btn-outline-light btn-sm fw-bold {% if filter_range == 'all' %}active{% endif %}">All Dates</a>
+                </div>
 
-    <!-- Status States -->
-    <div class="btn-group shadow-sm">
-        <a href="?filter_range={{ filter_range }}&status=pending" class="btn btn-outline-warning btn-sm fw-bold {% if status_filter == 'pending' %}active{% endif %}">⚠️ Pending</a>
-        <a href="?filter_range={{ filter_range }}&status=approved" class="btn btn-outline-success btn-sm fw-bold {% if status_filter == 'approved' %}active{% endif %}">✔️ Approved</a>
-        <a href="?filter_range={{ filter_range }}&status=all" class="btn btn-outline-light btn-sm fw-bold {% if status_filter == 'all' %}active{% endif %}">All Status</a>
-    </div>
-</div>
+                <!-- Status States -->
+                <div class="btn-group shadow-sm ms-2">
+                    <a href="?filter_range={{ filter_range }}&status=pending" class="btn btn-outline-light btn-sm fw-bold {% if status_filter == 'pending' %}active{% endif %}">⚠️ Pending</a>
+                    <a href="?filter_range={{ filter_range }}&status=approved" class="btn btn-outline-light btn-sm fw-bold {% if status_filter == 'approved' %}active{% endif %}">✅ Approved</a>
+                    <a href="?filter_range={{ filter_range }}&status=all" class="btn btn-outline-light btn-sm fw-bold {% if status_filter == 'all' %}active{% endif %}">All Status</a>
+                </div>
             </div>
 
             <!-- Specific Date Filter -->
@@ -63,63 +78,63 @@
                 <input type="date" name="filter_date" value="{{ selected_date }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;">
                 <button type="submit" class="btn btn-xu-gold btn-sm px-3 fw-bold">GO</button>
             </form>
-            
         </div>
     </div>
 
-    <main class="flex-grow-1 p-4 overflow-auto">
-        <div class="container-fluid">
-            <div class="card border-0 shadow-sm rounded-3">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold m-0 text-xu-blue">📂 {{ filter_label }}</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Section</th>
-                                <th>Period</th>
-                                <th>Submitted By (Beadle)</th>
-                                <th>Time Submitted</th>
-                                <th>Status</th>
-                                <th class="text-center pe-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for batch in attendance_batches %}
-                            <tr>
-                                <td class="ps-4 fw-bold">{{ batch.daily_attendance.section.name }} (Gr {{ batch.daily_attendance.section.grade_level }})</td>
-                                <td>Period {{ batch.period_number }}</td>
-                                <td>{{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}</td>
-                                <td class="text-muted small">
-    <div class="fw-bold text-dark">{{ batch.daily_attendance.date|date:'M j, Y' }}</div>
-    <div>{{ batch.submitted_at|time:"h:i A" }}</div>
-</td>
-                                <td>
-                                    {% if batch.is_approved %}
-                                        <span class="badge bg-success">Approved & Logged</span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark">Pending Review</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center pe-4">
-                                    <a href="{% url 'staff_attendance_review' batch.id %}" class="btn btn-sm btn-xu-primary fw-bold px-3">
-                                        {% if batch.is_approved %}View Record{% else %}Review Now{% endif %}
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
-                                    <h5>No attendance records submitted for this date.</h5>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+    <main class="flex-grow-1 p-3 d-flex flex-column">
+        <div class="container-fluid d-flex flex-column flex-grow-1" style="min-height: 0;">
+            <div class="mb-2 text-xu-blue fw-bold d-flex align-items-center gap-2">
+                <span class="fs-5">📂 {{ filter_label }}</span>
+            </div>
+            
+            <div class="table-container shadow-sm bg-white">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                    <thead style="position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1;">
+                        <tr>
+                            <th class="ps-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">Section</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">Period</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">Submitted By (Beadle)</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">Time Submitted</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">Status</th>
+                            <th class="text-center pe-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in attendance_batches %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-xu-blue">{{ batch.daily_attendance.section.name }} <span class="text-muted small fw-normal">(Gr {{ batch.daily_attendance.section.grade_level }})</span></td>
+                            <td class="fw-bold">Period {{ batch.period_number }}</td>
+                            <td>{{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}</td>
+                            <td class="text-muted small">
+                                <div class="fw-bold text-dark">{{ batch.daily_attendance.date|date:'M j, Y' }}</div>
+                                <div>{{ batch.submitted_at|time:"h:i A" }}</div>
+                            </td>
+                            <td>
+                                {% if batch.is_approved %}
+                                    <span class="badge bg-success px-2 py-1 shadow-sm">Approved & Logged</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark px-2 py-1 shadow-sm">Pending Review</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4">
+                                <a href="{% url 'staff_attendance_review' batch.id %}" class="btn btn-sm btn-xu-primary fw-bold px-3 shadow-sm">
+                                    {% if batch.is_approved %}View Record{% else %}Review Now{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <div class="display-6 text-muted opacity-25 mb-3">📂</div>
+                                <h6 class="fw-bold">No attendance records submitted for this selection.</h6>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
+    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

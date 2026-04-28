@@ -9,69 +9,37 @@
     <style>
         body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Navigation Styles */
         .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { 
-            color: #555; 
-            font-weight: 600; 
-            padding: 15px 20px; 
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
 
-        /* Container & Table Styles */
-        .content-area { overflow-y: auto; padding: 20px; height: calc(100vh - 125px); }
+        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
         
         .table-container { 
-            height: 300px; 
-            overflow-y: auto; 
             background-color: white; 
             border: 1px solid var(--xu-border-color);
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-height: 350px; /* Provides a fixed scrollable area */
+            overflow-y: auto;
         }
 
-        .table-xu th { 
-            position: sticky; 
-            top: 0; 
-            background-color: var(--xu-blue-1); 
-            color: white;
-            z-index: 1; 
-            padding: 12px 10px !important;
-            font-size: 0.85rem;
-            border-bottom: 3px solid var(--xu-gold) !important;
-        }
+        .action-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--xu-border-color); background: white;}
+        .action-btn-group .btn { border: none; border-radius: 0; padding: 6px 16px; font-size: 0.85rem; }
+        .action-btn-group .btn:not(:last-child) { border-right: 1px solid var(--xu-border-color); }
 
-        /* Module Fast-Switch Ribbon */
-        .ribbon-nav { border-bottom: 2px solid var(--xu-border-color); padding-bottom: 15px; margin-bottom: 20px; }
-        .nav-ribbon-btn {
-            padding: 8px 24px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: all 0.2s;
-            border: 1px solid var(--xu-border-color);
-            color: #555;
-            background-color: white;
-        }
-        .nav-ribbon-btn:hover { background-color: rgba(40, 57, 113, 0.05); color: var(--xu-blue-1); }
-        .nav-ribbon-btn.active { background-color: var(--xu-blue-1); color: white; border-color: var(--xu-blue-1); }
-
-        .search-card { background-color: var(--xu-blue-2); border-radius: 8px; }
+        .card-xu { border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <!-- Top Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
+    <!-- Standard Header -->
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Prefect Information System - Disciplinary Module</div>
+                <div class="small opacity-75">Disciplinary Module - {{ module_name }}</div>
             </div>
         </div>
         
@@ -85,130 +53,176 @@
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
         </div>
     </header>
 
-    <!-- Main Navigation -->
-    <nav class="main-nav d-flex shadow-sm z-1">
+    <!-- Standard 6-Tab Navigation -->
+    <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'staff_home' %}" class="nav-link active">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
-        <a href="{% url 'staff_attendance_list' %}" class="nav-link {% if 'attendance' in request.path %}active{% endif %}">ATTENDANCE</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <!-- Main Content Workspace -->
-    <main class="flex-grow-1 content-area bg-light">
-        <div class="container-fluid max-w-6xl mx-auto">
+    <!-- Unified Search Bar -->
+    <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
+        <form method="GET" class="d-flex align-items-center gap-4 m-0">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold mb-0 text-uppercase opacity-75">Filter Records by ID:</label>
+                <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search table history...">
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-xu-gold btn-sm px-4 fw-bold">FILTER TABLE</button>
+                <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light btn-sm px-3 text-muted fw-bold">CLEAR</a>
+            </div>
+        </form>
+    </div>
+
+    <main class="flex-grow-1 p-4 overflow-auto">
+        <div class="container-fluid d-flex flex-column gap-3" style="max-width: 1400px; margin: 0 auto;">
             
-            <!-- Fast-Switch Ribbon Navigation -->
-            <div class="d-flex gap-2 ribbon-nav">
-                <a href="{% url 'disciplinary_module' 'CONDUCT' %}" class="nav-ribbon-btn {% if module_name == 'CONDUCT' %}active{% endif %}">CONDUCT</a>
-                <a href="{% url 'disciplinary_module' 'ABSENCES' %}" class="nav-ribbon-btn {% if module_name == 'ABSENCES' %}active{% endif %}">ABSENCES</a>
-                <a href="{% url 'disciplinary_module' 'TARDINESS' %}" class="nav-ribbon-btn {% if module_name == 'TARDINESS' %}active{% endif %}">TARDINESS</a>
-                <a href="{% url 'disciplinary_module' 'SUSPENSION' %}" class="nav-ribbon-btn {% if module_name == 'SUSPENSION' %}active{% endif %}">SUSPENSION</a>
-            </div>
-
-            {% if student %}
-            <div class="alert alert-warning py-2 px-3 fw-bold shadow-sm d-flex align-items-center gap-2 mb-3 border border-warning" style="background-color: #fff9e6; color: #856404;">
-                <span class="fs-5">👤</span>
-                CURRENT STUDENT: {{ student.last_name|upper }}, {{ student.first_name|upper }} ({{ student.student_number }})
-            </div>
-            {% endif %}
-
-            <!-- Search Bar -->
-            <div class="search-card shadow-sm p-3 mb-4 d-flex align-items-center">
-                <form method="GET" class="d-flex align-items-center gap-3 m-0 w-100">
-                    <label class="text-white fw-bold mb-0 text-uppercase small">Find Student ID:</label>
-                    <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control border-0 shadow-sm" style="max-width: 250px;" placeholder="Enter ID Number...">
-                    <button type="submit" class="btn btn-xu-gold fw-bold px-4 shadow-sm">SEARCH</button>
-                    <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light fw-bold px-4 text-muted shadow-sm">CLEAR</a>
-                </form>
+            <!-- Module Fast-Switch Ribbon -->
+            <div class="d-flex gap-2">
+                <a href="{% url 'disciplinary_module' 'CONDUCT' %}" class="btn btn-sm {% if module_name == 'CONDUCT' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">CONDUCT</a>
+                <a href="{% url 'disciplinary_module' 'ABSENCES' %}" class="btn btn-sm {% if module_name == 'ABSENCES' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">ABSENCES</a>
+                <a href="{% url 'disciplinary_module' 'TARDINESS' %}" class="btn btn-sm {% if module_name == 'TARDINESS' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">TARDINESS</a>
+                <a href="{% url 'disciplinary_module' 'SUSPENSION' %}" class="btn btn-sm {% if module_name == 'SUSPENSION' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">SUSPENSION</a>
             </div>
 
             <!-- Incident History Table -->
-            <div class="table-container mb-3">
-                <table class="table table-hover mb-0 small align-middle">
-                    <thead class="table-xu">
+            <div class="table-container shadow-sm">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                    <thead style="position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1;">
                         <tr>
-                            <th class="ps-4">DATE</th>
-                            <th>STUDENT</th>
-                            <th>OFFENSE</th>
-                            <th>REMARKS/DETAILS</th>
-                            <th>DEMERITS</th>
-                            <th class="pe-4">RECORDED BY</th>
+                            <th class="ps-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">DATE</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">STUDENT</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">OFFENSE</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">REMARKS/DETAILS</th>
+                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">DEMERITS</th>
+                            <th class="pe-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">RECORDED BY</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for record in records %}
-                        <tr>
+                        <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ record.student.student_number }}', '{{ record.student.last_name|escapejs }}, {{ record.student.first_name|escapejs }}', '{{ record.student.sex|default:'-' }}')" title="View Student Offenses">
                             <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
-                            <td class="fw-bold">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
-                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ record.offense_name|default:record.category }}</td>
+                            <td class="fw-bold text-xu-blue">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
+                            <td class="fw-bold">{{ record.offense_name|default:record.category }}</td>
                             <td>{{ record.remarks }}</td>
-                            <td><span class="badge bg-danger rounded-pill px-3">{{ record.demerits }}</span></td>
-                            <td class="pe-4 small text-muted">{{ record.recorded_by.username }}</td>
+                            <td><span class="badge bg-danger px-2 py-1 shadow-sm">{{ record.demerits }}</span></td>
+                            <td class="pe-4 small text-muted fst-italic">{{ record.recorded_by.username }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center py-5 text-muted">No records found.</td></tr>
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <div class="display-6 text-muted opacity-25 mb-3">📂</div>
+                                <h6 class="fw-bold">No records found for this module.</h6>
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
 
-            <!-- ACTION BUTTONS ROW (The 5 Buttons) -->
-            {% if student %}
-            <div class="d-flex gap-2 mb-4 align-items-center bg-white p-2 border rounded shadow-sm">
-                <span class="small fw-bold text-muted ms-2 me-auto">STUDENT ACTIONS:</span>
-                <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
-                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal">Preview Letter</button>
-                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal">Offenses by Type</button>
-                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal">View Detailed Offenses</button>
-            </div>
-            {% endif %}
-
             <!-- Log New Record Form -->
-            <div class="card shadow-sm border-0 mb-5">
+            <div class="card card-xu border-0 mb-4 shadow-sm mt-2">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="m-0 fw-bold text-uppercase" style="color: var(--xu-blue-1);">➕ Log New {{ module_name|title }} Record</h6>
-                    {% if not student %}<span class="badge bg-danger">Search for a Student ID to Enable</span>{% endif %}
                 </div>
-                <div class="card-body p-4 bg-white">
+                <div class="card-body p-4 bg-light">
                     <form method="POST">
                         {% csrf_token %}
                         <div class="row g-4 mb-3">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Student ID</label>
+                                <input type="text" name="student_number" class="form-control border-0 shadow-sm fw-bold" required placeholder="e.g. 2024-0001">
+                            </div>
+                            <div class="col-md-2">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Date of Incident</label>
-                                <input type="date" name="date_of_incident" class="form-control border shadow-sm" required value="{{ today|date:'Y-m-d' }}">
+                                <input type="date" name="date_of_incident" class="form-control border-0 shadow-sm" required value="{{ today|date:'Y-m-d' }}">
                             </div>
                             <div class="col-md-2">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
-                                <input type="number" name="demerits" value="0" class="form-control border shadow-sm">
+                                <input type="number" name="demerits" value="0" class="form-control border-0 shadow-sm fw-bold text-danger">
                             </div>
                             <div class="col-md-3">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Offense Category</label>
-                                <input type="text" name="offense_name" value="{{ module_name }}" class="form-control border shadow-sm fw-bold" readonly>
+                                <input type="text" name="offense_name" value="{{ module_name }}" class="form-control border-0 shadow-sm fw-bold text-xu-blue" readonly>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
-                                <input type="text" value="{{ request.user.username }} (Prefect Office)" class="form-control bg-light border-0 text-muted fw-bold" readonly>
+                                <input type="text" value="{{ request.user.username|default:'Prefect Staff' }}" class="form-control bg-white border-0 text-muted fw-bold shadow-sm" readonly>
                             </div>
                         </div>
                         <div class="mb-4">
                             <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details / Remarks</label>
-                            <textarea name="remarks" rows="2" class="form-control border shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..."></textarea>
+                            <textarea name="remarks" rows="2" class="form-control border-0 shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..." required></textarea>
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-xu-primary px-5 fw-bold shadow-sm" {% if not student %}disabled{% endif %}>SAVE RECORD</button>
+                            <button type="submit" class="btn btn-xu-primary px-5 py-2 fw-bold shadow-sm">SAVE INCIDENT RECORD</button>
                         </div>
                     </form>
                 </div>
             </div>
-
+            
         </div>
     </main>
+
+    <!-- DETAILED OFFENSES MODAL (EMBEDDED) -->
+    <div class="modal fade" id="offenseModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header p-3" style="background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971;">
+                    <div>
+                        <div class="small fw-bold opacity-75 text-black">Student Number: <span id="modal-id-display">---</span></div>
+                        <h4 class="fw-bold m-0 text-black" id="modal-name-display">STUDENT NAME</h4>
+                        <div class="small opacity-75 text-black">Gender: <span id="modal-sex-display">---</span></div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="background-color: #f8f9fa;">
+                    <ul class="nav nav-tabs px-3 pt-2 bg-white" role="tablist" style="border-bottom: none;">
+                        <li class="nav-item"><button class="nav-link active fw-bold small" data-bs-toggle="tab" data-bs-target="#pane-offenses" type="button" style="color: #444;">Offenses this School Year</button></li>
+                    </ul>
+                    <div class="tab-content" style="border: 1px solid #dee2e6; border-top: none; min-height: 400px; background: #fff; padding: 15px;">
+                        <div class="tab-pane fade show active" id="pane-offenses">
+                            <table class="table table-bordered table-sm small align-middle">
+                                <thead class="table-light text-center">
+                                    <tr style="font-size: 11px;"><th>Date</th><th>Time</th><th>Offense</th><th>Dem</th><th>Status</th><th>Sanction</th><th>Notes</th><th>Served</th></tr>
+                                </thead>
+                                <tbody id="detailed-offenses-body"><tr><td colspan="8" class="text-center p-5 text-muted fw-bold">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    function openStudentModal(studentId, studentName, studentSex) {
+        document.getElementById('modal-id-display').innerText = studentId;
+        document.getElementById('modal-name-display').innerText = studentName;
+        document.getElementById('modal-sex-display').innerText = studentSex;
+        document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted fw-bold">Loading records...</td></tr>';
+
+        fetch(`/api/student/${studentId}/offenses/`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('detailed-offenses-body');
+                tbody.innerHTML = ''; 
+                if (!data.records || data.records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                } else {
+                    data.records.forEach(rec => {
+                        tbody.innerHTML += `<tr><td>${rec.date_raw || ''}</td><td>${rec.time || '12:00 PM'}</td><td>${rec.category || ''}</td><td class="text-center fw-bold text-danger">${rec.demerits || 0}</td><td>${rec.status || 'Unexcused'}</td><td>${rec.sanction || ''}</td><td>${rec.notes || ''}</td><td class="text-center">${rec.served ? 'Yes' : 'No'}</td></tr>`;
+                    });
+                }
+            }).catch(e => { document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="8" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; });
+    }
+    </script>
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
