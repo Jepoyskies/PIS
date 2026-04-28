@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Attendance - {{ batch.section.name }}</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: var(--xu-light-gray); min-height: 100vh; }
+        .beadle-header { background-color: var(--xu-blue-1); border-bottom: 5px solid var(--xu-gold); padding: 15px 0; margin-bottom: 20px; }
+        .violation-row { background-color: #fff3cd !important; border-left: 5px solid #dc3545 !important; }
+    </style>
+</head>
+<body>
+    <header class="beadle-header shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+                <h5 class="text-white fw-bold mb-0">STAFF REVIEW: ATTENDANCE</h5>
+            </div>
+            <a href="{% url 'staff_attendance_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold">BACK TO LIST</a>
+        </div>
+    </header>
+
+    <div class="container pb-5">
+        <div class="card shadow border-0 rounded-3">
+            <div class="card-header bg-white p-4 border-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="fw-bold mb-1 text-xu-blue">{{ batch.daily_attendance.section.name }} - Period {{ batch.period_number }}</h4>
+                        <p class="text-muted mb-0 small fw-bold">
+                            📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
+                            🕒 Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
+                            ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if batch.is_approved %}
+                            <div class="alert alert-success m-0 p-2 fw-bold text-center">✅ Approved & Logged</div>
+                        {% else %}
+                            <div class="alert alert-warning m-0 p-2 fw-bold text-center text-dark">⚠️ Pending Admin Approval</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}">
+                    {% csrf_token %}
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Student Name</th>
+                                <th>Submitted Status</th>
+                                <th>Beadle Notes</th>
+                                <th class="pe-4">Admin Override (Optional)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec in batch.records.all %}
+                            <tr class="{% if rec.code != 'P' %}violation-row{% endif %}">
+                                <td class="ps-4 py-3">
+    <div class="d-flex align-items-center">
+        <span class="fw-bold">{{ rec.student.last_name }}, {{ rec.student.first_name }}</span>
+        <a href="{% url 'staff_dashboard' %}?searchId={{ rec.student.student_number }}" target="_blank" class="btn btn-outline-secondary py-0 px-2 ms-2 shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" title="Open profile in new tab">
+            🔍 View Profile
+        </a>
+    </div>
+    <div class="text-muted" style="font-size: 0.7rem;">ID: {{ rec.student.student_number }}</div>
+</td>
+                                <td>
+                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} rounded-pill px-3 py-2 border shadow-sm">
+                                        {{ rec.get_code_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if rec.note %}
+                                        <span class="text-muted fst-italic small">📝 {{ rec.note }}</span>
+                                    {% else %}
+                                        <span class="text-muted opacity-50 small">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4">
+                                    {% if not batch.is_approved %}
+                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark">
+                                            <option value="">-- Keep Submitted Status --</option>
+                                            <option value="P">Override to Present (P)</option>
+                                            <option value="A">Override to Absent (A)</option>
+                                            <option value="L">Override to Late (L)</option>
+                                            <option value="UU">Override to Uniform (UU)</option>
+                                            <option value="ID">Override to No ID (ID)</option>
+                                        </select>
+                                    {% else %}
+                                        <span class="text-muted small">Locked</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    {% if not batch.is_approved %}
+                    <div class="bg-light p-4 text-end border-top rounded-bottom">
+                        <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
+                            ✅ APPROVE & LOG TO SYSTEM
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

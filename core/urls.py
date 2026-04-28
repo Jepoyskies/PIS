@@ -22,7 +22,7 @@ urlpatterns = [
     
     # INJECTED FIX: Added <int:batch_id>
     path('staff/attendance-review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
-    path('staff/attendance-confirm/<int:batch_id>/', views.staff_attendance_confirm, name='staff_attendance_confirm'),
+    
 
     # Portals
     path('beadle/dashboard/', views.beadle_dashboard, name='beadle_dashboard'),
@@ -30,4 +30,8 @@ urlpatterns = [
 
     #Dashboard Buttons
     path('reports/', views.reports_dashboard, name='reports_dashboard'),
+
+    path('staff/attendance/list/', views.staff_attendance_list, name='staff_attendance_list'),
+    path('staff/attendance/review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
+    path('staff/attendance/approve/<int:batch_id>/', views.approve_attendance_batch, name='approve_attendance_batch'),
 ]

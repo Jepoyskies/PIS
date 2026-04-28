@@ -94,6 +94,7 @@
         <a href="{% url 'staff_home' %}" class="nav-link active">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link {% if 'attendance' in request.path %}active{% endif %}">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
@@ -128,86 +129,79 @@
             </div>
 
             <!-- Incident History Table -->
-            <div class="table-container mb-4">
+            <div class="table-container mb-3">
                 <table class="table table-hover mb-0 small align-middle">
                     <thead class="table-xu">
-    <tr>
-        <th class="ps-4">DATE</th>
-        <th>STUDENT</th> <!-- ADD THIS COLUMN -->
-        <th>CATEGORY</th>
-        <th>REMARKS/DETAILS</th>
-        <th>DEMERITS</th>
-        <th class="pe-4">RECORDED BY</th>
-    </tr>
-</thead>
-<tbody>
-    {% for record in records %}
-    <tr>
-        <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
-        <!-- ADD THIS CELL -->
-        <td class="fw-bold">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
-        
-        <td class="fw-bold" style="color: var(--xu-blue-1);">{{ record.category }}</td>
-        <td>{{ record.remarks }}</td>
-        <td><span class="badge bg-danger rounded-pill px-3">{{ record.demerits }}</span></td>
-        <td class="pe-4">{{ record.recorded_by.username }}</td>
-    </tr>
-    ...
-                        {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-5">
-                                <div class="display-6 text-muted opacity-25 mb-2">📁</div>
-                                <p class="text-muted fw-bold">No {{ module_name|lower }} records found for this student.</p>
-                            </td>
+                            <th class="ps-4">DATE</th>
+                            <th>STUDENT</th>
+                            <th>OFFENSE</th>
+                            <th>REMARKS/DETAILS</th>
+                            <th>DEMERITS</th>
+                            <th class="pe-4">RECORDED BY</th>
                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
+                            <td class="fw-bold">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
+                            <td class="fw-bold" style="color: var(--xu-blue-1);">{{ record.offense_name|default:record.category }}</td>
+                            <td>{{ record.remarks }}</td>
+                            <td><span class="badge bg-danger rounded-pill px-3">{{ record.demerits }}</span></td>
+                            <td class="pe-4 small text-muted">{{ record.recorded_by.username }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-5 text-muted">No records found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
 
+            <!-- ACTION BUTTONS ROW (The 5 Buttons) -->
+            {% if student %}
+            <div class="d-flex gap-2 mb-4 align-items-center bg-white p-2 border rounded shadow-sm">
+                <span class="small fw-bold text-muted ms-2 me-auto">STUDENT ACTIONS:</span>
+                <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
+                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal">Preview Letter</button>
+                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal">Offenses by Type</button>
+                <button type="button" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal">View Detailed Offenses</button>
+            </div>
+            {% endif %}
+
             <!-- Log New Record Form -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h6 class="m-0 fw-bold text-uppercase" style="color: var(--xu-blue-1); letter-spacing: 1px;">➕ Log New Record</h6>
+            <div class="card shadow-sm border-0 mb-5">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-uppercase" style="color: var(--xu-blue-1);">➕ Log New {{ module_name|title }} Record</h6>
+                    {% if not student %}<span class="badge bg-danger">Search for a Student ID to Enable</span>{% endif %}
                 </div>
-                <div class="card-body p-4 bg-light">
+                <div class="card-body p-4 bg-white">
                     <form method="POST">
                         {% csrf_token %}
-                        <input type="hidden" name="save_record" value="1">
-                        <input type="hidden" name="student_number" value="{{ student.student_number }}">
-                        
                         <div class="row g-4 mb-3">
                             <div class="col-md-3">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Date of Incident</label>
-                                <input type="date" name="date_of_incident" class="form-control border-0 shadow-sm" required>
+                                <input type="date" name="date_of_incident" class="form-control border shadow-sm" required value="{{ today|date:'Y-m-d' }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
-                                <input type="number" name="demerits" value="0" class="form-control border-0 shadow-sm">
+                                <input type="number" name="demerits" value="0" class="form-control border shadow-sm">
                             </div>
                             <div class="col-md-3">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Offense Level</label>
-                                <select name="offense_level" class="form-select border-0 shadow-sm">
-                                    <option>Minor</option>
-                                    <option>Major</option>
-                                    <option>Grave</option>
-                                </select>
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Offense Category</label>
+                                <input type="text" name="offense_name" value="{{ module_name }}" class="form-control border shadow-sm fw-bold" readonly>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
-                                <input type="text" value="{{ request.user.username }}" class="form-control bg-white border-0 shadow-sm text-muted fw-bold" readonly>
+                                <input type="text" value="{{ request.user.username }} (Prefect Office)" class="form-control bg-light border-0 text-muted fw-bold" readonly>
                             </div>
                         </div>
-                        
                         <div class="mb-4">
                             <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details / Remarks</label>
-                            <textarea name="details" rows="3" class="form-control border-0 shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..."></textarea>
+                            <textarea name="remarks" rows="2" class="form-control border shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..."></textarea>
                         </div>
-                        
                         <div class="text-end">
-                            <button type="submit" class="btn btn-xu-primary px-5 fw-bold shadow-sm" {% if not student %}disabled title="Search for a student first"{% endif %}>
-                                SAVE RECORD
-                            </button>
+                            <button type="submit" class="btn btn-xu-primary px-5 fw-bold shadow-sm" {% if not student %}disabled{% endif %}>SAVE RECORD</button>
                         </div>
                     </form>
                 </div>

@@ -13,8 +13,7 @@
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
         .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
-        .table-container { height: calc(100vh - 260px); overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
+.table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
         .selected-row { background-color: rgba(58, 83, 164, 0.1) !important; }
         .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
         .student-photo-placeholder { width: 120px; height: 140px; border: 2px solid #283971; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #ccc; }
@@ -61,6 +60,7 @@
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link active">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link {% if 'attendance' in request.path %}active{% endif %}">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
@@ -662,74 +662,97 @@
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
     // 1. Logic for Row Selection and Data Fetching
+    const selectStudent = (row) => {
+        const studentId = row.dataset.id;
+        const studentName = row.dataset.name;
+        const studentSection = row.dataset.section;
+        const studentAddress = row.dataset.address;
+
+        document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+        
+        // Enable buttons
+        const btnView = document.getElementById('btn-view-offenses');
+        const btnType = document.getElementById('btn-offenses-by-type');
+        const btnPreviewLetter = document.getElementById('btn-preview-letter');
+        
+        if(btnView) btnView.disabled = false;
+        if(btnType) btnType.disabled = false;
+        if(btnPreviewLetter) btnPreviewLetter.disabled = false;
+
+        // Populate Detailed Modal Identifiers
+        document.getElementById('modal-id-display').innerText = studentId;
+        document.getElementById('modal-name-display').innerText = studentName;
+        document.getElementById('modal-sex-display').innerText = row.dataset.sex;
+        document.getElementById('type-modal-name').innerText = studentName;
+
+        // Populate Preview Letter fields
+        const plId = document.getElementById('pl-student-id');
+        const plName = document.getElementById('pl-name');
+        const plSec = document.getElementById('pl-section');
+        const plAdd = document.getElementById('pl-address');
+        
+        if(plId) plId.value = studentId;
+        if(plName) plName.value = studentName;
+        if(plSec) plSec.value = studentSection;
+        if(plAdd) plAdd.value = studentAddress;
+
+        // Format Today's Date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const todayStr = new Date().toLocaleDateString('en-US', options);
+        const plDate = document.getElementById('pl-current-date');
+        if(plDate) plDate.innerText = todayStr;
+
+        // Fetch Data from API
+        fetch(`/api/student/${studentId}/offenses/`)
+            .then(response => response.json())
+            .then(data => {
+                const summaryBody = document.getElementById('offenses-by-type-body');
+                summaryBody.innerHTML = ''; 
+                data.summary.forEach(item => {
+                    summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
+                });
+
+                const detailedBody = document.getElementById('detailed-offenses-body');
+                detailedBody.innerHTML = ''; 
+                if (data.records.length === 0) {
+                    detailedBody.innerHTML = '<tr><td colspan="9" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                } else {
+                    data.records.forEach(rec => createOffenseRow(rec));
+                }
+            });
+    };
+
+    // Attach click listener to all rows
     document.querySelectorAll('.student-row').forEach(row => {
         row.addEventListener('click', (e) => {
             if (e.target.closest('.action-stop')) return;
-
-            const studentId = row.dataset.id;
-            const studentName = row.dataset.name;
-            const studentSection = row.dataset.section;
-            const studentAddress = row.dataset.address;
-
-            document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
-            row.classList.add('selected-row');
-            
-            // Enable buttons
-            const btnView = document.getElementById('btn-view-offenses');
-            const btnType = document.getElementById('btn-offenses-by-type');
-            const btnPreviewLetter = document.getElementById('btn-preview-letter');
-            
-            if(btnView) btnView.disabled = false;
-            if(btnType) btnType.disabled = false;
-            if(btnPreviewLetter) btnPreviewLetter.disabled = false;
-
-            // Populate Detailed Modal Identifiers
-            document.getElementById('modal-id-display').innerText = studentId;
-            document.getElementById('modal-name-display').innerText = studentName;
-            document.getElementById('modal-sex-display').innerText = row.dataset.sex;
-            document.getElementById('type-modal-name').innerText = studentName;
-
-            // Populate Preview Letter fields automatically
-            const plId = document.getElementById('pl-student-id');
-            const plName = document.getElementById('pl-name');
-            const plSec = document.getElementById('pl-section');
-            const plAdd = document.getElementById('pl-address');
-            
-            if(plId) plId.value = studentId;
-            if(plName) plName.value = studentName;
-            if(plSec) plSec.value = studentSection;
-            if(plAdd) plAdd.value = studentAddress;
-
-            // Format Today's Date like: "Wednesday, April 22, 2026"
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const todayStr = new Date().toLocaleDateString('en-US', options);
-            const plDate = document.getElementById('pl-current-date');
-            if(plDate) plDate.innerText = todayStr;
-
-            fetch(`/api/student/${studentId}/offenses/`)
-                .then(response => response.json())
-                .then(data => {
-                    // Populate Summary Modal
-                    const summaryBody = document.getElementById('offenses-by-type-body');
-                    summaryBody.innerHTML = ''; 
-                    data.summary.forEach(item => {
-                        summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
-                    });
-
-                    // Populate Editable Detailed Table
-                    const detailedBody = document.getElementById('detailed-offenses-body');
-                    detailedBody.innerHTML = ''; 
-
-                    if (data.records.length === 0) {
-                        detailedBody.innerHTML = '<tr><td colspan="9" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
-                    } else {
-                        data.records.forEach(rec => {
-                            createOffenseRow(rec);
-                        });
-                    }
-                });
+            selectStudent(row);
         });
     });
+
+// REPLACEMENT: Bulletproof Auto-Select Logic
+    const attemptAutoSelect = (attempts) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchId = urlParams.get('searchId');
+
+        if (searchId) {
+            const cleanId = searchId.trim(); // Remove any accidental spaces
+            // Try to find the row
+            const targetRow = document.querySelector(`.student-row[data-id="${cleanId}"]`);
+
+            if (targetRow) {
+                console.log("Auto-selecting student:", cleanId);
+                selectStudent(targetRow);
+            } else if (attempts > 0) {
+                // If not found, wait 100ms and try again (up to 5 times)
+                setTimeout(() => attemptAutoSelect(attempts - 1), 100);
+            }
+        }
+    };
+
+    // Run on load
+    window.addEventListener('load', () => attemptAutoSelect(5));
 
     // The core function that builds the editable row
     function createOffenseRow(data = {}) {
@@ -739,7 +762,7 @@
         row.innerHTML = `
             <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
             <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"</td>
+            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"></td>
             <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" oninput="calculateRow(this)"></td>
             <td>
                 <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
@@ -747,8 +770,8 @@
                     <option value="Excused" ${data.status == 'Excused' ? 'selected' : ''}>Excused</option>
                 </select>
             </td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value=""></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.offense || ''}" placeholder="Details..."></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${data.sanction || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
             <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count" readonly value="0"></td>
         `;

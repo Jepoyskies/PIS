@@ -127,6 +127,7 @@ class PeriodAttendance(TimeStampedModel):
     is_locked = models.BooleanField(default=False)
     submitted_by = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, help_text="Beadle who submitted")
     submitted_at = models.DateTimeField(null=True, blank=True)
+    is_approved = models.BooleanField(default=False)
     
     class Meta:
         unique_together = ('daily_attendance', 'period_number')

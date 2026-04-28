@@ -34,7 +34,7 @@ def get_staff_context(request):
         active_sy = SchoolYear.objects.filter(is_active=True).first()
         
     # INJECTED: Temporarily empty while we rebuild the Staff Review Module
-    pending_batches =[]
+    pending_batches = PeriodAttendance.objects.filter(is_locked=True, is_approved=False).select_related('daily_attendance__section', 'submitted_by')
         
     context = {
         'all_school_years': all_school_years, 
@@ -317,12 +317,96 @@ def disciplinary_module(request, category):
 
 # INJECTED: Review & Confirm Attendance Logic
 @login_required
-def staff_attendance_review(request, batch_id):
-    pass
+def staff_attendance_list(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    from datetime import timedelta
+    from django.db.models import Q
+
+    # 1. Get Params
+    filter_range = request.GET.get('filter_range', 'default')
+    status_filter = request.GET.get('status', 'all')
+    selected_date_str = request.GET.get('filter_date')
+    
+    # 2. Base Query (Only locked/submitted records)
+    batches = PeriodAttendance.objects.filter(is_locked=True).select_related('daily_attendance__section', 'submitted_by')
+
+    # 3. Apply Date Filters
+    today = timezone.now().date()
+    if selected_date_str:
+        date_obj = timezone.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        batches = batches.filter(daily_attendance__date=date_obj)
+    elif filter_range == 'today':
+        batches = batches.filter(daily_attendance__date=today)
+    elif filter_range == 'yesterday':
+        batches = batches.filter(daily_attendance__date=today - timedelta(days=1))
+    elif filter_range == 'this_week':
+        start_of_week = today - timedelta(days=today.weekday())
+        batches = batches.filter(daily_attendance__date__gte=start_of_week)
+    elif filter_range == 'default':
+        # Default view: Pending items OR today's items
+        batches = batches.filter(Q(is_approved=False) | Q(daily_attendance__date=today))
+
+    # 4. Apply Status Filters (Additive)
+    if status_filter == 'approved':
+        batches = batches.filter(is_approved=True)
+    elif status_filter == 'pending':
+        batches = batches.filter(is_approved=False)
+
+    # 5. Context for UI
+    context.update({
+        'attendance_batches': batches.order_by('-daily_attendance__date', 'daily_attendance__section', 'period_number'),
+        'filter_range': filter_range,
+        'status_filter': status_filter,
+        'selected_date': selected_date_str,
+    })
+    return render(request, 'core/staff_attendance_list.html', context)
 
 @login_required
-def staff_attendance_confirm(request, batch_id):
-    pass
+def staff_attendance_review(request, batch_id):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    batch = get_object_or_404(PeriodAttendance.objects.prefetch_related('records__student'), id=batch_id)
+    context['batch'] = batch
+    return render(request, 'core/staff_attendance_review.html', context)
+
+@login_required
+def approve_attendance_batch(request, batch_id):
+    if not request.user.is_staff: return redirect('home')
+    batch = get_object_or_404(PeriodAttendance, id=batch_id)
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            for rec in batch.records.all():
+                override_code = request.POST.get(f'override_{rec.id}')
+                
+                # If admin selected an override, update the record
+                if override_code:
+                    rec.code = override_code
+                    rec.save()
+
+                # AUTO-LOGIC: If code is not 'Present', log it as a Disciplinary Record!
+                if rec.code != 'P':
+                    DisciplinaryRecord.objects.create(
+                        student=rec.student,
+                        category="ATTENDANCE", 
+                        offense_name=rec.get_code_display(), # Maps "No ID", "Absent", etc. to the Offense Column
+                        date_of_incident=batch.daily_attendance.date,
+                        demerits=3 if rec.code == 'A' else 1,
+                        remarks="", # Left blank so staff can type custom notes later!
+                        recorded_by=request.user,
+                        school_year=batch.daily_attendance.section.students.first().enrollments.first().school_year
+                    )
+
+            # Lock and Approve
+            batch.is_approved = True
+            batch.save()
+            messages.success(request, "Attendance successfully approved and logged to Conduct/Disciplinary system!")
+            
+    # Redirect back to the SAME page so they don't lose their place!
+    return redirect('staff_attendance_review', batch_id=batch.id)
 
 @login_required
 def api_student_offenses(request, student_id):
@@ -332,14 +416,18 @@ def api_student_offenses(request, student_id):
     # Get all records for this student in the active school year
     records = DisciplinaryRecord.objects.filter(student__student_number=student_id, **sy_filter).order_by('-date_of_incident')
     
-    # 1. Format data for the detailed modal
+# 1. Format data for the detailed modal
     detailed_records =[]
     for r in records:
         detailed_records.append({
-            'date': r.date_of_incident.strftime('%m/%d/%Y'),
-            'category': r.category,
-            'offense': r.remarks, # You can change this later when you add specific dropdowns
+            'date_raw': r.date_of_incident.strftime('%Y-%m-%d'),
+            'time': r.time_of_incident.strftime('%I:%M %p') if r.time_of_incident else '12:00 PM',
+            'category': r.offense_name if r.offense_name else r.category, # Prioritizes specific offense like "No ID"
             'demerits': r.demerits,
+            'status': 'Excused' if r.is_excused else 'Unexcused',
+            'sanction': r.sanction or '',
+            'notes': r.remarks or '', # Maps exactly to the Notes column
+            'served': r.is_served
         })
         
     # 2. Format data for the "Offenses By Type" Modal (Groups them and counts them)
