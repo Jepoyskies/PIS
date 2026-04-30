@@ -10,7 +10,7 @@ from django.db.models import Count
 
 from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, DailyAttendance, PeriodAttendance, StudentPeriodRecord
 from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm
-
+import json
 # ==========================================
 # HELPER FUNCTIONS (Must be at the top)
 # ==========================================
@@ -426,35 +426,75 @@ def approve_attendance_batch(request, batch_id):
     # Redirect back to the SAME page so they don't lose their place!
     return redirect('staff_attendance_review', batch_id=batch.id)
 
+import json
+
 @login_required
 def api_student_offenses(request, student_id):
+    student = get_object_or_404(Student, student_number=student_id)
+    
+    # 1. HANDLE SAVING PERSONAL INFO
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # List of all the fields we can update from the modal
+            fields =['address', 'home_phone', 'date_of_birth', 'birthplace', 'citizenship', 'nationality', 'religion', 
+                      'brothers', 'sisters', 'guardian_name', 'guardian_address', 'guardian_contact',
+                      'father_name', 'father_attainment', 'father_occupation', 'father_office_name', 'father_office_number', 
+                      'father_office_address', 'father_contact', 'mother_name', 'mother_attainment', 'mother_occupation', 
+                      'mother_office_name', 'mother_office_number', 'mother_office_address', 'mother_contact']
+            
+            for field in fields:
+                if field in data:
+                    # Handle empty numbers for brothers/sisters
+                    if field in ['brothers', 'sisters']:
+                        val = data[field]
+                        setattr(student, field, int(val) if val else 0)
+                    else:
+                        setattr(student, field, data[field])
+            student.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    # 2. HANDLE GETTING DATA
     active_sy_id = request.session.get('active_sy_id')
     sy_filter = {'school_year_id': active_sy_id} if active_sy_id else {'school_year__is_active': True}
+    records = DisciplinaryRecord.objects.filter(student=student, **sy_filter).order_by('-date_of_incident')
     
-    # Get all records for this student in the active school year
-    records = DisciplinaryRecord.objects.filter(student__student_number=student_id, **sy_filter).order_by('-date_of_incident')
-    
-# 1. Format data for the detailed modal
     detailed_records =[]
     for r in records:
         detailed_records.append({
             'date_raw': r.date_of_incident.strftime('%Y-%m-%d'),
             'time': r.time_of_incident.strftime('%I:%M %p') if r.time_of_incident else '12:00 PM',
-            'category': r.offense_name if r.offense_name else r.category, # Prioritizes specific offense like "No ID"
+            'category': r.offense_name if r.offense_name else r.category,
             'demerits': r.demerits,
             'status': 'Excused' if r.is_excused else 'Unexcused',
             'sanction': r.sanction or '',
-            'notes': r.remarks or '', # Maps exactly to the Notes column
+            'notes': r.remarks or '',
             'served': r.is_served
         })
         
-    # 2. Format data for the "Offenses By Type" Modal (Groups them and counts them)
     summary = records.values('category').annotate(count=Count('id')).order_by('category')
     summary_list = [{'category': s['category'], 'count': s['count']} for s in summary]
     
+    # 3. BUILD PERSONAL INFO PAYLOAD
+    student_info = {
+        'address': student.address, 'home_phone': student.home_phone, 
+        'date_of_birth': student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '',
+        'birthplace': student.birthplace, 'citizenship': student.citizenship, 'nationality': student.nationality,
+        'religion': student.religion, 'brothers': student.brothers, 'sisters': student.sisters,
+        'guardian_name': student.guardian_name, 'guardian_address': student.guardian_address, 'guardian_contact': student.guardian_contact,
+        'father_name': student.father_name, 'father_attainment': student.father_attainment, 'father_occupation': student.father_occupation,
+        'father_office_name': student.father_office_name, 'father_office_number': student.father_office_number, 'father_office_address': student.father_office_address,
+        'father_contact': student.father_contact, 'mother_name': student.mother_name, 'mother_attainment': student.mother_attainment,
+        'mother_occupation': student.mother_occupation, 'mother_office_name': student.mother_office_name, 'mother_office_number': student.mother_office_number,
+        'mother_office_address': student.mother_office_address, 'mother_contact': student.mother_contact
+    }
+    
     return JsonResponse({
         'records': detailed_records,
-        'summary': summary_list
+        'summary': summary_list,
+        'student_info': student_info # Sent to frontend!
     })
 
 @login_required

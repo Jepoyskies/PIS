@@ -56,6 +56,35 @@ class Student(TimeStampedModel):
     date_of_birth = models.DateField(null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     
+    # NEW: EXTENDED PERSONAL & FAMILY INFORMATION
+    home_phone = models.CharField(max_length=50, blank=True, null=True)
+    birthplace = models.CharField(max_length=255, blank=True, null=True)
+    citizenship = models.CharField(max_length=50, blank=True, null=True)
+    nationality = models.CharField(max_length=50, blank=True, null=True)
+    religion = models.CharField(max_length=100, blank=True, null=True)
+    brothers = models.IntegerField(default=0)
+    sisters = models.IntegerField(default=0)
+    
+    guardian_name = models.CharField(max_length=255, blank=True, null=True)
+    guardian_address = models.CharField(max_length=255, blank=True, null=True)
+    guardian_contact = models.CharField(max_length=50, blank=True, null=True)
+
+    father_name = models.CharField(max_length=255, blank=True, null=True)
+    father_attainment = models.CharField(max_length=255, blank=True, null=True)
+    father_occupation = models.CharField(max_length=255, blank=True, null=True)
+    father_office_name = models.CharField(max_length=255, blank=True, null=True)
+    father_office_number = models.CharField(max_length=50, blank=True, null=True)
+    father_office_address = models.CharField(max_length=255, blank=True, null=True)
+    father_contact = models.CharField(max_length=50, blank=True, null=True)
+
+    mother_name = models.CharField(max_length=255, blank=True, null=True)
+    mother_attainment = models.CharField(max_length=255, blank=True, null=True)
+    mother_occupation = models.CharField(max_length=255, blank=True, null=True)
+    mother_office_name = models.CharField(max_length=255, blank=True, null=True)
+    mother_office_number = models.CharField(max_length=50, blank=True, null=True)
+    mother_office_address = models.CharField(max_length=255, blank=True, null=True)
+    mother_contact = models.CharField(max_length=50, blank=True, null=True)
+    
     # UPDATED FIELDS
     status = models.CharField(max_length=20, choices=[('OLD', 'Old'), ('NEW', 'New'), ('TRANSFEREE', 'Transferee')], default='NEW')
     photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)

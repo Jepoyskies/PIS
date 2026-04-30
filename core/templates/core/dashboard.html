@@ -115,7 +115,8 @@
     data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
     data-sex="{{ student.sex }}"
     data-section="{{ student.section.name|default:'' }}"
-    data-address="{{ student.address|default:'' }}">
+    data-address="{{ student.address|default:'' }}"
+    data-bday="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}">
                             
                             <td class="ps-3 fw-bold">{{ student.student_number }}</td>
                             <td class="fw-bold" style="color: var(--xu-blue-1);">
@@ -399,63 +400,28 @@
                     <div class="tab-content legacy-tab-content" id="offenseTabsContent">
                         
                         <!-- TAB 1: PERSONAL INFORMATION -->
+                        <!-- TAB 1: PERSONAL INFORMATION -->
                         <div class="tab-pane fade" id="pane-personal" role="tabpanel">
                             <div class="row g-3">
                                 <!-- Left Column -->
                                 <div class="col-md-5">
                                     <div class="info-group-box pt-3">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
-                                            <div class="col-sm-8"><textarea class="form-control form-control-sm" rows="2" style="resize: none;"></textarea></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Home Phone #:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label><div class="col-sm-8"><textarea name="address" class="form-control form-control-sm personal-info-input" rows="2" style="resize: none;"></textarea></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Home Phone #:</label><div class="col-sm-8"><input type="text" name="home_phone" class="form-control form-control-sm personal-info-input"></div></div>
                                     </div>
                                     <div class="info-group-box pt-3 bg-legacy-blue">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthday:</label>
-                                            <div class="col-sm-8"><input type="date" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthplace:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Nationality:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Religion:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Brothers:</label>
-                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Sisters:</label>
-                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
-                                        </div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthday:</label><div class="col-sm-8"><input type="date" name="date_of_birth" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthplace:</label><div class="col-sm-8"><input type="text" name="birthplace" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label><div class="col-sm-8"><input type="text" name="citizenship" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Nationality:</label><div class="col-sm-8"><input type="text" name="nationality" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Religion:</label><div class="col-sm-8"><input type="text" name="religion" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Brothers:</label><div class="col-sm-8"><input type="number" name="brothers" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Sisters:</label><div class="col-sm-8"><input type="number" name="sisters" class="form-control form-control-sm personal-info-input"></div></div>
                                     </div>
                                     <div class="info-group-box pt-3">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Guardian Name:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Contact Number:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Guardian Name:</label><div class="col-sm-8"><input type="text" name="guardian_name" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label><div class="col-sm-8"><input type="text" name="guardian_address" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-8"><input type="text" name="guardian_contact" class="form-control form-control-sm personal-info-input"></div></div>
                                     </div>
                                 </div>
 
@@ -463,23 +429,27 @@
                                 <div class="col-md-7">
                                     <div class="info-group-box mt-2 bg-legacy-blue">
                                         <span class="info-group-title">FATHER</span>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" name="father_name" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" name="father_attainment" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" name="father_occupation" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" name="father_office_name" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" name="father_office_number" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" name="father_office_address" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" name="father_contact" class="form-control form-control-sm personal-info-input"></div></div>
                                     </div>
                                     <div class="info-group-box mt-3">
                                         <span class="info-group-title">MOTHER</span>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" name="mother_name" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" name="mother_attainment" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" name="mother_occupation" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" name="mother_office_name" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" name="mother_office_number" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" name="mother_office_address" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" name="mother_contact" class="form-control form-control-sm personal-info-input"></div></div>
+                                    </div>
+                                    <!-- NEW SAVE BUTTON -->
+                                    <div class="text-end mt-2">
+                                        <button type="button" class="btn btn-success fw-bold px-4" onclick="savePersonalInfo()">💾 Save Personal Info</button>
                                     </div>
                                 </div>
                             </div>
@@ -667,6 +637,7 @@
         const studentName = row.dataset.name;
         const studentSection = row.dataset.section;
         const studentAddress = row.dataset.address;
+        const studentBday = row.dataset.bday;
 
         document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
         row.classList.add('selected-row');
@@ -707,21 +678,36 @@
         fetch(`/api/student/${studentId}/offenses/`)
             .then(response => response.json())
             .then(data => {
+                // 1. Clear all previous inputs to fix the "Ghost" bug
+                document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
+                
+                // 2. Fill inputs with the actual database values
+                if (data.student_info) {
+                    Object.keys(data.student_info).forEach(key => {
+                        const input = document.querySelector(`.personal-info-input[name="${key}"]`);
+                        if(input) input.value = data.student_info[key] || '';
+                    });
+                }
+
+                // 3. Load Summaries
                 const summaryBody = document.getElementById('offenses-by-type-body');
                 summaryBody.innerHTML = ''; 
-                data.summary.forEach(item => {
-                    summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
-                });
+                if (data.summary) {
+                    data.summary.forEach(item => {
+                        summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
+                    });
+                }
 
+                // 4. Load Detailed Records
                 const detailedBody = document.getElementById('detailed-offenses-body');
                 detailedBody.innerHTML = ''; 
-                if (data.records.length === 0) {
+                if (!data.records || data.records.length === 0) {
                     detailedBody.innerHTML = '<tr><td colspan="9" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
                 } else {
                     data.records.forEach(rec => createOffenseRow(rec));
                 }
             });
-    };
+    }; // <--- THIS is the bracket that was missing and broke the page!
 
     // Attach click listener to all rows
     document.querySelectorAll('.student-row').forEach(row => {
@@ -731,34 +717,31 @@
         });
     });
 
-// REPLACEMENT: Bulletproof Auto-Select Logic
+    // Auto-Select Logic
     const attemptAutoSelect = (attempts) => {
         const urlParams = new URLSearchParams(window.location.search);
         const searchId = urlParams.get('searchId');
 
         if (searchId) {
-            const cleanId = searchId.trim(); // Remove any accidental spaces
-            // Try to find the row
+            const cleanId = searchId.trim();
             const targetRow = document.querySelector(`.student-row[data-id="${cleanId}"]`);
 
             if (targetRow) {
-                console.log("Auto-selecting student:", cleanId);
                 selectStudent(targetRow);
             } else if (attempts > 0) {
-                // If not found, wait 100ms and try again (up to 5 times)
                 setTimeout(() => attemptAutoSelect(attempts - 1), 100);
             }
         }
     };
 
-    // Filter by Section if URL param exists
+    // Filter by Section
     const urlParams = new URLSearchParams(window.location.search);
     const filterSection = urlParams.get('sectionName');
     if (filterSection) {
         let visibleCount = 0;
         document.querySelectorAll('.student-row').forEach(row => {
             if (row.dataset.section !== filterSection) {
-                row.style.display = 'none'; // Hide non-matching sections
+                row.style.display = 'none';
             } else {
                 visibleCount++;
             }
@@ -772,7 +755,6 @@
     // Run on load
     window.addEventListener('load', () => attemptAutoSelect(5));
 
-    // The core function that builds the editable row
     function createOffenseRow(data = {}) {
         const tbody = document.getElementById('detailed-offenses-body');
         const row = document.createElement('tr');
@@ -795,59 +777,33 @@
         `;
         
         tbody.appendChild(row);
-        // Trigger the math immediately for the new row
         calculateRow(row.querySelector('.val-dem'));
     }
 
-    // Function to add a completely empty row for manual input
     function addNewOffenseRow() {
         const tbody = document.getElementById('detailed-offenses-body');
-        
-        // Remove the "No records" message if it's there
         if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
             tbody.innerHTML = '';
         }
-
-        // Use today's date as default
         const today = new Date().toISOString().split('T')[0];
-        
         createOffenseRow({
-            date_raw: today,
-            time: '12:00 PM',
-            demerits: 0,
-            status: 'Unexcused',
-            offense: '',
-            served: false
+            date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', offense: '', served: false
         });
     }
 
-    // AUTOMATIC CALCULATION LOGIC
     function calculateRow(input) {
         const row = input.closest('tr');
         const demerits = parseInt(row.querySelector('.val-dem').value) || 0;
         const status = row.querySelector('.val-status').value;
-        
         const sanctionField = row.querySelector('.val-sanction');
         const countField = row.querySelector('.val-count');
 
-        // 1. Sanction Logic (Calculates based on demerits)
-        if (demerits >= 50) {
-            sanctionField.value = "2 Hrs CS";
-        } else if (demerits >= 8) {
-            sanctionField.value = "1 Hr CS";
-        } else if (demerits > 0) {
-            sanctionField.value = "Warning";
-        } else {
-            sanctionField.value = "N/A";
-        }
+        if (demerits >= 50) { sanctionField.value = "2 Hrs CS"; } 
+        else if (demerits >= 8) { sanctionField.value = "1 Hr CS"; } 
+        else if (demerits > 0) { sanctionField.value = "Warning"; } 
+        else { sanctionField.value = "N/A"; }
 
-        // 2. Count Logic (Only counts towards summary if Unexcused)
         countField.value = (status === "Unexcused") ? "1" : "0";
-    }
-
-    function saveOffenseChanges() {
-        alert("Saving student record modifications... (Backend sync pending)");
-        // Here you would collect row data and send to a Django View via Fetch POST
     }
 
     // Edit Student Details Logic
@@ -863,6 +819,34 @@
             document.getElementById('edit-section').value = this.dataset.section;
         });
     });
+
+    // SAVE PERSONAL INFO TO DATABASE
+    function savePersonalInfo() {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        const payload = {};
+        
+        // Gather all inputs
+        document.querySelectorAll('.personal-info-input').forEach(input => {
+            payload[input.name] = input.value;
+        });
+
+        // Send to backend
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                alert('Personal Information Saved Successfully!');
+                window.location.reload(); 
+            } else {
+                alert('Error saving data: ' + data.message);
+            }
+        });
+    }
     </script>
 </body>
 </html>
