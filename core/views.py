@@ -76,9 +76,7 @@ def traffic_cop(request):
         return redirect('staff_home')
         
     if hasattr(user, 'student_profile'):
-        student = user.student_profile
-        if student.is_beadle or student.beadle_of.exists():
-            return redirect('beadle_dashboard')
+        # EVERY student (including beadles) goes to their home dashboard first!
         return redirect('student_dashboard')
         
     logout(request)
@@ -157,8 +155,14 @@ def manage_students(request):
             student = get_object_or_404(Student, student_number=request.POST.get('student_number'))
             student.is_beadle = not student.is_beadle
             student.save()
+            
             if student.is_beadle and student.section:
+                # If made beadle, assign to section
                 Section.objects.filter(id=student.section.id).update(beadle=student)
+            elif not student.is_beadle:
+                # FIX: If revoked, remove them from ANY section they were beadle of
+                Section.objects.filter(beadle=student).update(beadle=None)
+                
             messages.success(request, "Beadle Role Updated!")
             return redirect('manage_students')
             
@@ -178,10 +182,17 @@ def manage_students(request):
             
         # Original: Add Student Logic
         else:
-            form = StudentMaintenanceForm(request.POST)
-            if form.is_valid():
-                with transaction.atomic():
-                    form.save()
+                form = StudentMaintenanceForm(request.POST)
+                if form.is_valid():
+                    with transaction.atomic():
+                        new_student = form.save()
+                        
+                        # FIX: Automatically enroll them in the active school year!
+                        active_sy_id = request.session.get('active_sy_id')
+                        active_sy = SchoolYear.objects.filter(id=active_sy_id).first() or SchoolYear.objects.filter(is_active=True).first()
+                        if active_sy:
+                            Enrollment.objects.create(student=new_student, school_year=active_sy)
+                            
                 messages.success(request, "Student created successfully!")
                 return redirect('manage_students')
     
@@ -218,6 +229,9 @@ def staff_dashboard(request):
             # If made a beadle, assign them to their section
             if student.is_beadle and student.section:
                 Section.objects.filter(id=student.section.id).update(beadle=student)
+            # FIX: If revoked, clear them from the section's beadle slot
+            elif not student.is_beadle:
+                Section.objects.filter(beadle=student).update(beadle=None)
                 
             status = "assigned as Beadle" if student.is_beadle else "revoked from Beadle"
             messages.success(request, f"{student.first_name} {student.last_name} was {status}!")
@@ -237,21 +251,25 @@ def staff_dashboard(request):
             messages.success(request, "Student details updated successfully!")
             return redirect('staff_dashboard')
             
-        # ADD STUDENT
         elif 'add_student' in request.POST:
-            student_number = request.POST.get('student_number')
-            if not Student.objects.filter(student_number=student_number).exists():
-                Student.objects.create(
-                    student_number=student_number,
-                    first_name=request.POST.get('first_name').upper(),
-                    last_name=request.POST.get('last_name').upper(),
-                    sex=request.POST.get('sex'),
-                    section_id=request.POST.get('section') or None
-                )
-                messages.success(request, "New student registered successfully!")
-            else:
-                messages.error(request, "A student with that ID Number already exists!")
-            return redirect('staff_dashboard')
+                student_number = request.POST.get('student_number')
+                if not Student.objects.filter(student_number=student_number).exists():
+                    new_student = Student.objects.create(
+                        student_number=student_number,
+                        first_name=request.POST.get('first_name').upper(),
+                        last_name=request.POST.get('last_name').upper(),
+                        sex=request.POST.get('sex'),
+                        section_id=request.POST.get('section') or None
+                    )
+                    
+                    # FIX: Automatically enroll them in the active school year!
+                    active_sy_id = request.session.get('active_sy_id')
+                    active_sy = SchoolYear.objects.filter(id=active_sy_id).first() or SchoolYear.objects.filter(is_active=True).first()
+                    if active_sy:
+                        Enrollment.objects.create(student=new_student, school_year=active_sy)
+                        
+                    messages.success(request, "New student registered successfully!")
+   
 
     # ==========================================
     # 2. HANDLE GET REQUESTS & RENDER PAGE
@@ -397,7 +415,7 @@ def approve_attendance_batch(request, batch_id):
                         demerits=3 if rec.code == 'A' else 1,
                         remarks="", # Left blank so staff can type custom notes later!
                         recorded_by=request.user,
-                        school_year=batch.daily_attendance.section.students.first().enrollments.first().school_year
+                        school_year=SchoolYear.objects.filter(is_active=True).first()
                     )
 
             # Lock and Approve

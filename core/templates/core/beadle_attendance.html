@@ -2,37 +2,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Attendance - {{ student.section.name }}</title>
+    <meta charset="UTF-8">
+    <title>Attendance - {{ student.section.name }}</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: var(--xu-light-gray); display: flex; flex-direction: column; min-height: 100vh; }
+        .dashboard-container { max-width: 900px; margin: 40px auto; width: 100%; display: flex; flex-direction: column; }
+        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
+        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        
+        .table-xu-dashboard th { background-color: var(--xu-light-gray); color: var(--xu-blue-1); padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; }
+        .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-4">
-        <div class="card shadow border-dark" style="border-radius:0;">
-            <div class="card-header text-white" style="background:#003366;">
-                Attendance Input: {{ student.section.name }} (Gr {{ student.section.grade_level }})
+<body>
+    <!-- Standard Header -->
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <div class="text-white">
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
-            <form method="POST" class="card-body bg-white p-3">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="fw-bold small">Select Date:</label>
-                    <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control form-control-sm w-25" required>
-                </div>
-                <table class="table table-sm table-bordered">
-                    <thead class="table-secondary"><tr><th>Classmate Name</th><th>Present</th><th>Late</th><th>Absent</th></tr></thead>
-                    <tbody>
-                        {% for s in section_students %}
-                        <tr>
-                            <td class="fw-bold">{{ s.last_name }}, {{ s.first_name }}</td>
-                            <td><input type="radio" name="status_{{ s.student_number }}" value="PRESENT" checked></td>
-                            <td><input type="radio" name="status_{{ s.student_number }}" value="LATE"></td>
-                            <td><input type="radio" name="status_{{ s.student_number }}" value="ABSENT"></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <button type="submit" class="btn btn-primary w-100 fw-bold border-dark">🚀 SUBMIT TO OFFICE</button>
-            </form>
         </div>
-    </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold shadow-sm">Log Off</a>
+        </div>
+    </header>
+
+    <main class="flex-grow-1 p-4">
+        <div class="dashboard-container">
+            <!-- Clean Page Title Area -->
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h3 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Attendance Fallback</h3>
+                    <div class="text-muted fw-bold small mt-1">
+                        Section: <span class="text-dark">{{ student.section.name }} (Gr {{ student.section.grade_level }})</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-card">
+                <div class="menu-header">
+                    <span><i class="me-2">📋</i> ATTENDANCE INPUT</span>
+                </div>
+                
+                <form method="POST" class="bg-white p-4 m-0">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="fw-bold small text-muted text-uppercase mb-2">Select Date</label>
+                            <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" class="form-control fw-bold shadow-sm" required>
+                        </div>
+                    </div>
+
+                    <div class="border rounded mb-4 shadow-sm overflow-hidden">
+                        <table class="table table-hover table-xu-dashboard mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Classmate Name</th>
+                                    <th class="text-center" style="width: 100px;">Present</th>
+                                    <th class="text-center" style="width: 100px;">Late</th>
+                                    <th class="text-center" style="width: 100px;">Absent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in section_students %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">{{ s.last_name|upper }}, {{ s.first_name|upper }}</td>
+                                    <td class="text-center"><input type="radio" class="form-check-input" style="transform: scale(1.3);" name="status_{{ s.student_number }}" value="PRESENT" checked></td>
+                                    <td class="text-center"><input type="radio" class="form-check-input" style="transform: scale(1.3);" name="status_{{ s.student_number }}" value="LATE"></td>
+                                    <td class="text-center"><input type="radio" class="form-check-input" style="transform: scale(1.3);" name="status_{{ s.student_number }}" value="ABSENT"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button type="submit" class="btn text-white w-100 fw-bold py-3 shadow-sm" style="background-color: var(--xu-blue-1); border-radius: 8px;">
+                        🚀 SUBMIT ATTENDANCE TO OFFICE
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
 </body>
 </html>

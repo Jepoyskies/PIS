@@ -3,166 +3,220 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>XJHS Student Portal</title>
+    <title>PIS - Student Portal</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
-        body { background-color: var(--xu-light-gray); display: flex; flex-direction: column; min-height: 100vh; }
-        .profile-card {
-            border: none;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        }
-        .profile-header {
-            background-color: var(--xu-blue-2);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        .status-badge {
-            background-color: var(--xu-gold);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 10px;
-        }
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Standard Navigation Styles */
+        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; flex-shrink: 0; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; display: inline-block;}
+        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+
+        /* Unified Card Styles - Matching PIS Home exactly */
+        .dashboard-container { max-width: 1100px; margin: 30px auto; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
+        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+
+        /* Custom Tabs under Menu Header */
+        .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 600; padding: 12px 25px; border-bottom: 3px solid transparent; border-radius: 0; }
+        .nav-tabs .nav-link:hover { color: var(--xu-blue-1); background-color: transparent; border-color: transparent; }
+        .nav-tabs .nav-link.active { color: var(--xu-blue-1) !important; background-color: transparent !important; border-bottom: 3px solid var(--xu-blue-1); }
+
+        /* Formal Tables */
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
+        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-light-gray); color: var(--xu-blue-1); z-index: 1; padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
+        .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
     </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
+<body class="d-flex flex-column vh-100">
+    <!-- Standard Header -->
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center z-2 shadow-sm flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
             <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Student Portal</div>
+                <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
         </div>
-        
         <div class="d-flex align-items-center gap-3">
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
+            <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold shadow-sm">Log Off</a>
         </div>
     </header>
 
-    <main class="flex-grow-1 py-4">
-        <div class="container">
-        <div class="row">
-            <!-- Profile Column -->
-            <div class="col-md-4">
-                <div class="profile-card bg-white mb-4">
-                    <div class="profile-header">
-                        <div class="mb-3">
-                            <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 2rem; color: var(--xu-blue-1);">
-                                👤
-                            </div>
-                        </div>
-                        <h4 class="fw-bold mb-1">{{ student.first_name }} {{ student.last_name }}</h4>
-                        <p class="opacity-75 mb-0 small">Student No: {{ student.student_number }}</p>
-                        {% if student.is_beadle %}
-                            <div class="status-badge">⭐ CLASSROOM BEADLE</div>
-                        {% endif %}
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between mb-2 small">
-                            <span class="text-muted">Section:</span>
-                            <span class="fw-bold">{{ student.section.name|default:"Not Assigned" }}</span>
-                        </div>
-                        <hr>
-                        {% if student.is_beadle %}
-                            <div class="alert alert-info py-2 small mb-3 border-0">
-                                <strong>Notice:</strong> You have been assigned as the beadle for your section.
-                            </div>
-                            <a href="{% url 'beadle_dashboard' %}" class="btn btn-xu-primary w-100 fw-bold py-2 shadow-sm">
-                                📝 TAKE CLASS ATTENDANCE
-                            </a>
-                        {% endif %}
-                    </div>
+    <!-- Standard Nav -->
+    <nav class="main-nav d-flex z-1 shadow-sm">
+        <a href="{% url 'student_dashboard' %}" class="nav-link active">HOME</a>
+        {% if student.is_beadle %}
+        <a href="{% url 'beadle_dashboard' %}" class="nav-link">TAKE ATTENDANCE</a>
+        {% endif %}
+    </nav>
+
+    <main class="flex-grow-1 overflow-hidden p-4 d-flex flex-column">
+        <div class="dashboard-container pb-4">
+            
+            <!-- Clean Page Title Area -->
+            <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0">
+                <div>
+                    <h3 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Personal Dashboard</h3>
                 </div>
             </div>
 
-            <!-- History Column -->
-            <div class="col-md-8">
-                <div class="card card-xu mb-4">
-                    <div class="card-xu-header">My Disciplinary History</div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr class="small text-uppercase">
-                                        <th class="ps-4">Date of Incident</th>
-                                        <th>Category</th>
-                                        <th class="pe-4">Remarks / Action Taken</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="small">
-                                    {% for rec in discipline_history %}
-                                    <tr>
-                                        <td class="ps-4 fw-bold text-muted">{{ rec.date_of_incident }}</td>
-                                        <td><span class="badge {% if 'Conduct' in rec.category %}bg-info{% else %}bg-warning text-dark{% endif %} px-3 rounded-pill">{{ rec.category }}</span></td>
-                                        <td class="pe-4">{{ rec.remarks }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="3" class="text-center py-5">
-                                            <div class="display-6 mb-2">🏅</div>
-                                            <div class="fw-bold text-success">CLEAN DISCIPLINARY RECORD</div>
-                                            <p class="text-muted small">Keep up the good work!</p>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+            <!-- Single Unified Menu Card (Matches PIS Home layout) -->
+            <div class="menu-card flex-grow-1">
+                <div class="menu-header">
+                    <span><i class="me-2">👤</i> STUDENT PROFILE & RECORDS</span>
+                </div>
+                
+                <div class="row g-0 flex-grow-1" style="min-height: 0;">
+                    
+                    <!-- LEFT COLUMN: Profile Sidebar -->
+                    <div class="col-md-4 col-lg-3 bg-light border-end d-flex flex-column align-items-center justify-content-center text-center p-4 overflow-auto">
+                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3 text-xu-blue fw-bold" style="width: 120px; height: 120px; font-size: 4rem; border: 4px solid var(--xu-gold);">
+                            {% if student.sex == 'M' %}👦{% else %}👧{% endif %}
+                        </div>
+                        
+                        <h4 class="fw-bold mb-0" style="color: var(--xu-blue-1);">{{ student.last_name|upper }},</h4>
+                        <h5 class="fw-bold mb-2">{{ student.first_name|upper }}</h5>
+                        
+                        <div class="bg-white px-4 py-1 rounded-pill border fw-bold text-muted small mb-3 shadow-sm">
+                            ID: {{ student.student_number }}
+                        </div>
+
+                        <div class="text-muted fw-bold small mb-4">
+                            Section: <span class="text-dark">{{ student.section.name|default:"Unassigned" }}</span>
+                        </div>
+
+                        <hr class="w-100 my-3 opacity-25">
+
+                        <div class="w-100 mt-auto pt-3">
+                            {% if student.is_beadle %}
+                                <div class="w-100 py-3 mb-3 shadow-sm d-flex flex-column align-items-center" style="background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px;">
+                                    <span class="text-uppercase fw-bold mb-1" style="color: #856404; font-size: 0.85rem; letter-spacing: 1px;">⭐ Classroom Beadle</span>
+                                    <span class="small opacity-75" style="color: #856404;">Assigned to: <strong>{{ student.section.name }}</strong></span>
+                                </div>
+                                <a href="{% url 'beadle_dashboard' %}" class="btn w-100 fw-bold py-3 shadow-sm text-white" style="background-color: var(--xu-blue-1); border-radius: 8px; transition: all 0.2s;">
+                                    <i class="me-2">📋</i> CLASS ATTENDANCE
+                                </a>
+                            {% else %}
+                                <div class="badge bg-secondary text-white w-100 py-3 mb-3 shadow-sm text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px; border-radius: 8px;">Regular Student</div>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
 
-                <div class="card card-xu">
-                    <div class="card-xu-header" style="background-color: var(--xu-blue-2);">My Attendance Records</div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr class="small text-uppercase">
-                                        <th class="ps-4">Date</th>
-                                        <th>Attendance Status</th>
-                                        <th class="pe-4 text-end">Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="small">
-                                    {% for att in attendance_history %}
-                                    <tr>
-                                        <td class="ps-4 text-muted">{{ att.date }}</td>
-                                        <td>
-                                            {% if att.status == 'Present' %}
-                                                <span class="text-success fw-bold">✓ {{ att.status }}</span>
-                                            {% else %}
-                                                <span class="text-danger fw-bold">✗ {{ att.status }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="pe-4 text-end">
-                                            {% if att.is_excused %}
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3">Excused</span>
-                                            {% elif att.status != 'Present' %}
-                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3">Unexcused</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="3" class="text-center py-4 text-muted small">No attendance records found yet.</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <!-- RIGHT COLUMN: Tabbed Data Area -->
+                    <div class="col-md-8 col-lg-9 d-flex flex-column bg-white h-100">
+                        
+                        <!-- Clean Bootstrap Tabs -->
+                        <div class="bg-white border-bottom px-4 pt-3 shadow-sm z-1 flex-shrink-0">
+                            <ul class="nav nav-tabs border-bottom-0" id="studentTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="discipline-tab" data-bs-toggle="pill" data-bs-target="#discipline" type="button" role="tab">
+                                        🛑 Disciplinary History
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button" role="tab">
+                                        📅 Recent Attendance
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Tab Content -->
+                        <div class="tab-content flex-grow-1 d-flex flex-column" id="studentTabsContent" style="min-height: 0;">
+                            
+                            <!-- TAB 1: Disciplinary History -->
+                            <div class="tab-pane fade show active h-100" id="discipline" role="tabpanel">
+                                <div class="table-container p-0 h-100">
+                                    <table class="table table-hover table-xu-dashboard mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4" style="width: 150px;">Date of Incident</th>
+                                                <th style="width: 150px;">Category</th>
+                                                <th class="pe-4">Remarks / Action Taken</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rec in discipline_history %}
+                                            <tr>
+                                                <td class="ps-4 fw-bold text-muted">{{ rec.date_of_incident|date:'M j, Y' }}</td>
+                                                <td>
+                                                    <span class="badge {% if 'Conduct' in rec.category %}bg-info text-dark{% else %}bg-warning text-dark border{% endif %} px-3 py-1 shadow-sm">
+                                                        {{ rec.category }}
+                                                    </span>
+                                                </td>
+                                                <td class="pe-4 text-dark fw-bold">
+                                                    <!-- FIX: Show the specific offense name from attendance, fallback to remarks -->
+                                                    {% if rec.offense_name %}
+                                                        {{ rec.offense_name }} 
+                                                        {% if rec.remarks %}<span class="text-muted fw-normal fst-italic ms-2">- {{ rec.remarks }}</span>{% endif %}
+                                                    {% else %}
+                                                        {{ rec.remarks|default:"No specific remarks provided." }}
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="3" class="text-center py-5">
+                                                    <div class="display-6 mb-2 mt-4">🏅</div>
+                                                    <div class="fw-bold text-success fs-5">CLEAN DISCIPLINARY RECORD</div>
+                                                    <p class="text-muted small">Keep up the good work!</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- TAB 2: Attendance History -->
+                            <div class="tab-pane fade h-100" id="attendance" role="tabpanel">
+                                <div class="table-container p-0 h-100">
+                                    <table class="table table-hover table-xu-dashboard mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4" style="width: 150px;">Date</th>
+                                                <th style="width: 120px;">Period</th>
+                                                <th style="width: 150px;">Status</th>
+                                                <th class="pe-4">Beadle / Admin Remarks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for att in attendance_history %}
+                                            <tr>
+                                                <td class="ps-4 fw-bold text-muted">{{ att.period.daily_attendance.date|date:'M j, Y' }}</td>
+                                                <td class="fw-bold text-dark">Period {{ att.period.period_number }}</td>
+                                                <td>
+                                                    <span class="badge {% if att.code == 'P' %}bg-success{% elif att.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} px-3 py-1 shadow-sm">
+                                                        {{ att.get_code_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="pe-4 text-muted fst-italic">
+                                                    {% if att.note %}⚠️ {{ att.note }}{% else %}-{% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-center py-5 text-muted">
+                                                    <div class="display-6 mb-2 mt-4">📅</div>
+                                                    <div class="fw-bold fs-6">No attendance records found yet.</div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </main>
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
