@@ -6,9 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logon - XU Prefect Information System</title>
     
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -17,17 +15,15 @@
             --xu-blue-light: #3a53a4;
             --xu-gold: #f3bc2c;
         }
-
         body {
             background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-light) 100%);
             height: 100vh;
             display: flex; align-items: center; justify-content: center;
             font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; overflow: hidden;
         }
-
         .discovery-container { width: 100%; max-width: 460px; text-align: center; color: white; padding: 20px; }
         .xu-logo-main { width: 130px; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2)); }
-
+        
         .selection-card {
             background: white; border-radius: 15px; padding: 18px 22px; margin-bottom: 16px;
             display: flex; align-items: center; text-decoration: none !important;
@@ -35,41 +31,17 @@
             border-left: 6px solid transparent; width: 100%; text-align: left;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
         }
-
-        .selection-card:hover {
-            transform: translateY(-5px); border-left: 6px solid var(--xu-gold);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.25);
-        }
-
-        .icon-box {
-            background-color: #f1f3f7; width: 54px; height: 54px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; margin-right: 20px;
-            color: var(--xu-blue-dark); font-size: 1.3rem;
-        }
-
+        .selection-card:hover { transform: translateY(-5px); border-left: 6px solid var(--xu-gold); box-shadow: 0 12px 24px rgba(0,0,0,0.25); }
+        .icon-box { background-color: #f1f3f7; width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 20px; color: var(--xu-blue-dark); font-size: 1.3rem; }
         .text-content .title { display: block; color: var(--xu-blue-dark); font-weight: 700; font-size: 1.1rem; }
         .text-content .subtitle { display: block; color: #6c757d; font-size: 0.88rem; }
 
-        #login-form-section {
-            display: none; background: white; padding: 40px 30px; border-radius: 20px;
-            color: #333; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: left;
-        }
-
+        #login-form-section { display: none; background: white; padding: 40px 30px; border-radius: 20px; color: #333; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: left; }
         .form-control { border-radius: 10px; padding: 12px; border: 1px solid #ddd; }
-        .btn-xu-primary {
-            background-color: var(--xu-blue-dark); color: white; border-radius: 10px;
-            padding: 12px; font-weight: 600; width: 100%; border: none;
-        }
-
-        .back-btn {
-            color: var(--xu-blue-dark); text-decoration: none; font-size: 0.9rem;
-            display: inline-block; margin-bottom: 20px; font-weight: 600;
-        }
-
-        .alert-error {
-            background-color: #fee2e2; color: #b91c1c; padding: 12px;
-            border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #fecaca;
-        }
+        .btn-xu-primary { background-color: var(--xu-blue-dark); color: white; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; border: none; transition: 0.2s; }
+        .btn-xu-primary:hover { background-color: var(--xu-blue-light); }
+        .back-btn { color: var(--xu-blue-dark); text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 20px; font-weight: 600; }
+        .alert-error { background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #fecaca; }
     </style>
 </head>
 <body>
@@ -97,7 +69,6 @@
                     <span class="subtitle">Use your @my.xu.edu.ph account</span>
                 </div>
             </div>
-            
             <p class="mt-4"><small>© Xavier University - Ateneo de Cagayan</small></p>
         </div>
 
@@ -113,20 +84,27 @@
                 {% endfor %}
             {% endif %}
 
-            <form method="POST" action="{% url 'login' %}">
+            <!-- AUTOCOMPLETE="OFF" added to form -->
+            <form method="POST" action="{% url 'login' %}" id="loginForm" autocomplete="off">
                 {% csrf_token %}
-                <!-- Hidden slug to track role without & bug -->
+
+                <!-- BROWSER HONEYPOT: These hidden fields trick the browser into auto-filling them instead of your real fields -->
+                <input style="display:none" type="text" name="fakeusernameremembered"/>
+                <input style="display:none" type="password" name="fakepasswordremembered"/>
+
                 <input type="hidden" name="selected_role" id="selected_role_input" value="{{ selected_role|default:'' }}">
                 
                 <div class="mb-3">
                     <label class="form-label small fw-bold">Username</label>
-                    <input type="text" name="username" class="form-control" required placeholder="Enter username">
+                    <!-- autocomplete="one-time-code" is a trick to stop persistent auto-fill -->
+                    <input type="text" name="username" id="usernameField" class="form-control" required placeholder="Enter username" autocomplete="one-time-code">
                 </div>
                 <div class="mb-4">
                     <label class="form-label small fw-bold">Password</label>
-                    <input type="password" name="password" class="form-control" required placeholder="Enter password">
+                    <!-- autocomplete="new-password" prevents browsers from suggesting saved passwords -->
+                    <input type="password" name="password" id="passwordField" class="form-control" required placeholder="Enter password" autocomplete="new-password">
                 </div>
-                <button type="submit" class="btn btn-xu-primary">Login to System</button>
+                <button type="submit" class="btn btn-xu-primary shadow-sm">Login to System</button>
             </form>
         </div>
     </div>
@@ -136,35 +114,45 @@
         const loginFormSection = document.getElementById('login-form-section');
         const formTitle = document.getElementById('form-title');
         const roleInput = document.getElementById('selected_role_input');
+        const userField = document.getElementById('usernameField');
+        const passField = document.getElementById('passwordField');
 
-        // This map fixes the "System Login" title issue
         const roleMap = {
             'staff': 'Faculty & Staff',
-            'student': 'Student',
-            'external': 'External'
+            'student': 'Student'
         };
 
         function showLoginForm(roleKey) {
             if (!roleKey || !roleMap[roleKey]) return;
-            
-            // Set pretty title
             formTitle.innerText = roleMap[roleKey] + " Login";
-            // Set hidden slug
             roleInput.value = roleKey;
-    
             selectionSection.style.display = 'none';
             loginFormSection.style.display = 'block';
+            
+            // Extra security: wipe fields every time the box is opened
+            userField.value = '';
+            passField.value = '';
         }
 
         function showSelection() {
             selectionSection.style.display = 'block';
             loginFormSection.style.display = 'none';
             roleInput.value = '';
+            userField.value = '';
+            passField.value = '';
         }
 
-        // AUTO-REOPEN: If Django sends back a selected_role, reopen that specific form
+        // FORCE CLEAR on page load/error
+        window.onload = () => {
+            userField.value = '';
+            passField.value = '';
+        };
+
         {% if selected_role %}
             showLoginForm("{{ selected_role|safe }}");
+            // Clear again if error was detected
+            userField.value = '';
+            passField.value = '';
         {% endif %}
     </script>
 </body>

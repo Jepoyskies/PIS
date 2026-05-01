@@ -58,22 +58,26 @@ def login_view(request):
     if request.method == 'POST':
         u = request.POST.get('username')
         p = request.POST.get('password')
-        selected_role = request.POST.get('selected_role') # Will be 'staff' or 'student'
+        selected_role = request.POST.get('selected_role') 
 
         user = authenticate(request, username=u, password=p)
         
         if user:
-            # --- RBAC CHECK ---
+            # --- ROLE RESTRICTION LOGIC ---
             
-            # If they are at the Faculty portal but are NOT staff/admin
+            # 1. Case: Student trying to use the Staff Portal
             if selected_role == 'staff' and not (user.is_staff or user.is_superuser):
-                messages.error(request, "Access Denied: This portal is for Faculty & Staff only.")
-                # We return render here and pass selected_role back to keep form open
+                messages.error(request, "Access Denied: This portal is for Faculty, Formators, & Staff. Please use the Students & Beadles portal.")
                 return render(request, 'core/login.html', {'selected_role': selected_role})
 
-            # If they are at the Student portal but have no student profile
+            # 2. Case: Staff/Admin trying to use the Student Portal
             if selected_role == 'student' and not hasattr(user, 'student_profile'):
-                messages.error(request, "Access Denied: Staff must use the Faculty & Staff portal.")
+                messages.error(request, "Access Denied: This portal is for Students & Beadles. Faculty/Staff must use the Faculty, Formators, & Staff portal.")
+                return render(request, 'core/login.html', {'selected_role': selected_role})
+
+            # 3. Case: External Portal (Optional)
+            if selected_role == 'external' and not user.is_superuser:
+                messages.error(request, "Access Denied: External portal is currently restricted to system administrators.")
                 return render(request, 'core/login.html', {'selected_role': selected_role})
 
             login(request, user)
@@ -81,7 +85,6 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid Username or Password')
             
-    # Always pass selected_role back (it will be None on first load)
     return render(request, 'core/login.html', {'selected_role': selected_role})
 
 def logout_view(request):
