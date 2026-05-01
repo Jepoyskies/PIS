@@ -24,6 +24,7 @@
         .discovery-container { width: 100%; max-width: 460px; text-align: center; color: white; padding: 20px; }
         .xu-logo-main { width: 130px; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2)); }
         
+        /* Card Styles */
         .selection-card {
             background: white; border-radius: 15px; padding: 18px 22px; margin-bottom: 16px;
             display: flex; align-items: center; text-decoration: none !important;
@@ -36,12 +37,15 @@
         .text-content .title { display: block; color: var(--xu-blue-dark); font-weight: 700; font-size: 1.1rem; }
         .text-content .subtitle { display: block; color: #6c757d; font-size: 0.88rem; }
 
+        /* Form Card */
         #login-form-section { display: none; background: white; padding: 40px 30px; border-radius: 20px; color: #333; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: left; }
         .form-control { border-radius: 10px; padding: 12px; border: 1px solid #ddd; }
-        .btn-xu-primary { background-color: var(--xu-blue-dark); color: white; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; border: none; transition: 0.2s; }
-        .btn-xu-primary:hover { background-color: var(--xu-blue-light); }
+        .btn-xu-primary { background-color: var(--xu-blue-dark); color: white; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; border: none; }
         .back-btn { color: var(--xu-blue-dark); text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 20px; font-weight: 600; }
         .alert-error { background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #fecaca; }
+        
+        /* Footer Style */
+        .copyright { margin-top: 40px; font-size: 0.75rem; opacity: 0.8; font-weight: 400; }
     </style>
 </head>
 <body>
@@ -69,7 +73,6 @@
                     <span class="subtitle">Use your @my.xu.edu.ph account</span>
                 </div>
             </div>
-            <p class="mt-4"><small>© Xavier University - Ateneo de Cagayan</small></p>
         </div>
 
         <!-- STEP 2: LOGIN FORM -->
@@ -84,28 +87,27 @@
                 {% endfor %}
             {% endif %}
 
-            <!-- AUTOCOMPLETE="OFF" added to form -->
             <form method="POST" action="{% url 'login' %}" id="loginForm" autocomplete="off">
                 {% csrf_token %}
-
-                <!-- BROWSER HONEYPOT: These hidden fields trick the browser into auto-filling them instead of your real fields -->
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
                 <input style="display:none" type="password" name="fakepasswordremembered"/>
-
                 <input type="hidden" name="selected_role" id="selected_role_input" value="{{ selected_role|default:'' }}">
                 
                 <div class="mb-3">
                     <label class="form-label small fw-bold">Username</label>
-                    <!-- autocomplete="one-time-code" is a trick to stop persistent auto-fill -->
                     <input type="text" name="username" id="usernameField" class="form-control" required placeholder="Enter username" autocomplete="one-time-code">
                 </div>
                 <div class="mb-4">
                     <label class="form-label small fw-bold">Password</label>
-                    <!-- autocomplete="new-password" prevents browsers from suggesting saved passwords -->
                     <input type="password" name="password" id="passwordField" class="form-control" required placeholder="Enter password" autocomplete="new-password">
                 </div>
                 <button type="submit" class="btn btn-xu-primary shadow-sm">Login to System</button>
             </form>
+        </div>
+
+        <!-- FOOTER: Placed outside the sections so it shows on both steps -->
+        <div class="copyright">
+            © Xavier University - Ateneo de Cagayan
         </div>
     </div>
 
@@ -128,8 +130,6 @@
             roleInput.value = roleKey;
             selectionSection.style.display = 'none';
             loginFormSection.style.display = 'block';
-            
-            // Extra security: wipe fields every time the box is opened
             userField.value = '';
             passField.value = '';
         }
@@ -142,7 +142,6 @@
             passField.value = '';
         }
 
-        // FORCE CLEAR on page load/error
         window.onload = () => {
             userField.value = '';
             passField.value = '';
@@ -150,7 +149,6 @@
 
         {% if selected_role %}
             showLoginForm("{{ selected_role|safe }}");
-            // Clear again if error was detected
             userField.value = '';
             passField.value = '';
         {% endif %}
