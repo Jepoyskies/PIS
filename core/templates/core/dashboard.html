@@ -232,6 +232,16 @@
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
+        let globalOffenses = [];
+
+// Fetch the official list immediately when the page loads
+fetch('/api/offenses/list/')
+    .then(res => res.json())
+    .then(data => { 
+        globalOffenses = data.offenses; 
+        console.log("Offenses Loaded:", globalOffenses.length); 
+    })
+    .catch(err => console.error("Could not load offenses:", err));
     // 1. Logic for Row Selection and Data Fetching
     const selectStudent = (row) => {
         const studentId = row.dataset.id;
@@ -362,56 +372,105 @@
     // Run on load
     window.addEventListener('load', () => attemptAutoSelect(5));
 
-    function createOffenseRow(data = {}) {
-        const tbody = document.getElementById('detailed-offenses-body');
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"></td>
-            <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" oninput="calculateRow(this)"></td>
-            <td>
-                <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
-                    <option value="Unexcused" ${data.status == 'Unexcused' ? 'selected' : ''}>Unexcused</option>
-                    <option value="Excused" ${data.status == 'Excused' ? 'selected' : ''}>Excused</option>
-                </select>
-            </td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${data.sanction || ''}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
-            <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count" readonly value="0"></td>
-        `;
-        
-        tbody.appendChild(row);
-        calculateRow(row.querySelector('.val-dem'));
-    }
+function createOffenseRow(data = {}) {
+    const tbody = document.getElementById('detailed-offenses-body');
+    const row = document.createElement('tr');
+    
+    let optionsHTML = '<option value="">-- Select Offense --</option>';
+    let matchFound = false;
 
-    function addNewOffenseRow() {
-        const tbody = document.getElementById('detailed-offenses-body');
-        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
-            tbody.innerHTML = '';
+    // 1. Build the official list options
+    globalOffenses.forEach(off => {
+        let isSelected = '';
+        // If the database category matches exactly OR partially (e.g., "Campus Leave" in "Campus Leave without permission")
+        if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
+            isSelected = 'selected';
+            matchFound = true;
         }
-        const today = new Date().toISOString().split('T')[0];
-        createOffenseRow({
-            date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', offense: '', served: false
-        });
+        optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
+    });
+
+    // 2. Handle existing data that doesn't match the new official list
+    // We removed "(Unmapped)" here. We just show the name.
+    if (!matchFound && data.category) {
+        optionsHTML = `<option value="${data.category}" selected>${data.category}</option>` + optionsHTML;
     }
 
-    function calculateRow(input) {
-        const row = input.closest('tr');
-        const demerits = parseInt(row.querySelector('.val-dem').value) || 0;
-        const status = row.querySelector('.val-status').value;
-        const sanctionField = row.querySelector('.val-sanction');
-        const countField = row.querySelector('.val-count');
-
-        if (demerits >= 50) { sanctionField.value = "2 Hrs CS"; } 
-        else if (demerits >= 8) { sanctionField.value = "1 Hr CS"; } 
-        else if (demerits > 0) { sanctionField.value = "Warning"; } 
-        else { sanctionField.value = "N/A"; }
-
-        countField.value = (status === "Unexcused") ? "1" : "0";
+    row.innerHTML = `
+        <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
+        <td>
+            <select class="form-select form-select-sm border-0 val-offense fw-bold" onchange="applyOffenseDefaults(this)" style="min-width: 200px;">
+                ${optionsHTML}
+            </select>
+        </td>
+        <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" readonly></td>
+        <td>
+            <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
+                <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
+                <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
+            </select>
+        </td>
+        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${data.sanction || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
+        <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
+        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${data.count || 0}"></td>
+    `;
+    
+    tbody.appendChild(row);
+}
+function addNewOffenseRow() {
+    const tbody = document.getElementById('detailed-offenses-body');
+    if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
+        tbody.innerHTML = '';
     }
+    const today = new Date().toISOString().split('T')[0];
+    createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
+}
+
+function applyOffenseDefaults(selectElem) {
+    const row = selectElem.closest('tr');
+    const selectedOption = selectElem.options[selectElem.selectedIndex];
+
+    const demField = row.querySelector('.val-dem');
+    const sancField = row.querySelector('.val-sanction');
+
+    if (selectedOption.value && selectedOption.dataset.dem !== undefined) {
+        // Auto-populate based on the official list
+        demField.value = selectedOption.dataset.dem;
+        sancField.value = selectedOption.dataset.sanc || 'N/A';
+    } else {
+        // If unmapped or cleared
+        demField.value = 0;
+        sancField.value = '';
+    }
+    
+    // Recalculate Count and Sanction logic
+    calculateRow(selectElem);
+}
+
+function calculateRow(input) {
+    const row = input.closest('tr');
+    const status = row.querySelector('.val-status').value;
+    const countField = row.querySelector('.val-count');
+    
+    const selectElem = row.querySelector('.val-offense');
+    const selectedOption = selectElem.options[selectElem.selectedIndex];
+
+    // LOGIC: 
+    // 1. If Status is Excused -> Count is always 0
+    // 2. If Status is Unexcused -> Use the official count from the dataset (0.5, 1.0, etc.)
+    if (status === "Unexcused") {
+        if (selectedOption && selectedOption.dataset.cnt !== undefined) {
+            countField.value = selectedOption.dataset.cnt;
+        } else {
+            // Default if it's a legacy record not yet mapped to the new list
+            countField.value = "1"; 
+        }
+    } else {
+        countField.value = "0";
+    }
+}
 
     // Edit Student Details Logic
     document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -607,6 +666,8 @@
         document.getElementById('student-photo-text').style.display = 'flex';
         console.warn("Could not load student photo from:", this.src);
     });
+
+
     </script>
 </body>
 </html>

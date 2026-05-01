@@ -13,6 +13,18 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
+class Offense(models.Model):
+    offense_type = models.CharField(max_length=50) # e.g., Conduct, Absence
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=255)
+    default_demerits = models.IntegerField(default=5)
+    default_sanction = models.CharField(max_length=100, blank=True, null=True)
+    default_count = models.FloatField(default=1.0)
+    classification = models.CharField(max_length=50, blank=True, null=True) # Major, Minor
+
+    def __str__(self):
+        return f"[{self.code}] {self.name}"
+
 class SchoolYear(TimeStampedModel):
     code = models.CharField(max_length=9, unique=True, help_text="e.g., 2025-2026")
     is_active = models.BooleanField(default=False)

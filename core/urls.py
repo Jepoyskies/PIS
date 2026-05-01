@@ -35,4 +35,5 @@ urlpatterns = [
     path('staff/attendance/list/', views.staff_attendance_list, name='staff_attendance_list'),
     path('staff/attendance/review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
     path('staff/attendance/approve/<int:batch_id>/', views.approve_attendance_batch, name='approve_attendance_batch'),
+    path('api/offenses/list/', views.api_get_offenses, name='api_get_offenses'),
 ]

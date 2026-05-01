@@ -570,3 +570,9 @@ def beadle_dashboard(request):
         'submitted_period_numbers': submitted_period_numbers, 
     }
     return render(request, 'core/beadle_dashboard.html', context)
+
+def api_get_offenses(request):
+    """Returns the official list of offenses for the dropdowns"""
+    from .models import Offense
+    offenses = list(Offense.objects.values('id', 'name', 'default_demerits', 'default_sanction', 'default_count'))
+    return JsonResponse({'offenses': offenses})
