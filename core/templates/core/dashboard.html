@@ -13,10 +13,19 @@
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
         .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
-.table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
+        
+        .table-container { 
+            flex-grow: 1; 
+            min-height: 0; 
+            overflow-y: auto; 
+            background-color: white; 
+            border: 1px solid var(--xu-border-color); 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
         .selected-row { background-color: rgba(58, 83, 164, 0.1) !important; }
         .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
-        .student-photo-placeholder { width: 120px; height: 140px; border: 2px solid #283971; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #ccc; }
         
         /* Action Button Styles */
         .action-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--xu-border-color); }
@@ -29,13 +38,28 @@
         .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
         .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
         .bg-legacy-yellow { background-color: #fcf4a3 !important; }
-        .signature-box { height: 160px; border: 1px solid #999; background: #fff; margin-bottom: 5px; }
+
+        /* Fix for notifications so they don't push the table layout */
+        .messages-container {
+            position: absolute;
+            top: 130px; 
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            width: 90%;
+            max-width: 600px;
+            pointer-events: none; 
+        }
+        .messages-container .alert {
+            pointer-events: auto; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
+    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student Masterlist Dashboard</div>
@@ -56,17 +80,18 @@
         </div>
     </header>
 
-    <nav class="main-nav d-flex z-1 shadow-sm">
+    <nav class="main-nav d-flex z-1 shadow-sm flex-shrink-0">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link active">CURRENTLY ENROLLED STUDENTS</a>
-        <a href="{% url 'staff_attendance_list' %}" class="nav-link {% if 'attendance' in request.path %}active{% endif %}">ATTENDANCE</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
-        <div class="search-bar-container">
+        <!-- Search Bar -->
+        <div class="search-bar-container flex-shrink-0">
             <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
                 <div class="d-flex align-items-center gap-2">
                     <label class="small fw-bold mb-0 text-uppercase opacity-75">Student Name:</label>
@@ -83,18 +108,22 @@
             </form>
         </div>
 
+        <!-- Working Area -->
         <div class="flex-grow-1 p-3 d-flex flex-column" style="min-height: 0;">
-            <!-- Dynamic Messages Display -->
-            {% if messages %}
-            <div class="mb-2">
-                {% for message in messages %}
-                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} py-2 px-3 small fw-bold border-0 shadow-sm mb-1">
-                    {{ message }}
-                </div>
-                {% endfor %}
+            
+            <!-- Floating Messages -->
+            <div class="messages-container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show fw-bold border-0 shadow-sm mb-1" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
-            {% endif %}
 
+            <!-- Main Table -->
             <div class="table-container shadow-sm bg-white">
                 <table class="table table-hover table-xu-dashboard mb-0" style="font-size: 0.85rem;">
                     <thead>
@@ -111,12 +140,11 @@
                     <tbody id="student-table-body">
                         {% for student in students %}
                         <tr class="student-row align-middle" style="cursor: pointer;" 
-    data-id="{{ student.student_number }}"
-    data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
-    data-sex="{{ student.sex }}"
-    data-section="{{ student.section.name|default:'' }}"
-    data-address="{{ student.address|default:'' }}"
-    data-bday="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}">
+                            data-id="{{ student.student_number }}"
+                            data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
+                            data-sex="{{ student.sex }}"
+                            data-section="{{ student.section.name|default:'' }}"
+                            data-address="{{ student.address|default:'' }}">
                             
                             <td class="ps-3 fw-bold">{{ student.student_number }}</td>
                             <td class="fw-bold" style="color: var(--xu-blue-1);">
@@ -169,14 +197,12 @@
                 </table>
             </div>
 
-            <!-- ACTION BUTTONS ROW -->
+            <!-- Action Buttons -->
             <div class="d-flex gap-2 mt-3 align-items-center flex-shrink-0">
-                <div class="small text-muted me-auto">Record 1 of {{ students|length }}</div>
+                <div class="small text-muted me-auto" id="record-count-display">Record 1 of {{ students|length }}</div>
                 
                 <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
                 <button type="button" id="btn-preview-letter" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal" disabled>Preview Letter</button>
-                
-                <!-- Fixed Buttons connected to modals -->
                 <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
                 <button type="button" id="btn-view-offenses" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal" disabled>View Student Offenses</button>
                 
@@ -356,23 +382,42 @@
     <div class="modal fade" id="offenseModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header modal-legacy-header p-3">
+                <div class="modal-header modal-legacy-header p-3 d-flex justify-content-between align-items-start">
+                    
+                    <!-- Left: Student Details -->
                     <div>
                         <div class="small fw-bold opacity-75 text-black">Student Number: <span id="modal-id-display">---</span></div>
                         <h4 class="fw-bold m-0 text-black" id="modal-name-display">STUDENT NAME</h4>
                         <div class="small opacity-75 text-black">Gender: <span id="modal-sex-display">---</span></div>
                     </div>
-                    <div class="ms-auto d-flex align-items-center gap-3">
-                        <div class="student-photo-placeholder">PHOTO</div>
-                        <div class="d-flex flex-column gap-1">
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Take a Picture</button>
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Load a Picture</button>
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Clear Picture</button>
+                    
+                    <!-- Right: Photo & Actions -->
+                    <div class="d-flex align-items-start gap-4">
+                        <div class="d-flex align-items-center gap-3">
+                            
+                            <!-- Enlarged Photo Container -->
+                            <div class="student-photo-container position-relative shadow-sm" style="width: 140px; height: 170px; border: 3px solid #283971; border-radius: 4px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <span id="student-photo-text" style="font-size: 14px; font-weight: bold; color: #ccc; letter-spacing: 1px;">PHOTO</span>
+                                <img id="student-photo-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0;">
+                                <video id="webcam-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; transform: scaleX(-1);"></video>
+                            </div>
+                            
+                            <!-- Enlarged Camera Buttons -->
+                            <div class="d-flex flex-column gap-2" style="width: 120px;">
+                                <button type="button" id="btn-camera" class="btn btn-light btn-sm fw-bold py-1 shadow-sm border" style="font-size:11px;" onclick="toggleCamera()">Take a Picture</button>
+                                <button type="button" id="btn-upload" class="btn btn-light btn-sm fw-bold py-1 shadow-sm border" style="font-size:11px;" onclick="document.getElementById('upload-photo-input').click()">Load a Picture</button>
+                                <button type="button" class="btn btn-light btn-sm fw-bold py-1 shadow-sm border text-danger" style="font-size:11px;" onclick="clearPhoto()">Clear Picture</button>
+                            </div>
+                            
+                            <input type="file" id="upload-photo-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handlePhotoUpload(event)">
+                            <input type="hidden" id="student-photo-base64" name="photo_base64">
+                            <canvas id="webcam-canvas" style="display: none;"></canvas>
                         </div>
-                        <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
+                        
+                        <button type="button" class="btn-close btn-close-white mt-1 ms-2" data-bs-dismiss="modal"></button>
                     </div>
+
                 </div>
-                <div class="modal-body p-0" style="background-color: #f8f9fa;">
                     
                     <!-- Bootstrap Nav Tabs -->
                     <ul class="nav nav-tabs px-3 pt-2 bg-white" id="offenseTabs" role="tablist" style="border-bottom: none;">
@@ -399,7 +444,6 @@
                     <!-- Tab Content Container -->
                     <div class="tab-content legacy-tab-content" id="offenseTabsContent">
                         
-                        <!-- TAB 1: PERSONAL INFORMATION -->
                         <!-- TAB 1: PERSONAL INFORMATION -->
                         <div class="tab-pane fade" id="pane-personal" role="tabpanel">
                             <div class="row g-3">
@@ -449,7 +493,7 @@
                                     </div>
                                     <!-- NEW SAVE BUTTON -->
                                     <div class="text-end mt-2">
-                                        <button type="button" class="btn btn-success fw-bold px-4" onclick="savePersonalInfo()">💾 Save Personal Info</button>
+                                        <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="savePersonalInfo()">💾 Save Personal Info</button>
                                     </div>
                                 </div>
                             </div>
@@ -472,7 +516,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="detailed-offenses-body">
-                                    <!-- Populated dynamically by JavaScript -->
+                                    <tr><td colspan="9" class="text-center p-5 text-muted fw-bold">Loading...</td></tr>
                                 </tbody>
                             </table>
                             <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-2" onclick="addNewOffenseRow()">
@@ -678,10 +722,8 @@
         fetch(`/api/student/${studentId}/offenses/`)
             .then(response => response.json())
             .then(data => {
-                // 1. Clear all previous inputs to fix the "Ghost" bug
                 document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
                 
-                // 2. Fill inputs with the actual database values
                 if (data.student_info) {
                     Object.keys(data.student_info).forEach(key => {
                         const input = document.querySelector(`.personal-info-input[name="${key}"]`);
@@ -689,7 +731,16 @@
                     });
                 }
 
-                // 3. Load Summaries
+                // Load Photo if it exists
+                if (data.student_info && data.student_info.photo_url) {
+                    document.getElementById('student-photo-img').src = data.student_info.photo_url;
+                    document.getElementById('student-photo-img').style.display = 'block';
+                    document.getElementById('student-photo-text').style.display = 'none';
+                } else {
+                    setPhotoUI('');
+                }
+                document.getElementById('student-photo-base64').value = ''; 
+
                 const summaryBody = document.getElementById('offenses-by-type-body');
                 summaryBody.innerHTML = ''; 
                 if (data.summary) {
@@ -698,7 +749,6 @@
                     });
                 }
 
-                // 4. Load Detailed Records
                 const detailedBody = document.getElementById('detailed-offenses-body');
                 detailedBody.innerHTML = ''; 
                 if (!data.records || data.records.length === 0) {
@@ -707,7 +757,7 @@
                     data.records.forEach(rec => createOffenseRow(rec));
                 }
             });
-    }; // <--- THIS is the bracket that was missing and broke the page!
+    };
 
     // Attach click listener to all rows
     document.querySelectorAll('.student-row').forEach(row => {
@@ -825,12 +875,10 @@
         const studentId = document.getElementById('modal-id-display').innerText;
         const payload = {};
         
-        // Gather all inputs
         document.querySelectorAll('.personal-info-input').forEach(input => {
             payload[input.name] = input.value;
         });
 
-        // Send to backend
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         fetch(`/api/student/${studentId}/offenses/`, {
             method: 'POST',
@@ -847,6 +895,161 @@
             }
         });
     }
+
+    // ==========================================
+    // INLINE PHOTO & CAMERA LOGIC
+    // ==========================================
+    let videoStream = null;
+    let isCameraActive = false;
+
+    // 1. ADD NEW FUNCTION TO INSTANTLY SAVE
+    function savePhotoInstantly(base64Str) {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        if (!studentId || studentId === '---') return;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const payload = { photo_base64: base64Str }; // Only send the photo data
+
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status !== 'success') {
+                alert('Error saving photo: ' + data.message);
+            }
+        })
+        .catch(err => console.error("Error saving photo:", err));
+    }
+
+    // 2. UPDATE setPhotoUI TO TRIGGER THE INSTANT SAVE
+    function setPhotoUI(base64Str, autoSave = false) {
+        const img = document.getElementById('student-photo-img');
+        const text = document.getElementById('student-photo-text');
+        
+        if (base64Str) {
+            img.src = base64Str;
+            img.style.display = 'block';
+            text.style.display = 'none';
+            if (autoSave && base64Str.startsWith('data:image')) {
+                savePhotoInstantly(base64Str);
+            }
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            text.style.display = 'flex';
+            if (autoSave) {
+                savePhotoInstantly('DELETE');
+            }
+        }
+    }
+
+    function toggleCamera() {
+        const video = document.getElementById('webcam-video');
+        const btnCamera = document.getElementById('btn-camera');
+        const btnUpload = document.getElementById('btn-upload');
+        const img = document.getElementById('student-photo-img');
+        const text = document.getElementById('student-photo-text');
+
+        if (!isCameraActive) {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        img.style.display = 'none';
+                        text.style.display = 'none';
+                        
+                        btnCamera.innerHTML = '📸 Snap Picture';
+                        btnCamera.classList.replace('btn-light', 'btn-primary');
+                        btnCamera.classList.add('text-white');
+                        
+                        btnUpload.innerHTML = 'Cancel';
+                        btnUpload.classList.add('text-danger');
+                        btnUpload.onclick = cancelCamera; 
+                        isCameraActive = true;
+                    })
+                    .catch(function(err) {
+                        alert("Camera access denied or unavailable.");
+                    });
+            } else {
+                alert("Your browser does not support camera access.");
+            }
+        } else {
+            const canvas = document.getElementById('webcam-canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            cancelCamera(); 
+            // PASS TRUE TO TRIGGER AUTOSAVE
+            setPhotoUI(dataURL, true); 
+        }
+    }
+
+    function cancelCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        document.getElementById('webcam-video').style.display = 'none';
+        
+        const btnCamera = document.getElementById('btn-camera');
+        const btnUpload = document.getElementById('btn-upload');
+        
+        btnCamera.innerHTML = 'Take a Picture';
+        btnCamera.classList.replace('btn-primary', 'btn-light');
+        btnCamera.classList.remove('text-white');
+        
+        btnUpload.innerHTML = 'Load a Picture';
+        btnUpload.classList.remove('text-danger');
+        btnUpload.onclick = () => document.getElementById('upload-photo-input').click(); 
+        isCameraActive = false;
+
+        const img = document.getElementById('student-photo-img');
+        if (img.src && img.src !== window.location.href) {
+             img.style.display = 'block';
+        } else {
+             document.getElementById('student-photo-text').style.display = 'block';
+        }
+    }
+
+    function handlePhotoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert("File is too large. Please select an image under 5MB.");
+                return;
+            }
+            const reader = new FileReader();
+            // PASS TRUE TO TRIGGER AUTOSAVE
+            reader.onload = function(e) { setPhotoUI(e.target.result, true); };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearPhoto() {
+        if (confirm("Would you like to delete the current photo?")) {
+            // PASS TRUE TO TRIGGER AUTOSAVE
+            setPhotoUI('', true);
+            document.getElementById('upload-photo-input').value = '';
+        }
+    }
+    // Fallback: If an image fails to load, hide the broken icon and show the "PHOTO" text
+    document.getElementById('student-photo-img').addEventListener('error', function() {
+        this.style.display = 'none';
+        document.getElementById('student-photo-text').style.display = 'flex';
+        console.warn("Could not load student photo from:", this.src);
+    });
     </script>
 </body>
 </html>

@@ -38,7 +38,7 @@
     <!-- Main Header -->
     <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center z-2 shadow-sm flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student & Beadle Portal</div>
@@ -108,14 +108,14 @@
                     <div class="pb-2 d-flex align-items-center gap-2">
                         <label class="small fw-bold text-muted mb-0">Select Period:</label>
                         <select name="period_number" id="periodSelect" form="attendanceForm" class="form-select form-select-sm shadow-sm border-secondary fw-bold text-dark" style="width: 220px; cursor: pointer;">
-                            <option value="1">1st Period (7:30 - 8:25)</option>
-                            <option value="2">2nd Period (8:30 - 9:25)</option>
-                            <option value="3">3rd Period (9:50 - 10:45)</option>
-                            <option value="4">4th Period (10:50 - 11:45)</option>
-                            <option value="5">5th Period (1:00 - 1:55)</option>
-                            <option value="6">6th Period (2:00 - 2:55)</option>
-                            <option value="7">7th Period (3:00 - 3:55)</option>
-                        </select>
+                        <option value="1" {% if 1 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>1st Period (7:30 - 8:25) {% if 1 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="2" {% if 2 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>2nd Period (8:30 - 9:25) {% if 2 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="3" {% if 3 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>3rd Period (9:50 - 10:45) {% if 3 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="4" {% if 4 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>4th Period (10:50 - 11:45) {% if 4 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="5" {% if 5 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>5th Period (1:00 - 1:55) {% if 5 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="6" {% if 6 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>6th Period (2:00 - 2:55) {% if 6 in submitted_period_numbers %}✔️{% endif %}</option>
+                        <option value="7" {% if 7 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>7th Period (3:00 - 3:55) {% if 7 in submitted_period_numbers %}✔️{% endif %}</option>
+                    </select>
                     </div>
                 </div>
 
@@ -303,6 +303,19 @@
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
+        // Auto-select the first available period so beadles don't get stuck on a disabled option
+        window.addEventListener('DOMContentLoaded', () => {
+            const periodSelect = document.getElementById('periodSelect');
+            if (periodSelect) {
+                for (let i = 0; i < periodSelect.options.length; i++) {
+                    if (!periodSelect.options[i].disabled) {
+                        periodSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        });
+        
         const fullNames = {
             'P': 'Present', 'A': 'Absent', 'L': 'Late', 'UU': 'Unprescribed Uniform',
             'UH': 'Unprescribed Haircut', 'ID': 'No ID', 'CL': 'Campus Leave'

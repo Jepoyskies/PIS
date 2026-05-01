@@ -21,7 +21,7 @@
     <!-- Standard Header -->
     <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu_logo.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
             <div class="text-white">
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Staff Attendance Review</div>
@@ -73,6 +73,17 @@
     </div>
 
     <main class="flex-grow-1 p-3 d-flex flex-column">
+        <!-- MESSAGES CONTAINER -->
+        <div class="container-fluid" style="max-width: 1400px; margin: 0 auto;">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show fw-bold border-0 shadow-sm mb-3" role="alert">
+                        <span class="me-2">ℹ️</span> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
         <div class="container-fluid d-flex flex-column flex-grow-1" style="min-height: 0; max-width: 1400px; margin: 0 auto; width: 100%;">
             <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" class="d-flex flex-column h-100">
                 {% csrf_token %}
