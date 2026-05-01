@@ -1,0 +1,28 @@
+<!-- OFFENSES BY TYPE MODAL (Legacy Style) -->
+    <div class="modal fade" id="offensesByTypeModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header p-2" style="background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); border-bottom: 3px solid #283971;">
+                    <h6 class="modal-title fw-bold text-white small m-0 ms-2">Offenses by Type</h6>
+                    <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="background-color: #ffffff;"> 
+                    <div class="p-2 fw-bold text-center text-xu-blue" id="type-modal-name">STUDENT NAME</div>
+                    <table class="table table-sm border-dark mb-0 small" style="background-color: transparent;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #333;">
+                                <th class="ps-3">Offense Type</th>
+                                <th class="text-center pe-3">Counts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="offenses-by-type-body">
+                            <!-- Populated dynamically by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer p-1 d-flex justify-content-end bg-light">
+                    <button type="button" class="btn btn-light btn-sm border fw-bold" data-bs-dismiss="modal">Close Form</button>
+                </div>
+            </div>
+        </div>
+    </div>

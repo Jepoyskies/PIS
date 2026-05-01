@@ -1,0 +1,62 @@
+<!-- EDIT STUDENT MODAL -->
+    <div class="modal fade" id="editStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-xu-primary text-white py-3">
+                    <h6 class="modal-title fw-bold text-uppercase small letter-spacing-1">Update Student Information</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="edit_student" value="1">
+                    <input type="hidden" name="student_number" id="edit-id">
+                    <div class="modal-body p-4 bg-light">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-5">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">First Name</label>
+                                <input type="text" name="first_name" id="edit-fname" class="form-control border-0 shadow-sm" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Last Name</label>
+                                <input type="text" name="last_name" id="edit-lname" class="form-control border-0 shadow-sm" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">M.I.</label>
+                                <input type="text" name="middle_initial" id="edit-mi" class="form-control border-0 shadow-sm text-center">
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Sex</label>
+                                <select name="sex" id="edit-sex" class="form-select border-0 shadow-sm">
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Birth Date</label>
+                                <input type="date" name="date_of_birth" id="edit-bday" class="form-control border-0 shadow-sm">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold small text-muted text-uppercase mb-1">Current Address</label>
+                            <input type="text" name="address" id="edit-address" class="form-control border-0 shadow-sm">
+                        </div>
+                        <div class="mb-0">
+                            <label class="fw-bold small text-uppercase mb-1" style="color: var(--xu-blue-2);">Change Assigned Section</label>
+                            <select name="section_id" id="edit-section" class="form-select border-0 shadow-sm">
+                                <option value="">-- Unassigned --</option>
+                                {% for sec in sections %}
+                                <option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white py-2">
+                        <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-xu-gold btn-sm px-4 fw-bold">SAVE CHANGES</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,18 @@
+<!-- IMPORT EXCEL MODAL -->
+    <div class="modal fade" id="importExcelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h6 class="modal-title fw-bold">IMPORT STUDENT MASTERLIST</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-body p-4 text-center">
+                        <input type="file" name="import_excel" class="form-control" required>
+                    </div>
+                    <div class="modal-footer bg-light"><button type="submit" class="btn btn-success px-4 fw-bold">PROCEED WITH IMPORT</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
