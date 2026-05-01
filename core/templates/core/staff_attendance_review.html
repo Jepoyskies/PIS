@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -13,8 +14,15 @@
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
         .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
-        .violation-row { background-color: #fff3cd !important; border-left: 5px solid #dc3545 !important; }
-        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .violation-row { background-color: #fffdf5 !important; border-left: 5px solid var(--xu-gold) !important; }
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        .grid-header { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px !important; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
+        
+        /* Compact columns to fit screen */
+        .col-name { min-width: 200px; max-width: 250px; }
+        .col-expanded { min-width: 280px; width: 280px; background-color: #fafbfc; border-left: 2px solid var(--xu-gold); border-right: 2px solid var(--xu-gold); }
+        .col-narrow { width: 45px; min-width: 45px; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -42,7 +50,6 @@
         </div>
     </header>
 
-    <!-- Standard 5-Tab Navigation -->
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
@@ -55,10 +62,10 @@
     <!-- Review Header Bar -->
     <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
         <div class="d-flex flex-column">
-            <div class="fw-bold fs-5 mb-0">REVIEW: {{ batch.daily_attendance.section.name }} - Period {{ batch.period_number }}</div>
+            <div class="fw-bold fs-5 mb-0">DAILY ATTENDANCE REVIEW: {{ batch.daily_attendance.section.name }}</div>
             <div class="small opacity-75 fw-bold">
                 📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
-                🕒 Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
+                🕒 Period {{ batch.period_number }} Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
                 ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
             </div>
         </div>
@@ -73,7 +80,6 @@
     </div>
 
     <main class="flex-grow-1 p-3 d-flex flex-column">
-        <!-- MESSAGES CONTAINER -->
         <div class="container-fluid" style="max-width: 1400px; margin: 0 auto;">
             {% if messages %}
                 {% for message in messages %}
@@ -88,55 +94,77 @@
             <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" class="d-flex flex-column h-100">
                 {% csrf_token %}
                 <div class="table-container shadow-sm bg-white mb-3">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                        <thead style="position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1;">
+                    <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;">
+                        <thead>
                             <tr>
-                                <th class="ps-4 py-3" style="border-bottom: 3px solid var(--xu-gold); width: 30%;">Student Name</th>
-                                <th class="py-3" style="border-bottom: 3px solid var(--xu-gold); width: 15%;">Submitted Status</th>
-                                <th class="py-3" style="border-bottom: 3px solid var(--xu-gold); width: 30%;">Beadle Notes</th>
-                                <th class="pe-4 py-3" style="border-bottom: 3px solid var(--xu-gold); width: 25%;">Admin Override (Optional)</th>
+                                <th class="grid-header ps-3 col-name">Student Name</th>
+                                <th class="grid-header text-center col-narrow">Sex</th>
+                                {% for p in "1234567"|make_list %}
+                                    {% if p|add:"0" == batch.period_number %}
+                                        <th class="grid-header text-center bg-white text-dark">
+                                            {{ p }} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Current Review</small>
+                                        </th>
+                                    {% else %}
+                                        <th class="grid-header text-center col-narrow opacity-75">{{ p }}</th>
+                                    {% endif %}
+                                {% endfor %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for rec in batch.records.all %}
-                            <tr class="{% if rec.code != 'P' %}violation-row{% endif %}">
-                                <td class="ps-4 py-3">
+                            <tr class="{% if rec.code != 'P' %}violation-row{% endif %} border-bottom">
+                                <td class="ps-3 bg-white align-middle">
                                     <div class="d-flex flex-column">
-                                        <span class="fw-bold text-xu-blue" style="font-size: 1rem;">{{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}</span>
+                                        <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="{{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}">
+                                            {{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}
+                                        </span>
                                         <div class="d-flex align-items-center mt-1 gap-2">
-                                            <span class="text-muted small fw-bold">ID: {{ rec.student.student_number }}</span>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 fw-bold shadow-sm" style="font-size: 0.7rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ rec.student.student_number }}', '{{ rec.student.last_name|escapejs }}, {{ rec.student.first_name|escapejs }}', '{{ rec.student.sex|default:'-' }}')" title="View Student Offenses">
-                                                🔍 View Offenses
+                                            <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: {{ rec.student.student_number }}</span>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ rec.student.student_number }}', '{{ rec.student.last_name|escapejs }}, {{ rec.student.first_name|escapejs }}', '{{ rec.student.sex|default:'M' }}')" title="View Student Offenses">
+                                                🔍
                                             </button>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} rounded-pill px-3 py-2 border shadow-sm" style="font-size: 0.8rem;">
-                                        {{ rec.get_code_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if rec.note %}
-                                        <span class="text-muted fst-italic small">📝 {{ rec.note }}</span>
+                                <td class="text-center fw-bold text-muted bg-white align-middle" style="font-size: 0.75rem;">{{ rec.student.sex|default:'M' }}</td>
+                                
+                                {% for p in "1234567"|make_list %}
+                                    {% if p|add:"0" == batch.period_number %}
+                                        <!-- ACTIVE PERIOD BEING REVIEWED -->
+                                        <td class="col-expanded p-2 align-middle">
+                                            <div class="d-flex flex-column gap-1">
+                                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">
+                                                        {{ rec.get_code_display }}
+                                                    </span>
+                                                    
+                                                    {% if not batch.is_approved %}
+                                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;">
+                                                            <option value="">-- Keep {{ rec.code }} --</option>
+                                                            <option value="P">Set Present (P)</option>
+                                                            <option value="A">Set Absent (A)</option>
+                                                            <option value="L">Set Late (L)</option>
+                                                            <option value="UU">Set Uniform (UU)</option>
+                                                            <option value="UH">Set Haircut (UH)</option>
+                                                            <option value="ID">Set No ID (ID)</option>
+                                                            <option value="CL">Set Leave (CL)</option>
+                                                        </select>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if rec.note %}
+                                                    <div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">{{ rec.note }}</span></div>
+                                                {% else %}
+                                                    <div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
                                     {% else %}
-                                        <span class="text-muted opacity-50 small">-</span>
+                                        <!-- OTHER PERIODS (Populated by JS) -->
+                                        <td class="col-narrow text-center text-muted opacity-50 fw-bold align-middle bg-white history-col-p{{ p }}" data-student-id="{{ rec.student.id }}" style="font-size: 0.8rem;">-</td>
                                     {% endif %}
-                                </td>
-                                <td class="pe-4">
-                                    {% if not batch.is_approved %}
-                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark shadow-sm fw-bold">
-                                            <option value="">-- Keep Submitted Status --</option>
-                                            <option value="P">Override to Present (P)</option>
-                                            <option value="A">Override to Absent (A)</option>
-                                            <option value="L">Override to Late (L)</option>
-                                            <option value="UU">Override to Uniform (UU)</option>
-                                            <option value="ID">Override to No ID (ID)</option>
-                                        </select>
-                                    {% else %}
-                                        <span class="badge bg-light text-muted border px-3 py-2">Locked</span>
-                                    {% endif %}
-                                </td>
+                                {% endfor %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -145,16 +173,85 @@
 
                 {% if not batch.is_approved %}
                 <div class="bg-white p-3 border rounded shadow-sm d-flex justify-content-end align-items-center">
-                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides before saving.</span>
+                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides for Period {{ batch.period_number }} before saving.</span>
                     <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm">
-                        ✅ APPROVE & LOG TO SYSTEM
+                        ✅ APPROVE & LOG PERIOD {{ batch.period_number }} TO SYSTEM
                     </button>
                 </div>
                 {% endif %}
             </form>
         </div>
     </main>
+
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    
+    <script>
+        const staffHistoryData = {};
+        
+        // Safely map records into dictionary to avoid JSON format errors
+        {% if batch.daily_attendance %}
+            
+            // Check via standard set relation
+            {% for b in batch.daily_attendance.attendancebatch_set.all %}
+                if (!staffHistoryData["{{ b.period_number }}"]) { staffHistoryData["{{ b.period_number }}"] = {}; }
+                
+                // Pending submissions
+                {% for r in b.records.all %}
+                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
+                        code: "{{ r.code }}", 
+                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
+                    };
+                {% endfor %}
+                
+                // Finalized/Approved records
+                {% for r in b.attendancerecord_set.all %}
+                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
+                        code: "{{ r.code }}", 
+                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
+                    };
+                {% endfor %}
+            {% endfor %}
+            
+            // Check via custom related_name just in case
+            {% for b in batch.daily_attendance.batches.all %}
+                if (!staffHistoryData["{{ b.period_number }}"]) { staffHistoryData["{{ b.period_number }}"] = {}; }
+                
+                // Pending submissions
+                {% for r in b.records.all %}
+                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
+                        code: "{{ r.code }}", 
+                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
+                    };
+                {% endfor %}
+                
+                // Finalized/Approved records
+                {% for r in b.attendancerecord_set.all %}
+                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
+                        code: "{{ r.code }}", 
+                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
+                    };
+                {% endfor %}
+            {% endfor %}
+
+        {% endif %}
+
+        document.addEventListener("DOMContentLoaded", function() {
+            for (let p = 1; p <= 7; p++) {
+                if (staffHistoryData[p]) {
+                    document.querySelectorAll(`.history-col-p${p}`).forEach(td => {
+                        let studentId = td.dataset.studentId;
+                        let rec = staffHistoryData[p][studentId];
+                        if (rec && rec.code) {
+                            td.innerHTML = `<span class="${rec.color} opacity-100">${rec.code}</span>`;
+                            td.classList.remove('opacity-50');
+                            td.classList.remove('text-muted');
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+
     <!-- DETAILED OFFENSES MODAL (WITH TABS) -->
     <div class="modal fade" id="offenseModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">

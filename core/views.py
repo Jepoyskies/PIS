@@ -370,41 +370,102 @@ def approve_attendance_batch(request, batch_id):
     batch = get_object_or_404(PeriodAttendance, id=batch_id)
 
     if request.method == 'POST':
-        overrides_made =[] 
-        
         with transaction.atomic():
+            # 1. Update the codes based on any overrides made by the staff in the UI
             for rec in batch.records.all():
                 override_code = request.POST.get(f'override_{rec.id}')
-                
                 if override_code and override_code != rec.code:
-                    old_status = rec.get_code_display()
                     rec.code = override_code
                     rec.save()
-                    new_status = rec.get_code_display()
-                    overrides_made.append(f"{rec.student.last_name} ({old_status} ➔ {new_status})")
 
-                if rec.code != 'P':
-                    DisciplinaryRecord.objects.create(
-                        student=rec.student,
-                        category="ATTENDANCE", 
-                        offense_name=rec.get_code_display(),
-                        date_of_incident=batch.daily_attendance.date,
-                        demerits=3 if rec.code == 'A' else 1,
-                        remarks="Staff Override" if override_code else "", 
-                        recorded_by=request.user,
-                        school_year=SchoolYear.objects.filter(is_active=True).first()
-                    )
-
+            # 2. Lock and Approve the batch
             batch.is_approved = True
             batch.save()
             
-            if overrides_made:
-                summary = ", ".join(overrides_made)
-                messages.success(request, f"✅ Attendance Approved! Overrides logged for: {summary}")
-            else:
-                messages.success(request, "✅ Attendance successfully approved and logged.")
+            # 3. TRIGGER INTELLIGENT AUTO-LOGGING
+            # We look at every student in this batch and sync their logs for the WHOLE day
+            for rec in batch.records.all():
+                sync_student_attendance_logs(rec.student, batch.daily_attendance, request.user)
+
+            messages.success(request, f"✅ Period {batch.period_number} approved and student records consolidated.")
             
     return redirect('staff_attendance_review', batch_id=batch.id)
+
+def sync_student_attendance_logs(student, daily_attendance, staff_user):
+    """
+    Intelligently maps a student's period absences to the best official Offense.
+    """
+    from .models import StudentPeriodRecord, DisciplinaryRecord, Offense, SchoolYear
+    
+    # 1. Clear existing attendance-based disciplinary logs for this student on this day
+    # This prevents duplication when approving multiple periods
+    DisciplinaryRecord.objects.filter(
+        student=student, 
+        date_of_incident=daily_attendance.date,
+        category="ATTENDANCE"
+    ).delete()
+
+    # 2. Get all approved period records for this student today
+    # We only count absences in periods that have been officially 'Approved' by staff
+    absent_periods = list(StudentPeriodRecord.objects.filter(
+        student=student,
+        period__daily_attendance=daily_attendance,
+        period__is_approved=True,
+        code='A' # 'A' for Absent
+    ).values_list('period__period_number', flat=True))
+
+    if not absent_periods:
+        return
+
+    # 3. CONSOLIDATION LOGIC
+    # Period Mapping: Morning (1-4), Afternoon (5-7)
+    all_day = {1, 2, 3, 4, 5, 6, 7}
+    morning = {1, 2, 3, 4}
+    afternoon = {5, 6, 7}
+    
+    absent_set = set(absent_periods)
+    offenses_to_log = []
+
+    # Check for Whole Day (WD)
+    if all_day.issubset(absent_set):
+        offenses_to_log.append("WD")
+    else:
+        # Check for Whole Morning (AWM)
+        if morning.issubset(absent_set):
+            offenses_to_log.append("AWM")
+        else:
+            # If not whole morning, log individual periods
+            for p in [1, 2, 3, 4]:
+                if p in absent_set: offenses_to_log.append(f"AM{p}")
+        
+        # Check for Whole Afternoon (AWA)
+        if afternoon.issubset(absent_set):
+            offenses_to_log.append("AWA")
+        else:
+            # If not whole afternoon, log individual periods
+            # Map periods 5-7 to your PM codes (PM5, PM6, PM7)
+            for p in [5, 6, 7]:
+                if p in absent_set: offenses_to_log.append(f"PM{p}")
+
+    # 4. CREATE THE DISCIPLINARY RECORDS
+    active_sy = SchoolYear.objects.filter(is_active=True).first()
+    
+    for code in offenses_to_log:
+        # Look up the official data from your seeded Offense table
+        official_offense = Offense.objects.filter(code=code).first()
+        
+        if official_offense:
+            DisciplinaryRecord.objects.create(
+                student=student,
+                category="ATTENDANCE",
+                offense_name=official_offense.name,
+                date_of_incident=daily_attendance.date,
+                demerits=official_offense.default_demerits,
+                sanction=official_offense.default_sanction,
+                recorded_by=staff_user,
+                school_year=active_sy,
+                remarks="Auto-generated from Beadle Attendance"
+            )
 
 @login_required
 def api_student_offenses(request, student_id):

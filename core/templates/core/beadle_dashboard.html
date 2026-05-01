@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -9,29 +10,35 @@
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
         body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Unified Navigation */
         .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; flex-shrink: 0; }
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; display: inline-block; }
         .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
         .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
         
-        /* Unified Card Styles */
-        .dashboard-container { max-width: 1200px; margin: 30px auto; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .dashboard-container { max-width: 1200px; margin: 20px auto; width: 100%; height: 100%; display: flex; flex-direction: column; }
         .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
-        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 12px 20px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
 
-        /* Custom Tabs under Menu Header */
-        .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 600; padding: 12px 25px; border-bottom: 3px solid transparent; border-radius: 0; }
-        .nav-tabs .nav-link:hover { color: var(--xu-blue-1); background-color: transparent; border-color: transparent; }
-        .nav-tabs .nav-link.active { color: var(--xu-blue-1) !important; background-color: transparent !important; border-bottom: 3px solid var(--xu-blue-1); }
-
-        /* Formal Tables */
-        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
-        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-light-gray); color: var(--xu-blue-1); z-index: 1; padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
-        .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
-
+        .table-container { flex-grow: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background-color: white; }
         .violation-row { background-color: #fffdf5 !important; border-left: 4px solid var(--xu-gold); }
+        
+        /* Optimized Grid Styles */
+        .hover-bg:hover { background-color: rgba(40, 57, 113, 0.08); }
+        .cursor-pointer { cursor: pointer; }
+        
+        /* Compact columns to fit screen */
+        .col-name { min-width: 180px; max-width: 220px; }
+        .col-sex { width: 40px; min-width: 40px; }
+        .col-narrow { width: 40px; min-width: 40px; }
+        
+        /* The active period column */
+        .col-expanded { width: 320px; min-width: 320px; border-left: 2px solid var(--xu-gold); border-right: 2px solid var(--xu-gold); background-color: #fafbfc; }
+        .col-locked { width: 280px; min-width: 280px; border-left: 2px solid var(--xu-blue-1); border-right: 2px solid var(--xu-blue-1); background-color: #f8f9fa; }
+        
+        .grid-header { position: sticky; top: 0; background-color: var(--xu-light-gray); color: var(--xu-blue-1); z-index: 2; padding: 10px 8px !important; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
+        
+        /* Make radio buttons smaller */
+        .btn-attendance { padding: 4px 6px !important; font-size: 0.75rem !important; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -50,20 +57,17 @@
         </div>
     </header>
 
-    <!-- Formal System Navigation -->
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'student_dashboard' %}" class="nav-link">HOME</a>
         <a href="{% url 'beadle_dashboard' %}" class="nav-link active">TAKE ATTENDANCE</a>
     </nav>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow-1 overflow-hidden p-4 d-flex flex-column bg-light">
-        <div class="dashboard-container pb-4">
+    <main class="flex-grow-1 overflow-hidden p-3 d-flex flex-column bg-light">
+        <div class="dashboard-container pb-2">
             
-            <!-- Clean Page Title Area -->
-            <div class="d-flex justify-content-between align-items-end mb-4 flex-shrink-0">
+            <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0">
                 <div>
-                    <h3 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Class Attendance Input</h3>
+                    <h4 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Daily Attendance Grid</h4>
                     <div class="text-muted fw-bold small mt-1">
                         Section: <span class="text-dark me-3">{{ student.section.name }}</span> 
                         Date: <span class="text-dark">{{ today|date:'l, F j, Y' }}</span>
@@ -73,193 +77,61 @@
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm fw-bold border-0 flex-shrink-0" role="alert">
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm fw-bold border-0 flex-shrink-0 py-2" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
 
-            <!-- Main Work Card -->
+            <!-- Form Wrapper -->
             <form method="POST" id="attendanceForm" action="" class="menu-card flex-grow-1 m-0">
                 {% csrf_token %}
                 <input type="hidden" name="attendance_date" value="{{ today|date:'Y-m-d' }}">
+                <div id="dynamic-inputs"></div>
 
                 <div class="menu-header">
-                    <span><i class="me-2">📋</i> ATTENDANCE ROSTER</span>
+                    <span class="small"><i class="me-2">📋</i> 1-7 PERIOD CLASS ROSTER</span>
                 </div>
                 
-                <!-- Clean Bootstrap Tabs WITH Period Dropdown -->
-                <div class="bg-light border-bottom px-4 pt-2 shadow-sm z-1 d-flex justify-content-between align-items-end flex-wrap">
-                    <ul class="nav nav-tabs border-bottom-0" id="attendanceTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="roster-tab" data-bs-toggle="pill" data-bs-target="#roster" type="button" role="tab">
-                                📝 Current Roster Input
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="history-tab" data-bs-toggle="pill" data-bs-target="#history" type="button" role="tab">
-                                🕒 Submission History
-                            </button>
-                        </li>
-                    </ul>
-                    
-                    <!-- Moved dropdown inline with tabs -->
-                    <div class="pb-2 d-flex align-items-center gap-2">
-                        <label class="small fw-bold text-muted mb-0">Select Period:</label>
-                        <select name="period_number" id="periodSelect" form="attendanceForm" class="form-select form-select-sm shadow-sm border-secondary fw-bold text-dark" style="width: 220px; cursor: pointer;">
-                        <option value="1" {% if 1 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>1st Period (7:30 - 8:25) {% if 1 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="2" {% if 2 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>2nd Period (8:30 - 9:25) {% if 2 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="3" {% if 3 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>3rd Period (9:50 - 10:45) {% if 3 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="4" {% if 4 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>4th Period (10:50 - 11:45) {% if 4 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="5" {% if 5 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>5th Period (1:00 - 1:55) {% if 5 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="6" {% if 6 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>6th Period (2:00 - 2:55) {% if 6 in submitted_period_numbers %}✔️{% endif %}</option>
-                        <option value="7" {% if 7 in submitted_period_numbers %}disabled class="bg-light text-muted"{% endif %}>7th Period (3:00 - 3:55) {% if 7 in submitted_period_numbers %}✔️{% endif %}</option>
-                    </select>
+                <!-- Period Selectors above grid -->
+                <div class="bg-light border-bottom px-3 py-2 shadow-sm z-1 d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small fw-bold text-muted me-2">SELECT ACTIVE PERIOD:</span>
+                        <div class="btn-group btn-group-sm shadow-sm" role="group" id="period-selectors">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <span id="period-status-indicator" class="badge bg-secondary px-3 py-1 shadow-sm fs-6">Select a period</span>
                     </div>
                 </div>
 
-                <div class="tab-content flex-grow-1 d-flex flex-column" id="attendanceTabsContent" style="min-height: 0;">
-                    
-                    <!-- TAB 1: FORMAL ROSTER -->
-                    <div class="tab-pane fade show active h-100" id="roster" role="tabpanel" aria-labelledby="roster-tab">
-                        <div class="d-flex flex-column h-100">
-                            <div class="table-container">
-                                <table class="table table-hover table-xu-dashboard mb-0" style="font-size: 0.85rem;">
-                                    <thead>
-                                        <tr>
-                                            <th class="ps-4" style="width: 120px;">Student No.</th>
-                                            <th style="width: 250px;">Student Name</th>
-                                            <th style="min-width: 350px;">Attendance Status</th>
-                                            <th class="pe-4" style="width: 250px;">Remarks / Edits</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for s in section_students %}
-                                        <tr class="student-row border-bottom" data-student-id="{{ s.id }}" data-name="{{ s.last_name }}, {{ s.first_name }}">
-                                            <td class="ps-4 fw-bold text-muted">{{ s.student_number }}</td>
-                                            <td class="fw-bold text-xu-blue">{{ s.last_name|upper }}, {{ s.first_name|upper }}</td>
-                                            
-                                            <td class="py-2">
-                                                <div class="btn-group btn-group-sm d-flex shadow-sm w-100" role="group">
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="p_{{ s.id }}" value="P" autocomplete="off">
-                                                    <label class="btn btn-outline-success fw-bold w-100" for="p_{{ s.id }}" title="Present">P</label>
-
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="a_{{ s.id }}" value="A" autocomplete="off">
-                                                    <label class="btn btn-outline-danger fw-bold w-100" for="a_{{ s.id }}" title="Absent">A</label>
-
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="l_{{ s.id }}" value="L" autocomplete="off">
-                                                    <label class="btn btn-outline-warning fw-bold w-100 text-dark" for="l_{{ s.id }}" title="Late">L</label>
-
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="uu_{{ s.id }}" value="UU" autocomplete="off">
-                                                    <label class="btn btn-outline-dark fw-bold w-100" for="uu_{{ s.id }}" title="Unprescribed Uniform">UU</label>
-
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="uh_{{ s.id }}" value="UH" autocomplete="off">
-                                                    <label class="btn btn-outline-dark fw-bold w-100" for="uh_{{ s.id }}" title="Unprescribed Haircut">UH</label>
-
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="id_{{ s.id }}" value="ID" autocomplete="off">
-                                                    <label class="btn btn-outline-dark fw-bold w-100" for="id_{{ s.id }}" title="No ID">ID</label>
-                                                    
-                                                    <input type="radio" class="btn-check status-trigger" name="code_{{ s.id }}" id="cl_{{ s.id }}" value="CL" autocomplete="off">
-                                                    <label class="btn btn-outline-dark fw-bold w-100" for="cl_{{ s.id }}" title="Campus Leave">CL</label>
-                                                </div>
-                                            </td>
-                                            
-                                            <td class="pe-4">
-                                                <div id="note_container_{{ s.id }}" style="display: none;">
-                                                    <input type="hidden" name="original_code_{{ s.id }}" id="orig_code_{{ s.id }}" value="">
-                                                    <input type="text" name="note_{{ s.id }}" class="form-control form-control-sm border-warning shadow-sm fw-bold text-dark" style="background-color: #fffdf5; font-size: 0.8rem;" placeholder="📝 Reason for status change...">
-                                                </div>
-                                                <span class="text-muted small opacity-50 fst-italic" id="default_text_{{ s.id }}">Pending selection...</span>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <!-- Action Bar -->
-                            <div class="d-flex justify-content-between align-items-center flex-shrink-0 p-3 bg-white" style="border-top: 1px solid var(--xu-border-color);">
-                                <span class="small fw-bold text-muted ms-2"><i class="me-1">ℹ️</i> Verify all entries before submitting to teacher.</span>
-                                <button type="button" class="btn fw-bold px-5 shadow-sm text-white" style="background-color: var(--xu-blue-1); border-radius: 6px;" onclick="showReviewMode()">🔍 Review Submission</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 2: HISTORY -->
-                    <div class="tab-pane fade h-100" id="history" role="tabpanel" aria-labelledby="history-tab">
-                        <div class="d-flex flex-column h-100">
-                            <div class="table-container p-0">
-                                <table class="table table-hover table-xu-dashboard mb-0 align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th class="ps-4" style="width: 150px;">Period</th>
-                                            <th style="width: 250px;">Student Name</th>
-                                            <th style="width: 150px;">Status</th>
-                                            <th class="pe-4">Remarks / Edits</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for period in today_periods %}
-                                            <tr class="table-light border-bottom border-top">
-                                                <td colspan="4" class="ps-4 fw-bold text-xu-blue py-2">
-                                                    Period {{ period.period_number }} 
-                                                    <span class="ms-2 badge bg-success shadow-sm">Submitted at {{ period.submitted_at|time:"h:i A" }}</span>
-                                                </td>
-                                            </tr>
-                                            
-                                            {% for rec in period.attendancerecord_set.all %}
-                                                <tr class="{% if rec.code != 'P' %}violation-row{% endif %}">
-                                                    <td class="ps-4 border-end-0"></td>
-                                                    <td class="fw-bold border-start-0" style="color: #444;">{{ rec.student.last_name }}, {{ rec.student.first_name }}</td>
-                                                    <td>
-                                                        <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} px-3 py-1 shadow-sm">
-                                                            {{ rec.get_code_display }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="pe-4 text-muted fst-italic small">
-                                                        {% if rec.note %}
-                                                            <span class="text-danger fw-bold">⚠️ Note:</span> <span class="text-dark">{{ rec.note }}</span>
-                                                        {% else %}
-                                                            -
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                            
-                                            {% for rec in period.records.all %}
-                                                <tr class="{% if rec.code != 'P' %}violation-row{% endif %}">
-                                                    <td class="ps-4 border-end-0"></td>
-                                                    <td class="fw-bold border-start-0" style="color: #444;">{{ rec.student.last_name }}, {{ rec.student.first_name }}</td>
-                                                    <td>
-                                                        <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} px-3 py-1 shadow-sm">
-                                                            {{ rec.get_code_display }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="pe-4 text-muted fst-italic small">
-                                                        {% if rec.note %}
-                                                            <span class="text-danger fw-bold">⚠️ Note:</span> <span class="text-dark">{{ rec.note }}</span>
-                                                        {% else %}
-                                                            -
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-
-                                        {% empty %}
-                                            <tr>
-                                                <td colspan="4" class="text-center py-5 text-muted">
-                                                    <div class="mb-2 fs-1">📄</div>
-                                                    <div class="fw-bold">No periods submitted yet today.</div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
+                <div class="table-container p-0">
+                    <table class="table table-bordered mb-0 align-middle" style="font-size: 0.8rem;" id="attendance-grid">
+                        <thead>
+                            <tr>
+                                <th class="grid-header ps-3 col-name">Student Name</th>
+                                <th class="grid-header text-center col-sex">Sex</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(1)" id="th-1">1</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(2)" id="th-2">2</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(3)" id="th-3">3</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(4)" id="th-4">4</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(5)" id="th-5">5</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(6)" id="th-6">6</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(7)" id="th-7">7</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Action Bar -->
+                <div id="action-bar" class="d-flex justify-content-between align-items-center flex-shrink-0 p-3 bg-white" style="border-top: 1px solid var(--xu-border-color);">
+                    <span class="small fw-bold text-muted ms-2"><i class="me-1">ℹ️</i> Verify all entries in the active period before submitting to teacher.</span>
+                    <button type="button" class="btn fw-bold px-4 shadow-sm text-white btn-sm" style="background-color: var(--xu-blue-1); border-radius: 6px;" onclick="showReviewMode()">🔍 Review Submission</button>
                 </div>
             </form>
         </div>
@@ -269,7 +141,7 @@
     <div class="modal fade" id="reviewModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-                <div class="menu-header px-4">
+                <div class="menu-header px-4 py-3">
                     <div class="text-white">
                         <h5 class="fw-bold m-0 text-white" style="letter-spacing: 0.5px;">CONFIRM SUBMISSION</h5>
                         <div class="small fw-bold opacity-75 mt-1">Period: <span id="review-period-display" class="text-white"></span></div>
@@ -277,8 +149,8 @@
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-white" style="max-height: 50vh; overflow-y: auto;">
-                    <table class="table table-sm table-xu-dashboard align-middle mb-0 small">
-                        <thead class="sticky-top">
+                    <table class="table table-sm table-bordered align-middle mb-0 small">
+                        <thead class="sticky-top bg-light text-muted">
                             <tr>
                                 <th class="ps-4 py-2">Student Name</th>
                                 <th class="py-2">Status</th>
@@ -293,7 +165,7 @@
                 <div class="modal-footer bg-light justify-content-between p-3" style="border-top: 1px solid var(--xu-border-color);">
                     <div class="small fw-bold text-danger"><i class="me-1">⚠️</i> Submitting will permanently lock this period.</div>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-4" data-bs-dismiss="modal" onclick="unlockForEditing()">Go Back & Edit</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-4" data-bs-dismiss="modal" onclick="unlockEditing()">Go Back & Edit</button>
                         <button type="button" class="btn btn-success btn-sm fw-bold px-4 shadow-sm" onclick="submitFinalForm()">Confirm & Submit to Office</button>
                     </div>
                 </div>
@@ -303,147 +175,347 @@
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
-        // Auto-select the first available period so beadles don't get stuck on a disabled option
-        window.addEventListener('DOMContentLoaded', () => {
-            const periodSelect = document.getElementById('periodSelect');
-            if (periodSelect) {
-                for (let i = 0; i < periodSelect.options.length; i++) {
-                    if (!periodSelect.options[i].disabled) {
-                        periodSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-        });
-        
+        const codesConfig = {
+            'P': { label: 'P', color: 'outline-success' },
+            'A': { label: 'A', color: 'outline-danger' },
+            'L': { label: 'L', color: 'outline-warning text-dark' },
+            'UU': { label: 'UU', color: 'outline-dark' },
+            'UH': { label: 'UH', color: 'outline-dark' },
+            'ID': { label: 'ID', color: 'outline-dark' },
+            'CL': { label: 'CL', color: 'outline-dark' }
+        };
+
         const fullNames = {
             'P': 'Present', 'A': 'Absent', 'L': 'Late', 'UU': 'Unprescribed Uniform',
             'UH': 'Unprescribed Haircut', 'ID': 'No ID', 'CL': 'Campus Leave'
         };
 
-        const studentOriginalChoices = {};
-        let reviewModeAccessed = false;
+        const submittedPeriods = {{ submitted_period_numbers|safe|default:"[]" }};
+        
+        const historyData = {
+            {% for period in today_periods %}
+            "{{ period.period_number }}": {
+                submittedAt: "{{ period.submitted_at|time:'h:i A' }}",
+                records: {
+                    {% for rec in period.records.all %}
+                    "{{ rec.student.id }}": { code: "{{ rec.code }}", note: "{{ rec.note|escapejs }}" }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                    {% for rec in period.attendancerecord_set.all %}
+                    "{{ rec.student.id }}": { code: "{{ rec.code }}", note: "{{ rec.note|escapejs }}" }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
 
-        document.querySelectorAll('.status-trigger').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const row = this.closest('tr');
-                const studentId = row.dataset.studentId;
-                const group = this.closest('.btn-group');
+        const students =[
+            {% for s in section_students %}
+            {
+                id: "{{ s.id }}",
+                no: "{{ s.student_number }}",
+                name: "{{ s.last_name|upper }}, {{ s.first_name|upper }}",
+                sex: "{{ s.sex|default:'M'|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        let activePeriod = 1;
+        let formData = {};
+        
+        // Strict Locking Mechanism Variables
+        let firstChoices = {}; 
+        let isUnlocked = false;
+
+        window.onload = function() {
+            for(let i=1; i<=7; i++) {
+                if(!submittedPeriods.includes(i)) {
+                    activePeriod = i;
+                    break;
+                }
+            }
+            initFormData();
+            renderUI();
+        };
+
+        function initFormData() {
+            firstChoices = {};
+            isUnlocked = false;
+            students.forEach(s => {
+                formData[s.id] = { code: '', note: '' };
+            });
+        }
+
+        function setActivePeriod(p) {
+            if (activePeriod === p) return;
+            activePeriod = p;
+            if (!submittedPeriods.includes(p)) {
+                initFormData();
+            }
+            renderUI();
+        }
+
+        function renderUI() {
+            renderSelectors();
+            renderGrid();
+            
+            const bar = document.getElementById('action-bar');
+            if (submittedPeriods.includes(activePeriod)) {
+                bar.classList.add('d-none');
+            } else {
+                bar.classList.remove('d-none');
+            }
+        }
+
+        function renderSelectors() {
+            const container = document.getElementById('period-selectors');
+            container.innerHTML = '';
+            
+            for(let p = 1; p <= 7; p++) {
+                const isSub = submittedPeriods.includes(p);
+                const isAct = (p === activePeriod);
+                let btnClass = isAct ? 'btn-primary text-white fw-bold' : 'btn-outline-primary fw-bold bg-white text-dark';
+                let icon = isSub ? '✔️ ' : '';
                 
-                const noteContainer = document.getElementById(`note_container_${studentId}`);
-                const defaultText = document.getElementById(`default_text_${studentId}`);
-                const noteInput = noteContainer.querySelector('input[type="text"]');
+                if(isSub && isAct) btnClass = 'btn-success text-white fw-bold';
+                else if(isSub) btnClass = 'btn-outline-success fw-bold bg-white text-dark';
+
+                container.innerHTML += `<button type="button" class="btn ${btnClass} px-3 py-1" onclick="setActivePeriod(${p})">${icon}${p}</button>`;
                 
-                if (!reviewModeAccessed && !studentOriginalChoices.hasOwnProperty(studentId)) {
-                    studentOriginalChoices[studentId] = this.value;
-                    defaultText.innerHTML = "Status locked.";
-                    
-                    group.querySelectorAll('input[type="radio"]').forEach(r => {
-                        if (r !== this) { r.disabled = true; }
-                    });
-                } 
-                else {
-                    const originalVal = studentOriginalChoices[studentId];
-                    if (this.value !== originalVal) {
-                        noteContainer.style.display = 'block';
-                        defaultText.style.display = 'none';
-                        noteInput.required = true;
-                        document.getElementById(`orig_code_${studentId}`).value = originalVal; 
+                const th = document.getElementById(`th-${p}`);
+                if (isAct) {
+                    th.className = 'grid-header text-center cursor-pointer bg-white text-dark';
+                    th.innerHTML = `${p} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Active</small>`;
+                } else {
+                    th.className = 'grid-header text-center col-narrow cursor-pointer text-muted opacity-50';
+                    th.innerHTML = `${p}`;
+                }
+            }
+
+            const indicator = document.getElementById('period-status-indicator');
+            if (submittedPeriods.includes(activePeriod)) {
+                const time = historyData[activePeriod]?.submittedAt || '';
+                indicator.className = 'badge bg-success px-3 py-1 shadow-sm fs-6';
+                indicator.innerHTML = `✅ Submitted at ${time}`;
+            } else {
+                indicator.className = 'badge bg-warning text-dark border border-dark px-3 py-1 shadow-sm fs-6';
+                indicator.innerHTML = `⚠️ Pending Input`;
+            }
+        }
+
+        function getRowHTML(s) {
+            let isViol = formData[s.id]?.code && formData[s.id].code !== 'P' && !submittedPeriods.includes(activePeriod);
+            let trClass = isViol ? "violation-row border-bottom" : "border-bottom";
+            
+            let html = `
+                <td class="fw-bold text-xu-blue ps-3 align-middle" style="font-size: 0.8rem; line-height: 1.1;">
+                    <div class="text-truncate" style="max-width: 180px;" title="${s.name}">${s.name}</div>
+                    <small class="text-muted fw-normal" style="font-size: 0.65rem;">${s.no}</small>
+                </td>
+                <td class="text-center fw-bold text-muted align-middle" style="font-size: 0.75rem;">${s.sex}</td>
+            `;
+
+            for(let p = 1; p <= 7; p++) {
+                const isAct = (p === activePeriod);
+                const isSub = submittedPeriods.includes(p);
+                
+                if (isAct) {
+                    if (isSub) {
+                        const rec = historyData[p].records[s.id];
+                        const code = rec?.code || '-';
+                        const note = rec?.note || '';
+                        const badgeCls = code === 'P' ? 'bg-success' : (code === 'A' ? 'bg-danger' : 'bg-dark');
+                        const dispCode = fullNames[code] || code;
+                        
+                        html += `
+                        <td class="col-locked p-2 align-middle">
+                            <div class="d-flex flex-column align-items-start gap-1">
+                                <span class="badge ${badgeCls} shadow-sm px-2 py-1" style="font-size: 0.75rem;">${dispCode}</span>
+                                ${note ? `<span class="text-danger mt-1 fw-bold" style="font-size:0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${note}</span></span>` : ''}
+                            </div>
+                        </td>`;
                     } else {
-                        noteContainer.style.display = 'none';
-                        defaultText.style.display = 'block';
-                        defaultText.innerHTML = "Status reverted to original.";
-                        noteInput.required = false;
-                        noteInput.value = ''; 
-                        document.getElementById(`orig_code_${studentId}`).value = originalVal;
+                        const currentCode = formData[s.id].code;
+                        const currentNote = formData[s.id].note;
+                        
+                        let buttonsHtml = '<div class="btn-group w-100 shadow-sm" role="group">';
+                        for(let c in codesConfig) {
+                            const id = `code_${p}_${s.id}_${c}`;
+                            const isChecked = currentCode === c ? 'checked' : '';
+                            
+                            // STRICT LOCKING LOGIC
+                            let isDisabled = '';
+                            if (firstChoices[s.id] && !isUnlocked && firstChoices[s.id] !== c) {
+                                isDisabled = 'disabled';
+                            }
+
+                            buttonsHtml += `
+                                <input type="radio" class="btn-check" name="ui_code_${s.id}" id="${id}" value="${c}" ${isChecked} ${isDisabled} onchange="updateForm(${s.id}, '${c}')">
+                                <label class="btn btn-${codesConfig[c].color} btn-attendance fw-bold" for="${id}">${codesConfig[c].label}</label>
+                            `;
+                        }
+                        buttonsHtml += '</div>';
+
+                        // Show note field ONLY if unlocked AND they changed from their first choice (ANY choice)
+                        let showNote = (isUnlocked && currentCode !== firstChoices[s.id]);
+
+                        html += `
+                        <td class="col-expanded p-2 align-middle">
+                            ${buttonsHtml}
+                            <input type="text" class="form-control form-control-sm border-warning shadow-sm mt-1 fw-bold text-dark ${showNote ? '' : 'd-none'}" 
+                                   style="font-size: 0.75rem;" id="note_input_${s.id}" placeholder="📝 Reason for change..." value="${currentNote}" onchange="updateNote(${s.id}, this.value)">
+                        </td>`;
+                    }
+                } else {
+                    if (isSub) {
+                        const rec = historyData[p].records[s.id];
+                        const code = rec?.code || '-';
+                        let color = code === 'P' ? 'text-success' : (code === 'A' ? 'text-danger' : 'text-dark');
+                        html += `<td class="text-center align-middle cursor-pointer hover-bg" onclick="setActivePeriod(${p})">
+                                    <span class="fw-bold ${color}" style="font-size: 0.8rem;">${code}</span>
+                                 </td>`;
+                    } else {
+                        html += `<td class="text-center align-middle cursor-pointer hover-bg text-muted opacity-25" onclick="setActivePeriod(${p})">-</td>`;
                     }
                 }
+            }
+            return { html: html, class: trClass };
+        }
 
-                if (this.value !== 'P') {
-                    row.classList.add('violation-row');
-                } else {
-                    row.classList.remove('violation-row');
-                }
+        function renderGrid() {
+            const tbody = document.getElementById('grid-body');
+            tbody.innerHTML = '';
+            students.forEach(s => {
+                let tr = document.createElement('tr');
+                tr.id = `tr_${s.id}`;
+                let rowData = getRowHTML(s);
+                tr.className = rowData.class;
+                tr.innerHTML = rowData.html;
+                tbody.appendChild(tr);
             });
-        });
+        }
+
+        window.updateForm = function(studentId, code) {
+            formData[studentId].code = code;
+            
+            // Apply first choice lock
+            if (!firstChoices[studentId]) {
+                firstChoices[studentId] = code;
+            }
+
+            // Handle note requirement if changed
+            if (isUnlocked) {
+                if (code !== firstChoices[studentId]) {
+                    // Requires a note. Don't clear it if they are typing.
+                } else {
+                    // Reverted back to original choice
+                    formData[studentId].note = '';
+                }
+            }
+
+            // Re-render just this specific row to apply disabled attributes instantly without losing focus
+            const s = students.find(st => st.id == studentId);
+            const tr = document.getElementById(`tr_${studentId}`);
+            let rowData = getRowHTML(s);
+            tr.className = rowData.class;
+            tr.innerHTML = rowData.html;
+        };
+
+        window.updateNote = function(studentId, val) {
+            formData[studentId].note = val;
+        };
 
         function showReviewMode() {
-            reviewModeAccessed = true; 
-            const periodSelect = document.getElementById('periodSelect');
-            document.getElementById('review-period-display').innerText = periodSelect.options[periodSelect.selectedIndex].text;
-
             const list = document.getElementById('review-full-list');
             list.innerHTML = '';
-            
-            let missingSelections = false;
+            let missing = false;
 
-            document.querySelectorAll('.student-row').forEach(row => {
-                const selectedRadio = row.querySelector('input[type="radio"]:checked');
-                const studentId = row.dataset.studentId;
-                const name = row.dataset.name;
-                
-                if (!selectedRadio) {
-                    missingSelections = true;
-                    row.style.backgroundColor = "#fff3cd";
-                    row.style.borderLeft = "4px solid #dc3545";
-                    return; 
+            document.getElementById('review-period-display').innerText = `Period ${activePeriod}`;
+
+            students.forEach(s => {
+                const data = formData[s.id];
+                if (!firstChoices[s.id]) {
+                    missing = true;
+                    const tr = document.getElementById(`tr_${s.id}`);
+                    tr.style.backgroundColor = "#fff3cd";
+                    tr.style.borderLeft = "4px solid #dc3545";
                 } else {
-                    row.style.borderLeft = "none";
-                    row.style.backgroundColor = "";
+                    const tr = document.getElementById(`tr_${s.id}`);
+                    tr.style.borderLeft = "";
+                    tr.style.backgroundColor = "";
+
+                    let badgeClass = data.code === 'P' ? 'bg-success' : (data.code === 'A' ? 'bg-danger' : 'bg-dark');
+                    let noteHtml = '<span class="text-muted">-</span>';
+
+                    if (data.code !== firstChoices[s.id]) {
+                        noteHtml = `<span class="text-warning fw-bold">⚠️ Edited from ${fullNames[firstChoices[s.id]]}:</span> <span class="fst-italic text-dark">${data.note || '<span class="text-danger fw-bold">No reason provided!</span>'}</span>`;
+                    } else if (data.code !== 'P') {
+                        noteHtml = `<span class="text-muted small">Recorded as ${fullNames[data.code]}</span>`;
+                    }
+
+                    list.innerHTML += `
+                        <tr class="border-bottom">
+                            <td class="ps-4 fw-bold py-2 text-dark">${s.name}</td>
+                            <td><span class="badge ${badgeClass} px-2 py-1 shadow-sm">${fullNames[data.code]}</span></td>
+                            <td class="pe-4 small py-2">${noteHtml}</td>
+                        </tr>
+                    `;
                 }
-
-                const selectedCode = selectedRadio.value;
-
-                if (!studentOriginalChoices.hasOwnProperty(studentId)) {
-                    studentOriginalChoices[studentId] = selectedCode;
-                }
-
-                let badgeClass = selectedCode === 'P' ? 'bg-success' : (selectedCode === 'A' ? 'bg-danger' : 'bg-dark');
-
-                const noteContainer = document.getElementById(`note_container_${studentId}`);
-                let noteHtml = '<span class="text-muted">-</span>';
-                
-                const origCode = studentOriginalChoices[studentId];
-                
-                if (selectedCode !== origCode) {
-                    const noteText = noteContainer.querySelector('input[type="text"]').value;
-                    noteHtml = `<span class="text-warning fw-bold">⚠️ Edited from ${fullNames[origCode]}:</span> <span class="fst-italic text-dark">${noteText || '<span class="text-danger fw-bold">No reason provided!</span>'}</span>`;
-                } else if (selectedCode !== 'P') {
-                    noteHtml = `<span class="text-muted small">Recorded as ${fullNames[selectedCode]}</span>`;
-                }
-
-                list.innerHTML += `
-                    <tr class="border-bottom">
-                        <td class="ps-4 fw-bold py-3 text-dark">${name}</td>
-                        <td><span class="badge ${badgeClass} px-3 py-1 shadow-sm">${fullNames[selectedCode]}</span></td>
-                        <td class="pe-4 small py-3">${noteHtml}</td>
-                    </tr>
-                `;
             });
 
-            if (missingSelections) {
+            if(missing) {
                 alert("Please ensure every student has a status selected before reviewing.");
             } else {
                 new bootstrap.Modal(document.getElementById('reviewModal')).show();
             }
         }
 
-        function unlockForEditing() {
-            document.querySelectorAll('input[type="radio"]').forEach(r => {
-                r.disabled = false;
-            });
+        function unlockEditing() {
+            isUnlocked = true;
+            renderGrid(); // Re-render whole grid to unlock all buttons
         }
 
         function submitFinalForm() {
             const form = document.getElementById('attendanceForm');
-            if (!form.checkValidity()) {
+            
+            // Strictly validate notes for ANY changed items
+            let invalid = false;
+            students.forEach(s => {
+                if (formData[s.id].code !== firstChoices[s.id] && !formData[s.id].note) {
+                    invalid = true;
+                }
+            });
+
+            if(invalid) {
                 bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
-                form.reportValidity(); 
+                alert("You changed a status but forgot to provide a reason in the Note field!");
                 return;
             }
-            document.querySelectorAll('input[type="radio"]').forEach(r => {
-                r.disabled = false;
+
+            const dynamicInputs = document.getElementById('dynamic-inputs');
+            dynamicInputs.innerHTML = '';
+            
+            let pInput = document.createElement('input');
+            pInput.type = 'hidden';
+            pInput.name = 'period_number';
+            pInput.value = activePeriod;
+            dynamicInputs.appendChild(pInput);
+
+            students.forEach(s => {
+                let cInput = document.createElement('input');
+                cInput.type = 'hidden';
+                cInput.name = `code_${s.id}`;
+                cInput.value = formData[s.id].code;
+                dynamicInputs.appendChild(cInput);
+
+                if(formData[s.id].note) {
+                    let nInput = document.createElement('input');
+                    nInput.type = 'hidden';
+                    nInput.name = `note_${s.id}`;
+                    nInput.value = formData[s.id].note;
+                    dynamicInputs.appendChild(nInput);
+                }
             });
+
             form.submit();
         }
     </script>
