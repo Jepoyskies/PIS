@@ -637,3 +637,35 @@ def api_get_offenses(request):
     from .models import Offense
     offenses = list(Offense.objects.values('id', 'name', 'default_demerits', 'default_sanction', 'default_count'))
     return JsonResponse({'offenses': offenses})
+
+@login_required
+def generate_student_report(request, student_id):
+    student = get_object_or_404(Student, student_number=student_id)
+    period_type = request.GET.get('type')
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+    
+    records = DisciplinaryRecord.objects.filter(student=student)
+
+    # Apply Filters
+    if period_type == 'CUSTOM' or period_type == 'TODAY':
+        records = records.filter(date_of_incident__range=[start_date, end_date])
+    elif period_type == 'MONTH':
+        month = request.GET.get('month')
+        records = records.filter(date_of_incident__month=month)
+    elif period_type.startswith('Q'):
+        # Quarterly logic usually mapped to the PH school year
+        quarters = {
+            'Q1': [8, 9, 10], 'Q2': [11, 12], 'Q3': [1, 2, 3], 'Q4': [4, 5]
+        }
+        records = records.filter(date_of_incident__month__in=quarters.get(period_type))
+
+    # For now, we return a simple summary. Later you can use a PDF library like WeasyPrint.
+    data = {
+        'student': f"{student.last_name}, {student.first_name}",
+        'period': period_type,
+        'offense_count': records.count(),
+        'total_demerits': sum(r.demerits for r in records),
+        'records': list(records.values('date_of_incident', 'offense_name', 'demerits'))
+    }
+    return JsonResponse(data)

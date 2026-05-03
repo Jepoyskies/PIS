@@ -1,0 +1,87 @@
+<!-- REPORT TIME PERIOD MODAL -->
+<div class="modal fade" id="reportTimePeriodModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-dark shadow-lg">
+            <div class="modal-header py-2 bg-light border-bottom border-dark">
+                <h6 class="modal-title fw-bold small">Time Period</h6>
+                <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="report-filter-form">
+                    <!-- Section 1: Quarters & Full Year -->
+                    <div class="info-group-box p-3 mb-3 border border-secondary rounded bg-white">
+                        <div class="small fw-bold text-xu-blue mb-2 border-bottom pb-1">Select a Time Period:</div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-check small">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="q1" value="Q1">
+                                    <label class="form-check-label" for="q1">1st Quarter</label>
+                                </div>
+                                <div class="form-check small">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="q2" value="Q2">
+                                    <label class="form-check-label" for="q2">2nd Quarter</label>
+                                </div>
+                                <div class="form-check small">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="q3" value="Q3">
+                                    <label class="form-check-label" for="q3">3rd Quarter</label>
+                                </div>
+                                <div class="form-check small">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="q4" value="Q4">
+                                    <label class="form-check-label" for="q4">4th Quarter</label>
+                                </div>
+                            </div>
+                            <div class="col-6 border-start ps-3">
+                                <div class="form-check small">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="full-sy" value="SY" checked>
+                                    <label class="form-check-label fw-bold" for="full-sy">Entire School Year</label>
+                                </div>
+                                <div class="form-check small mt-2">
+                                    <input class="form-check-input filter-radio" type="radio" name="periodType" id="custom" value="CUSTOM">
+                                    <label class="form-check-label text-primary" for="custom">Specify a date range</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Month & Today -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-7">
+                            <div class="form-check small mb-1">
+                                <input class="form-check-input filter-radio" type="radio" name="periodType" id="month-select" value="MONTH">
+                                <label class="form-check-label fw-bold" for="month-select">Select a Month and Year</label>
+                            </div>
+                            <select id="filter-month" class="form-select form-select-sm mb-1" disabled>
+                                <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                                <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                                <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5 pt-4">
+                            <div class="form-check small">
+                                <input class="form-check-input filter-radio" type="radio" name="periodType" id="today-filter" value="TODAY">
+                                <label class="form-check-label fw-bold" for="today-filter">Today (<span class="text-muted" id="today-date-display">--</span>)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Date Range Inputs -->
+                    <div class="row g-2 p-2 rounded bg-light border">
+                        <div class="col-6">
+                            <label class="small fw-bold">Date Start</label>
+                            <input type="date" id="range-start" name="startDate" class="form-control form-control-sm" disabled>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold">Date End</label>
+                            <input type="date" id="range-end" name="endDate" class="form-control form-control-sm" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm" onclick="generateFilteredReport()">Preview Report</button>
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

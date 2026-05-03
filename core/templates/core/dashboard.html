@@ -220,6 +220,7 @@
     {% include 'core/modals/offenses_by_type_modal.html' %}
     {% include 'core/student_detail_modal.html' %}     <!-- YOU MISSED THIS LINE! -->
     {% include 'core/preview_letter_modal.html' %}
+    {% include 'core/modals/report_time_period_modal.html' %}
 
 
 
@@ -666,6 +667,50 @@ function calculateRow(input) {
         document.getElementById('student-photo-text').style.display = 'flex';
         console.warn("Could not load student photo from:", this.src);
     });
+
+    // --- REPORT MODAL LOGIC ---
+
+window.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    const display = document.getElementById('today-date-display');
+    if(display) display.innerText = today;
+
+    // Handle disabling/enabling inputs based on radio selection
+    document.querySelectorAll('.filter-radio').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const type = e.target.value;
+            document.getElementById('filter-month').disabled = (type !== 'MONTH');
+            document.getElementById('range-start').disabled = (type !== 'CUSTOM');
+            document.getElementById('range-end').disabled = (type !== 'CUSTOM');
+        });
+    });
+});
+
+function generateFilteredReport() {
+    const studentId = document.getElementById('modal-id-display').innerText;
+    const form = document.getElementById('report-filter-form');
+    const formData = new FormData(form);
+    
+    const periodType = formData.get('periodType');
+    let start = "";
+    let end = "";
+
+    // Date Logic
+    if (periodType === 'CUSTOM') {
+        start = document.getElementById('range-start').value;
+        end = document.getElementById('range-end').value;
+        if (!start || !end) return alert("Please select both start and end dates.");
+        if (new Date(end) < new Date(start)) return alert("End date cannot be before start date.");
+    } else if (periodType === 'TODAY') {
+        start = end = new Date().toISOString().split('T')[0];
+    }
+
+    // Redirect to the report view (we will create this in views.py)
+    const url = `/staff/report/student/${studentId}/?type=${periodType}&start=${start}&end=${end}&month=${document.getElementById('filter-month').value}`;
+    
+    // Open in new tab (standard for reports)
+    window.open(url, '_blank');
+}
 
 
     </script>
