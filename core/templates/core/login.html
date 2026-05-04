@@ -102,7 +102,9 @@
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-danger py-2 small mb-3">{{ message }}</div>
+                    <div class="alert alert-danger py-2 small mb-3 border-0" style="background-color: #fee2e2; color: #b91c1c;">
+                        <i class="fa-solid fa-circle-exclamation me-1"></i> {{ message }}
+                    </div>
                 {% endfor %}
             {% endif %}
 
@@ -120,7 +122,7 @@
                     <label class="form-label small fw-bold">Password</label>
                     <input type="password" name="password" id="passwordField" class="form-control" required placeholder="Enter password" autocomplete="new-password">
                 </div>
-                <button type="submit" class="btn btn-xu-primary">Login to System</button>
+                <button type="submit" class="btn btn-xu-primary shadow-sm">Login to System</button>
             </form>
         </div>
 

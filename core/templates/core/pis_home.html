@@ -22,29 +22,32 @@
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; text-decoration: none; font-size: 0.85rem; }
         .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background: #f8f9fa; }
 
-        .dashboard-container { max-width: 1200px; margin: 40px auto; width: 100%; padding: 0 20px; }
-        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; }
+        .dashboard-container { max-width: 1200px; margin: 40px auto 10px auto; width: 100%; padding: 0 20px; display: flex; flex-direction: column; }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1; }
         .menu-header { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); }
 
+        /* BUTTON FIXES: Darker border and drop shadow so they pop off the white background */
         .pis-btn { 
-            display: flex; align-items: center; width: 100%; padding: 18px 20px; 
+            display: flex; align-items: center; width: 100%; padding: 15px 20px; 
             margin-bottom: 12px; font-weight: 700; background: #fff; 
-            border: 1px solid #eee; border-radius: 12px; text-decoration: none !important; 
+            border: 1px solid #ced4da; /* Much clearer border */
+            border-radius: 12px; text-decoration: none !important; 
             color: var(--xu-blue-dark); transition: 0.3s;
-            border-left: 6px solid transparent;
+            border-left: 6px solid #e9ecef; /* Visible resting left bar */
+            box-shadow: 0 3px 8px rgba(0,0,0,0.03); /* Subtle depth */
         }
         .pis-btn:hover { 
             transform: translateX(8px); border-left: 6px solid var(--xu-gold);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--xu-gold);
         }
         .btn-num { 
             width: 32px; height: 32px; background: #f1f3f7; color: var(--xu-blue-dark); 
             border-radius: 8px; display: flex; align-items: center; justify-content: center; 
-            margin-right: 15px; font-size: 0.9rem;
+            margin-right: 15px; font-size: 0.9rem; transition: 0.2s;
         }
         .pis-btn:hover .btn-num { background: var(--xu-gold); color: white; }
 
-        .notification-panel { background: #fffdf5; border: 1px solid #f9ebbe; border-radius: 12px; height: 100%; }
+        .notification-panel { background: #fffdf5; border: 1px solid #f9ebbe; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
         .notif-card { border-left: 4px solid #dc3545; }
 
         .btn-xu-gold { background-color: var(--xu-gold); color: white; font-weight: bold; border: none; }
@@ -63,7 +66,7 @@
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark);">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent;">
                     {% for sy in all_school_years %}
                     <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
@@ -83,40 +86,63 @@
     </nav>
 
     <main class="flex-grow-1 container dashboard-container">
-        <div class="main-card">
-            <div class="menu-header d-flex justify-content-between">
-                <span>SYSTEM MODULES</span>
-                <span class="badge badge-gold rounded-pill">MAIN MENU</span>
+        <div class="main-card mb-3">
+            <div class="menu-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-chart-pie me-2"></i> SYSTEM MODULES</span>
+                <span class="badge badge-gold rounded-pill px-3 py-1">MAIN MENU</span>
             </div>
             
-            <div class="row g-0">
+            <div class="row g-0 flex-grow-1">
+                <!-- Center Logo Column -->
                 <div class="col-md-4 p-5 d-flex flex-column align-items-center justify-content-center bg-light border-end text-center">
                     <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" style="width: 100px;" class="mb-3">
-                    <h3 class="fw-bold" style="color: var(--xu-blue-dark);">XAVIER<br>ATENEO</h3>
+                    <h3 class="fw-bold" style="color: var(--xu-blue-dark); letter-spacing: -0.5px;">XAVIER<br>ATENEO</h3>
                 </div>
 
-                <div class="col-md-4 p-4 border-end">
+                <!-- Buttons Column (ADDED: d-flex flex-column justify-content-center) -->
+                <div class="col-md-4 p-4 border-end d-flex flex-column justify-content-center">
                     <a href="{% url 'staff_dashboard' %}" class="pis-btn"><span class="btn-num">1</span> Masterlist</a>
                     <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn"><span class="btn-num">2</span> Absences</a>
                     <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn"><span class="btn-num">3</span> Tardiness</a>
                     <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn"><span class="btn-num">4</span> Conduct</a>
+                    <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn mb-0"><span class="btn-num">5</span> Suspension Tracking</a>
                 </div>
                 
-                <div class="col-md-4 p-4 bg-light">
-                    <div class="notification-panel p-3">
-                        <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">PENDING REPORTS ({{ pending_batches|length }})</h6>
-                        {% for batch in pending_batches %}
-                        <div class="card notif-card p-2 mb-2 shadow-sm small">
-                            <div class="fw-bold">{{ batch.daily_attendance.section.name }}</div>
-                            <div class="text-muted">Period {{ batch.period_number }}</div>
-                            <a href="{% url 'staff_attendance_review' batch.id %}" class="fw-bold text-decoration-none mt-1" style="color: var(--xu-gold);">Review Now →</a>
+                <!-- Notifications Column -->
+                <div class="col-md-4 p-4 bg-light d-flex flex-column">
+                    <div class="notification-panel flex-grow-1">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center rounded-top bg-white">
+                            <h6 class="fw-bold mb-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ACTION REQUIRED</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{% url 'staff_attendance_list' %}" class="btn btn-sm btn-outline-secondary py-0 small" style="font-size: 0.75rem;">View All</a>
+                                <span class="badge bg-danger rounded-pill">{{ pending_batches|length }}</span>
+                            </div>
                         </div>
-                        {% endfor %}
+                        
+                        <div class="p-3 flex-grow-1 overflow-auto" style="height: 0; min-height: 200px;">
+                            {% for batch in pending_batches %}
+                            <div class="card notif-card p-2 mb-2 shadow-sm small border-0">
+                                <div class="d-flex justify-content-between">
+                                    <div class="fw-bold">{{ batch.daily_attendance.section.name }}</div>
+                                    <span class="text-xu-blue fw-bold" style="font-size: 0.7rem;">Period {{ batch.period_number }}</span>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                                    📅 {{ batch.daily_attendance.date|date:'M j, Y' }}
+                                </div>
+                                <a href="{% url 'staff_attendance_review' batch.id %}" class="fw-bold text-decoration-none mt-2 d-inline-block" style="color: var(--xu-gold);">Review Now →</a>
+                            </div>
+                            {% empty %}
+                            <div class="text-center mt-4">
+                                <div class="display-6 text-muted opacity-25 mb-2"><i class="fa-solid fa-check-circle"></i></div>
+                                <p class="text-muted small">All attendance reports<br>are up to date.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <p class="text-center text-white small mt-4 opacity-75">© Xavier University - Ateneo de Cagayan</p>
+        <p class="text-center text-white small m-0 opacity-75">© Xavier University - Ateneo de Cagayan</p>
     </main>
 </body>
 </html>
