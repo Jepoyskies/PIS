@@ -220,6 +220,7 @@
     {% include 'core/modals/offenses_by_type_modal.html' %}
     {% include 'core/student_detail_modal.html' %}     <!-- YOU MISSED THIS LINE! -->
     {% include 'core/preview_letter_modal.html' %}
+    {% include 'core/modals/report_time_period_modal.html' %}
 
 
 
@@ -307,6 +308,9 @@ fetch('/api/offenses/list/')
                     setPhotoUI('');
                 }
                 document.getElementById('student-photo-base64').value = ''; 
+                setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
 
                 const summaryBody = document.getElementById('offenses-by-type-body');
                 summaryBody.innerHTML = ''; 
@@ -331,6 +335,10 @@ fetch('/api/offenses/list/')
         row.addEventListener('click', (e) => {
             if (e.target.closest('.action-stop')) return;
             selectStudent(row);
+            // Load Signatures if they exist
+                setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
         });
     });
 
@@ -372,30 +380,47 @@ fetch('/api/offenses/list/')
     // Run on load
     window.addEventListener('load', () => attemptAutoSelect(5));
 
+// This guarantees that ANY typing or changing in the table instantly updates the Unserved CS tab
+document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
 function createOffenseRow(data = {}) {
     const tbody = document.getElementById('detailed-offenses-body');
     const row = document.createElement('tr');
+    row.dataset.recordId = data.id || ''; // Save database ID for automatic syncing
     
     let optionsHTML = '<option value="">-- Select Offense --</option>';
     let matchFound = false;
 
-    // 1. Build the official list options
-    globalOffenses.forEach(off => {
-        let isSelected = '';
-        // If the database category matches exactly OR partially (e.g., "Campus Leave" in "Campus Leave without permission")
-        if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
-            isSelected = 'selected';
-            matchFound = true;
-        }
-        optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
-    });
+    // Build the dropdown options from the official list
+    if (typeof globalOffenses !== 'undefined') {
+        globalOffenses.forEach(off => {
+            let isSelected = '';
+            if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
+                isSelected = 'selected';
+                matchFound = true;
+            }
+            optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
+        });
+    }
 
-    // 2. Handle existing data that doesn't match the new official list
-    // We removed "(Unmapped)" here. We just show the name.
+    // Keep existing data if it doesn't match the new official list
     if (!matchFound && data.category) {
         optionsHTML = `<option value="${data.category}" selected>${data.category}</option>` + optionsHTML;
     }
 
+    // ==========================================
+    // NEW FIX: Sanction Fallback Logic
+    // If the database has a blank sanction, calculate it based on Demerits!
+    // ==========================================
+    let sanctionVal = data.sanction || '';
+    let demVal = parseInt(data.demerits) || 0;
+    
+    if (!sanctionVal && demVal > 0) {
+        if (demVal >= 50) sanctionVal = "2 Hrs CS";
+        else if (demVal >= 8) sanctionVal = "1 Hr CS";
+        else sanctionVal = "Warning";
+    }
+
+    // FULL ROW HTML
     row.innerHTML = `
         <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
         <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
@@ -404,20 +429,85 @@ function createOffenseRow(data = {}) {
                 ${optionsHTML}
             </select>
         </td>
-        <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" readonly></td>
+        <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
         <td>
             <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
                 <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
                 <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
             </select>
         </td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${data.sanction || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
         <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
-        <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
+        <td class="text-center">
+            <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
+        </td>
         <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${data.count || 0}"></td>
     `;
     
     tbody.appendChild(row);
+    
+    // Auto-update the "Unserved CS" tab immediately after rendering
+    if (typeof updateUnservedCSTable === "function") {
+        updateUnservedCSTable();
+    }
+}
+
+// 1. Function to save checkbox state to backend
+function handleServedToggle(checkbox) {
+    const row = checkbox.closest('tr');
+    const recordId = row.dataset.recordId;
+    
+    // If it's a saved record, sync to DB
+    if (recordId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch(`/api/record/${recordId}/toggle-served/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ is_served: checkbox.checked })
+        });
+    }
+    
+    // Always refresh the Unserved CS list UI immediately
+    updateUnservedCSTable();
+}
+
+// 2. Logic to follow the red arrows and populate the Unserved CS tab
+function updateUnservedCSTable() {
+    const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
+    const targetBody = document.getElementById('unserved-cs-body');
+    let html = '';
+    let count = 0;
+
+    sourceRows.forEach(row => {
+        const date = row.querySelector('input[type="date"]').value;
+        const offense = row.querySelector('.val-offense').value;
+        const demerits = row.querySelector('.val-dem').value;
+        const sanction = row.querySelector('.val-sanction').value;
+        const status = row.querySelector('.val-status').value;
+        const notes = row.querySelector('input[placeholder="Details..."]').value;
+        const isServed = row.querySelector('.val-served').checked;
+
+        // Filter: Only show if sanction contains "CS" and is NOT served
+        if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
+            count++;
+            html += `
+                <tr>
+                    <td class="text-center fw-bold">${date}</td>
+                    <td>${offense}</td>
+                    <td class="text-center text-danger fw-bold">${demerits}</td>
+                    <td class="text-center fw-bold text-primary">${sanction}</td>
+                    <td class="text-center"><span class="badge bg-warning text-dark">Pending</span></td>
+                    <td class="small fst-italic">${notes || '-'}</td>
+                </tr>
+            `;
+        }
+    });
+
+    if (count === 0) {
+        targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-muted fw-bold">No unserved community service pending.</td></tr>';
+    } else {
+        targetBody.innerHTML = html;
+    }
 }
 function addNewOffenseRow() {
     const tbody = document.getElementById('detailed-offenses-body');
@@ -447,6 +537,7 @@ function applyOffenseDefaults(selectElem) {
     
     // Recalculate Count and Sanction logic
     calculateRow(selectElem);
+    updateUnservedCSTable();
 }
 
 function calculateRow(input) {
@@ -470,6 +561,7 @@ function calculateRow(input) {
     } else {
         countField.value = "0";
     }
+    updateUnservedCSTable();
 }
 
     // Edit Student Details Logic
@@ -667,7 +759,262 @@ function calculateRow(input) {
         console.warn("Could not load student photo from:", this.src);
     });
 
+    // --- REPORT MODAL LOGIC ---
 
+window.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    const display = document.getElementById('today-date-display');
+    if(display) display.innerText = today;
+
+    // Handle disabling/enabling inputs based on radio selection
+    document.querySelectorAll('.filter-radio').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const type = e.target.value;
+            document.getElementById('filter-month').disabled = (type !== 'MONTH');
+            document.getElementById('range-start').disabled = (type !== 'CUSTOM');
+            document.getElementById('range-end').disabled = (type !== 'CUSTOM');
+        });
+    });
+});
+
+function generateFilteredReport() {
+    const studentId = document.getElementById('modal-id-display').innerText;
+    const form = document.getElementById('report-filter-form');
+    const formData = new FormData(form);
+    
+    const periodType = formData.get('periodType');
+    let start = "";
+    let end = "";
+
+    // Date Logic
+    if (periodType === 'CUSTOM') {
+        start = document.getElementById('range-start').value;
+        end = document.getElementById('range-end').value;
+        if (!start || !end) return alert("Please select both start and end dates.");
+        if (new Date(end) < new Date(start)) return alert("End date cannot be before start date.");
+    } else if (periodType === 'TODAY') {
+        start = end = new Date().toISOString().split('T')[0];
+    }
+
+    // Redirect to the report view (we will create this in views.py)
+    const url = `/staff/report/student/${studentId}/?type=${periodType}&start=${start}&end=${end}&month=${document.getElementById('filter-month').value}`;
+    
+    // Open in new tab (standard for reports)
+    window.open(url, '_blank');
+}
+
+// ==========================================
+// UNSERVED CS SYNC LOGIC
+// ==========================================
+
+// 1. Function to save checkbox state to backend instantly
+function handleServedToggle(checkbox) {
+    const row = checkbox.closest('tr');
+    const recordId = row.dataset.recordId;
+    
+    // If it's a saved record, sync to DB
+    if (recordId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch(`/api/record/${recordId}/toggle-served/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ is_served: checkbox.checked })
+        })
+        .catch(err => console.error("Error saving served status:", err));
+    }
+    
+    // Always refresh the Unserved CS list UI immediately
+    updateUnservedCSTable();
+}
+
+
+// Guarantees that ANY typing in the table instantly updates the Unserved CS tab
+document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
+// 2. Logic to follow the red arrows and populate the Unserved CS tab
+function updateUnservedCSTable() {
+    const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
+    const targetBody = document.getElementById('unserved-cs-body');
+    
+    if (!targetBody) return;
+
+    let html = '';
+    let count = 0;
+
+    sourceRows.forEach(row => {
+        // Skip placeholder/loading rows
+        if(row.cells.length < 9) return;
+
+        const dateInput = row.querySelector('input[type="date"]');
+        if(!dateInput) return; // Failsafe
+
+        const date = dateInput.value;
+        const offense = row.querySelector('.val-offense').value;
+        const demerits = row.querySelector('.val-dem').value;
+        const sanction = row.querySelector('.val-sanction').value;
+        const status = row.querySelector('.val-status').value; // Excused or Unexcused
+        const notes = row.querySelector('input[placeholder="Details..."]').value;
+        const isServed = row.querySelector('.val-served').checked;
+
+        // Filter: Only show if sanction contains "CS", is NOT served, and has an offense selected
+        if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
+            count++;
+
+            html += `
+                <tr style="border-left: 3px solid #dc3545;">
+                    <td class="text-center fw-bold align-middle">${date}</td>
+                    <td class="align-middle fw-bold text-dark">${offense}</td>
+                    <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
+                    <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
+                    
+                    <!-- Explicitly marks it as Pending per the checklist -->
+                    <td class="text-center align-middle">
+                        <span class="badge bg-warning text-dark shadow-sm">Pending</span><br>
+                        <span class="small text-muted" style="font-size: 0.65rem;">(${status})</span>
+                    </td>
+                    
+                    <td class="small fst-italic text-muted align-middle">${notes || 'No action notes added'}</td>
+                </tr>
+            `;
+        }
+    });
+
+    if (count === 0) {
+        targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-success fw-bold">🎉 All community service hours have been served!</td></tr>';
+    } else {
+        targetBody.innerHTML = html;
+    }
+}
+
+// ==========================================
+    // SIGNATURE CAMERA & UPLOAD LOGIC
+    // ==========================================
+    let sigVideoStream = null;
+    let activeSigCamera = null; // 'father', 'mother', or 'guardian'
+
+    function saveSignatureInstantly(base64Str, type) {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        if (!studentId || studentId === '---') return;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const payload = {};
+        payload[`${type}_signature_base64`] = base64Str; 
+
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Error saving signature:", err));
+    }
+
+    function setSigUI(base64Str, type, autoSave = false) {
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+        
+        if (base64Str) {
+            img.src = base64Str;
+            img.style.display = 'block';
+            text.style.display = 'none';
+            if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            text.style.display = 'block';
+            if (autoSave) saveSignatureInstantly('DELETE', type);
+        }
+    }
+
+    function toggleSigCamera(type) {
+        const video = document.getElementById(`sig-video-${type}`);
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+
+        if (activeSigCamera !== type) {
+            // Turn off any currently running camera first
+            if (sigVideoStream) cancelSigCamera(activeSigCamera);
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        sigVideoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        img.style.display = 'none';
+                        text.style.display = 'none';
+
+                        btnCam.innerHTML = '📸 Snap';
+                        btnCam.classList.replace('btn-light', 'btn-primary');
+                        btnCam.classList.remove('text-muted');
+                        btnCam.classList.add('text-white');
+                        
+                        btnUp.innerHTML = 'Cancel';
+                        btnUp.classList.add('text-danger');
+                        btnUp.onclick = () => cancelSigCamera(type);
+                        activeSigCamera = type;
+                    }).catch(err => alert("Camera access denied."));
+            }
+        } else {
+            // SNAP THE PICTURE
+            const canvas = document.getElementById(`sig-canvas-${type}`);
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            cancelSigCamera(type);
+            setSigUI(dataURL, type, true); // True = auto-save
+        }
+    }
+
+    function cancelSigCamera(type) {
+        if (!type) return;
+        if (sigVideoStream) {
+            sigVideoStream.getTracks().forEach(track => track.stop());
+            sigVideoStream = null;
+        }
+        document.getElementById(`sig-video-${type}`).style.display = 'none';
+        
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        
+        btnCam.innerHTML = 'Take Picture';
+        btnCam.classList.replace('btn-primary', 'btn-light');
+        btnCam.classList.replace('text-white', 'text-muted');
+        
+        btnUp.innerHTML = 'Load Picture';
+        btnUp.classList.remove('text-danger');
+        btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
+        
+        activeSigCamera = null;
+
+        const img = document.getElementById(`sig-img-${type}`);
+        if (img.src && img.src !== window.location.href) {
+             img.style.display = 'block';
+        } else {
+             document.getElementById(`sig-text-${type}`).style.display = 'block';
+        }
+    }
+
+    function handleSigUpload(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) return alert("File is too large.");
+            const reader = new FileReader();
+            reader.onload = function(e) { setSigUI(e.target.result, type, true); };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearSignature(type) {
+        if (confirm(`Would you like to delete the ${type}'s signature?`)) {
+            setSigUI('', type, true);
+            document.getElementById(`upload-sig-${type}`).value = '';
+        }
+    }
     </script>
 </body>
 </html>

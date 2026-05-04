@@ -97,10 +97,15 @@ class Student(TimeStampedModel):
     mother_office_address = models.CharField(max_length=255, blank=True, null=True)
     mother_contact = models.CharField(max_length=50, blank=True, null=True)
     
+    
     # UPDATED FIELDS
     status = models.CharField(max_length=20, choices=[('OLD', 'Old'), ('NEW', 'New'), ('TRANSFEREE', 'Transferee')], default='NEW')
     photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
     parent_signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
+    # Add these 3 new lines to your Student model:
+    father_signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
+    mother_signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
+    guardian_signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
     
     section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     is_beadle = models.BooleanField(default=False)

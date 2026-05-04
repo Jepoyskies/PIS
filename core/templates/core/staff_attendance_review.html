@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -19,10 +18,22 @@
         
         .grid-header { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px !important; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
         
-        /* Compact columns to fit screen */
+        /* Interactive Grid Styles */
+        .hover-bg:hover { background-color: rgba(40, 57, 113, 0.08); }
+        .cursor-pointer { cursor: pointer; }
         .col-name { min-width: 200px; max-width: 250px; }
         .col-expanded { min-width: 280px; width: 280px; background-color: #fafbfc; border-left: 2px solid var(--xu-gold); border-right: 2px solid var(--xu-gold); }
         .col-narrow { width: 45px; min-width: 45px; }
+
+        /* =========================================
+           IMPORTED MODAL STYLES FROM DASHBOARD
+           ========================================= */
+        .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
+        .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
+        .info-group-box { border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px; }
+        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
+        .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
+        .bg-legacy-yellow { background-color: #fcf4a3 !important; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -65,16 +76,10 @@
             <div class="fw-bold fs-5 mb-0">DAILY ATTENDANCE REVIEW: {{ batch.daily_attendance.section.name }}</div>
             <div class="small opacity-75 fw-bold">
                 📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
-                🕒 Period {{ batch.period_number }} Submitted: {{ batch.submitted_at|time:"h:i A" }} | 
                 ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            {% if batch.is_approved %}
-                <div class="badge bg-success fs-6 px-3 py-2 fw-bold shadow-sm border border-light">✅ Approved & Logged</div>
-            {% else %}
-                <div class="badge bg-warning text-dark fs-6 px-3 py-2 fw-bold shadow-sm border border-dark">⚠️ Pending Admin Approval</div>
-            {% endif %}
             <a href="{% url 'staff_attendance_list' %}" class="btn btn-light btn-sm fw-bold px-4 shadow-sm text-xu-blue">⬅️ BACK TO LIST</a>
         </div>
     </div>
@@ -90,453 +95,427 @@
                 {% endfor %}
             {% endif %}
         </div>
+        
         <div class="container-fluid d-flex flex-column flex-grow-1" style="min-height: 0; max-width: 1400px; margin: 0 auto; width: 100%;">
-            <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" class="d-flex flex-column h-100">
+            <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" id="approvalForm" class="d-flex flex-column h-100">
                 {% csrf_token %}
-                <div class="table-container shadow-sm bg-white mb-3">
-                    <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;">
+                
+                <div class="p-2 mb-0" style="background-color: #283971; border-radius: 8px 8px 0 0; border: 1px solid var(--xu-border-color); border-bottom: none;">
+                    <div class="d-flex justify-content-between align-items-center bg-white p-1 rounded shadow-sm">
+                        <div class="d-flex align-items-center gap-2 px-2">
+                            <span class="fw-bold text-xu-blue small mb-0" style="font-size: 0.75rem;">SELECT ACTIVE PERIOD:</span>
+                            <div class="d-flex gap-1" id="period-nav-buttons"></div>
+                            <!-- NEW EXPAND BUTTON -->
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2 fw-bold shadow-sm" id="btn-toggle-expand" onclick="toggleExpandAll()">⤢ Expand All</button>
+                        </div>
+                        <div class="px-2">
+                            <span id="status-badge" class="badge bg-secondary py-1 px-3 fw-bold shadow-sm" style="font-size: 0.75rem;">...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container shadow-sm bg-white mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;" id="attendance-grid">
                         <thead>
                             <tr>
                                 <th class="grid-header ps-3 col-name">Student Name</th>
                                 <th class="grid-header text-center col-narrow">Sex</th>
-                                {% for p in "1234567"|make_list %}
-                                    {% if p|add:"0" == batch.period_number %}
-                                        <th class="grid-header text-center bg-white text-dark">
-                                            {{ p }} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Current Review</small>
-                                        </th>
-                                    {% else %}
-                                        <th class="grid-header text-center col-narrow opacity-75">{{ p }}</th>
-                                    {% endif %}
-                                {% endfor %}
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(1)" id="th-1">1</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(2)" id="th-2">2</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(3)" id="th-3">3</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(4)" id="th-4">4</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(5)" id="th-5">5</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(6)" id="th-6">6</th>
+                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(7)" id="th-7">7</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for rec in batch.records.all %}
-                            <tr class="{% if rec.code != 'P' %}violation-row{% endif %} border-bottom">
-                                <td class="ps-3 bg-white align-middle">
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="{{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}">
-                                            {{ rec.student.last_name|upper }}, {{ rec.student.first_name|upper }}
-                                        </span>
-                                        <div class="d-flex align-items-center mt-1 gap-2">
-                                            <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: {{ rec.student.student_number }}</span>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ rec.student.student_number }}', '{{ rec.student.last_name|escapejs }}, {{ rec.student.first_name|escapejs }}', '{{ rec.student.sex|default:'M' }}')" title="View Student Offenses">
-                                                🔍
-                                            </button>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center fw-bold text-muted bg-white align-middle" style="font-size: 0.75rem;">{{ rec.student.sex|default:'M' }}</td>
-                                
-                                {% for p in "1234567"|make_list %}
-                                    {% if p|add:"0" == batch.period_number %}
-                                        <!-- ACTIVE PERIOD BEING REVIEWED -->
-                                        <td class="col-expanded p-2 align-middle">
-                                            <div class="d-flex flex-column gap-1">
-                                                <div class="d-flex align-items-center justify-content-between gap-2">
-                                                    <span class="badge {% if rec.code == 'P' %}bg-success{% elif rec.code == 'A' %}bg-danger{% else %}bg-dark{% endif %} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">
-                                                        {{ rec.get_code_display }}
-                                                    </span>
-                                                    
-                                                    {% if not batch.is_approved %}
-                                                        <select name="override_{{ rec.id }}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;">
-                                                            <option value="">-- Keep {{ rec.code }} --</option>
-                                                            <option value="P">Set Present (P)</option>
-                                                            <option value="A">Set Absent (A)</option>
-                                                            <option value="L">Set Late (L)</option>
-                                                            <option value="UU">Set Uniform (UU)</option>
-                                                            <option value="UH">Set Haircut (UH)</option>
-                                                            <option value="ID">Set No ID (ID)</option>
-                                                            <option value="CL">Set Leave (CL)</option>
-                                                        </select>
-                                                    {% else %}
-                                                        <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>
-                                                    {% endif %}
-                                                </div>
-                                                {% if rec.note %}
-                                                    <div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">{{ rec.note }}</span></div>
-                                                {% else %}
-                                                    <div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    {% else %}
-                                        <!-- OTHER PERIODS (Populated by JS) -->
-                                        <td class="col-narrow text-center text-muted opacity-50 fw-bold align-middle bg-white history-col-p{{ p }}" data-student-id="{{ rec.student.id }}" style="font-size: 0.8rem;">-</td>
-                                    {% endif %}
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
+                        <tbody id="grid-body"></tbody>
                     </table>
                 </div>
 
-                {% if not batch.is_approved %}
-                <div class="bg-white p-3 border rounded shadow-sm d-flex justify-content-end align-items-center">
-                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides for Period {{ batch.period_number }} before saving.</span>
-                    <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm">
-                        ✅ APPROVE & LOG PERIOD {{ batch.period_number }} TO SYSTEM
+                <div class="bg-white p-3 border rounded shadow-sm d-flex justify-content-end align-items-center gap-2" id="action-bar">
+                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides for Period <span id="action-period"></span> before saving.</span>
+                    <!-- ORIGINAL SUBMIT BUTTON -->
+                    <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm" id="submit-btn">
+                        ✅ APPROVE & LOG PERIOD TO SYSTEM
+                    </button>
+                    <!-- NEW SUBMIT ALL BUTTON -->
+                    <button type="button" class="btn btn-primary px-4 py-2 fw-bold shadow-sm" id="submit-all-btn" onclick="approveAllPeriods()">
+                        🚀 APPROVE & LOG ALL PENDING
                     </button>
                 </div>
-                {% endif %}
             </form>
         </div>
     </main>
 
+    <!-- BOOTSTRAP SCRIPTS -->
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     
+    <!-- GRID & ATTENDANCE LOGIC -->
     <script>
-        const staffHistoryData = {};
-        
-        // Safely map records into dictionary to avoid JSON format errors
-        {% if batch.daily_attendance %}
-            
-            // Check via standard set relation
-            {% for b in batch.daily_attendance.attendancebatch_set.all %}
-                if (!staffHistoryData["{{ b.period_number }}"]) { staffHistoryData["{{ b.period_number }}"] = {}; }
-                
-                // Pending submissions
-                {% for r in b.records.all %}
-                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
-                        code: "{{ r.code }}", 
-                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
-                    };
-                {% endfor %}
-                
-                // Finalized/Approved records
-                {% for r in b.attendancerecord_set.all %}
-                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
-                        code: "{{ r.code }}", 
-                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
-                    };
-                {% endfor %}
+        const students =[
+            {% for rec in batch.records.all %}
+            {
+                id: "{{ rec.student.id }}",
+                no: "{{ rec.student.student_number }}",
+                name: "{{ rec.student.last_name|upper|escapejs }}, {{ rec.student.first_name|upper|escapejs }}",
+                sex: "{{ rec.student.sex|default:'M'|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
             {% endfor %}
-            
-            // Check via custom related_name just in case
-            {% for b in batch.daily_attendance.batches.all %}
-                if (!staffHistoryData["{{ b.period_number }}"]) { staffHistoryData["{{ b.period_number }}"] = {}; }
-                
-                // Pending submissions
-                {% for r in b.records.all %}
-                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
-                        code: "{{ r.code }}", 
-                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
-                    };
-                {% endfor %}
-                
-                // Finalized/Approved records
-                {% for r in b.attendancerecord_set.all %}
-                    staffHistoryData["{{ b.period_number }}"]["{{ r.student.id }}"] = { 
-                        code: "{{ r.code }}", 
-                        color: "{% if r.code == 'P' %}text-success{% elif r.code == 'A' %}text-danger{% else %}text-dark{% endif %}" 
-                    };
-                {% endfor %}
-            {% endfor %}
+        ];
 
-        {% endif %}
+        const historyData = {};
+        const batchIds = {};
+        const batchStatus = {};
+        const formData = {}; 
+        
+        let activePeriod = {{ batch.period_number }};
+        let isExpandedAll = false; // NEW STATE
+
+        {% for b in batch.daily_attendance.periods.all %}
+            batchIds[{{ b.period_number }}] = "{{ b.id }}";
+            batchStatus[{{ b.period_number }}] = {% if b.is_approved %}true{% else %}false{% endif %};
+            historyData[{{ b.period_number }}] = {
+                {% for r in b.records.all %}
+                "{{ r.student.id }}": { code: "{{ r.code }}", note: "{{ r.note|escapejs }}", rec_id: "{{ r.id }}" }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            };
+        {% endfor %}
 
         document.addEventListener("DOMContentLoaded", function() {
-            for (let p = 1; p <= 7; p++) {
-                if (staffHistoryData[p]) {
-                    document.querySelectorAll(`.history-col-p${p}`).forEach(td => {
-                        let studentId = td.dataset.studentId;
-                        let rec = staffHistoryData[p][studentId];
-                        if (rec && rec.code) {
-                            td.innerHTML = `<span class="${rec.color} opacity-100">${rec.code}</span>`;
-                            td.classList.remove('opacity-50');
-                            td.classList.remove('text-muted');
-                        }
-                    });
+            renderNavButtons();
+            setActivePeriod(activePeriod);
+        });
+
+        // Updated function to track values securely even across views
+        function updateForm(studentId, val, overridePeriod = null) {
+            if (!formData[studentId]) formData[studentId] = {};
+            formData[studentId][overridePeriod || activePeriod] = val;
+        }
+
+        function renderNavButtons() {
+            const container = document.getElementById('period-nav-buttons');
+            container.innerHTML = '';
+            for (let i = 1; i <= 7; i++) {
+                if (batchIds[i]) {
+                    container.innerHTML += `<button type="button" class="btn btn-sm px-3 py-1 period-nav-btn fw-bold shadow-none" style="border-radius: 4px; font-size: 0.75rem;" data-period="${i}" onclick="setActivePeriod(${i})">${batchStatus[i] ? '✔ ' : ''}${i}</button>`;
+                } else {
+                    container.innerHTML += `<button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 opacity-25 shadow-none" style="border-radius: 4px; font-size: 0.75rem;" disabled>${i}</button>`;
                 }
             }
-        });
+        }
+
+        // --- NEW FEATURE LOGIC ADDED BELOW ---
+        function toggleExpandAll() {
+            isExpandedAll = !isExpandedAll;
+            const btn = document.getElementById('btn-toggle-expand');
+            if (isExpandedAll) {
+                btn.innerHTML = '⤡ Collapse All';
+                btn.classList.replace('btn-outline-primary', 'btn-primary');
+                document.getElementById('action-period').innerText = "ALL PENDING";
+                document.getElementById('submit-btn').classList.add('d-none');
+                
+                // Set sticky header positions for scrolling
+                const thName = document.querySelector('th.col-name');
+                const thSex = document.querySelector('th.col-narrow');
+                thName.style.position = 'sticky';
+                thName.style.left = '0';
+                thName.style.zIndex = '4';
+                thName.style.width = '250px';
+                thName.style.minWidth = '250px';
+                thSex.style.position = 'sticky';
+                thSex.style.left = '250px';
+                thSex.style.zIndex = '4';
+                thSex.style.borderRight = '2px solid var(--xu-gold)';
+
+                renderExpandedGrid();
+            } else {
+                btn.innerHTML = '⤢ Expand All';
+                btn.classList.replace('btn-primary', 'btn-outline-primary');
+                setActivePeriod(activePeriod); 
+            }
+        }
+
+        async function approveAllPeriods() {
+            const btn = document.getElementById('submit-all-btn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Processing...';
+
+            const form = document.getElementById('approvalForm');
+            const baseAction = form.getAttribute('action'); 
+            
+            const pendingPeriods =[];
+            for (let p = 1; p <= 7; p++) {
+                if (batchIds[p] && !batchStatus[p]) pendingPeriods.push(p);
+            }
+
+            if (pendingPeriods.length === 0) {
+                alert("No pending periods to approve.");
+                btn.disabled = false;
+                btn.innerHTML = '🚀 APPROVE & LOG ALL PENDING';
+                return;
+            }
+
+            try {
+                // Ensure form payload grabs any JS state tracking overrides even if not currently in DOM
+                const payload = new FormData(form);
+                for (const [studentId, periods] of Object.entries(formData)) {
+                    for (const [p, val] of Object.entries(periods)) {
+                        if (val && historyData[p] && historyData[p][studentId]) {
+                            const rec_id = historyData[p][studentId].rec_id;
+                            if (!payload.has(`override_${rec_id}`)) {
+                                payload.append(`override_${rec_id}`, val);
+                            }
+                        }
+                    }
+                }
+                
+                const promises = pendingPeriods.map(p => {
+                    const url = baseAction.replace(/\/\d+\/?$/, '/' + batchIds[p] + '/');
+                    return fetch(url, { method: 'POST', body: payload });
+                });
+
+                await Promise.all(promises);
+                window.location.reload();
+            } catch (error) {
+                console.error("Error approving periods:", error);
+                alert("An error occurred while saving. Please try again.");
+                btn.disabled = false;
+                btn.innerHTML = '🚀 APPROVE & LOG ALL PENDING';
+            }
+        }
+
+        function renderExpandedGrid() {
+            // Modify Headers for Expand
+            for (let i = 1; i <= 7; i++) {
+                const th = document.getElementById(`th-${i}`);
+                th.className = 'grid-header text-center col-expanded';
+                th.innerHTML = `Period ${i}`;
+            }
+
+            document.querySelectorAll('.period-nav-btn').forEach(btn => {
+                btn.className = 'btn btn-sm btn-outline-secondary text-dark px-3 py-1 period-nav-btn fw-bold shadow-none';
+            });
+
+            const tbody = document.getElementById('grid-body');
+            tbody.innerHTML = '';
+            
+            students.forEach(s => {
+                let tr = document.createElement('tr');
+                let isViol = false;
+                
+                for (let p = 1; p <= 7; p++) {
+                    if (historyData[p] && historyData[p][s.id] && historyData[p][s.id].code !== 'P') isViol = true;
+                }
+
+                tr.className = isViol ? 'violation-row border-bottom bg-white' : 'border-bottom bg-white';
+
+                let html = `
+                    <td class="ps-3 align-middle" style="position: sticky; left: 0; z-index: 2; background-color: inherit;">
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="${s.name}">${s.name}</span>
+                            <div class="d-flex align-items-center mt-1 gap-2">
+                                <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses">🔍</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center fw-bold text-muted align-middle" style="position: sticky; left: 250px; z-index: 2; background-color: inherit; border-right: 2px solid #dee2e6; font-size: 0.75rem;">${s.sex}</td>
+                `;
+
+                for (let p = 1; p <= 7; p++) {
+                    const hasData = historyData[p] && historyData[p][s.id];
+                    
+                    if (hasData) {
+                        const rec = historyData[p][s.id];
+                        const currentOverride = (formData[s.id] && formData[s.id][p] !== undefined) ? formData[s.id][p] : '';
+                        
+                        let dropdown = '';
+                        if (batchStatus[p]) {
+                            dropdown = `<span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>`;
+                        } else {
+                            dropdown = `
+                            <select name="override_${rec.rec_id}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
+                                <option value="">-- Keep ${rec.code} --</option>
+                                <option value="P" ${currentOverride === 'P' ? 'selected' : ''}>Set Present (P)</option>
+                                <option value="A" ${currentOverride === 'A' ? 'selected' : ''}>Set Absent (A)</option>
+                                <option value="L" ${currentOverride === 'L' ? 'selected' : ''}>Set Late (L)</option>
+                                <option value="UU" ${currentOverride === 'UU' ? 'selected' : ''}>Set Uniform (UU)</option>
+                                <option value="UH" ${currentOverride === 'UH' ? 'selected' : ''}>Set Haircut (UH)</option>
+                                <option value="ID" ${currentOverride === 'ID' ? 'selected' : ''}>Set No ID (ID)</option>
+                                <option value="CL" ${currentOverride === 'CL' ? 'selected' : ''}>Set Leave (CL)</option>
+                            </select>`;
+                        }
+
+                        const badgeCls = rec.code === 'P' ? 'bg-success' : (rec.code === 'A' ? 'bg-danger' : 'bg-dark');
+                        html += `<td class="col-expanded p-2 align-middle border-end"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><span class="badge ${badgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${rec.code}</span>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem; white-space: normal;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
+                    } else {
+                        html += `<td class="col-expanded p-2 align-middle text-center text-muted small fst-italic bg-light border-end">No Data</td>`;
+                    }
+                }
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+        }
+        // --- END NEW FEATURE LOGIC ---
+
+        function setActivePeriod(p) {
+            if (!batchIds[p]) return; 
+            
+            // Revert Expand All if needed
+            if (isExpandedAll) {
+                isExpandedAll = false;
+                const btn = document.getElementById('btn-toggle-expand');
+                btn.innerHTML = '⤢ Expand All';
+                btn.classList.replace('btn-primary', 'btn-outline-primary');
+                
+                const thName = document.querySelector('th.col-name');
+                const thSex = document.querySelector('th.col-narrow');
+                thName.style.position = '';
+                thName.style.left = '';
+                thName.style.zIndex = '';
+                thName.style.width = '';
+                thName.style.minWidth = '';
+                thSex.style.position = '';
+                thSex.style.left = '';
+                thSex.style.zIndex = '';
+                thSex.style.borderRight = '';
+            }
+
+            activePeriod = p;
+            
+            for (let i = 1; i <= 7; i++) {
+                const th = document.getElementById(`th-${i}`);
+                if (i === activePeriod) {
+                    th.className = 'grid-header text-center bg-white text-dark shadow-sm cursor-pointer';
+                    th.innerHTML = `${i} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Current Review</small>`;
+                } else {
+                    th.className = 'grid-header text-center col-narrow cursor-pointer opacity-75 hover-bg';
+                    th.innerHTML = `${i}`;
+                }
+            }
+
+            document.querySelectorAll('.period-nav-btn').forEach(btn => {
+                if (parseInt(btn.dataset.period) === activePeriod) {
+                    btn.className = 'btn btn-sm btn-success text-white shadow-sm px-3 py-1 period-nav-btn fw-bold';
+                } else {
+                    btn.className = 'btn btn-sm btn-outline-secondary text-dark px-3 py-1 period-nav-btn fw-bold shadow-none';
+                }
+            });
+            
+            renderGrid();
+            
+            const form = document.getElementById('approvalForm');
+            let currentAction = form.action;
+            form.action = currentAction.replace(/\/\d+\/?$/, '/' + batchIds[activePeriod] + '/');
+            
+            const actionBar = document.getElementById('action-bar');
+            let hasAnyPending = false;
+            for (let i = 1; i <= 7; i++) { if (batchIds[i] && !batchStatus[i]) hasAnyPending = true; }
+
+            if (batchStatus[activePeriod]) {
+                document.getElementById('submit-btn').classList.add('d-none');
+                document.getElementById('action-period').innerText = activePeriod + " (Locked)";
+                document.getElementById('status-badge').className = 'badge bg-success py-1 px-3 fw-bold shadow-sm';
+                document.getElementById('status-badge').innerHTML = '✔ Approved';
+                
+                if (hasAnyPending) actionBar.classList.remove('d-none');
+                else actionBar.classList.add('d-none');
+            } else {
+                actionBar.classList.remove('d-none');
+                document.getElementById('submit-btn').classList.remove('d-none');
+                document.getElementById('action-period').innerText = activePeriod;
+                document.getElementById('submit-btn').innerText = `✅ APPROVE & LOG PERIOD ${activePeriod} TO SYSTEM`;
+                document.getElementById('status-badge').className = 'badge bg-warning text-dark py-1 px-3 fw-bold shadow-sm';
+                document.getElementById('status-badge').innerHTML = '⚠️ Pending Admin Approval';
+            }
+        }
+
+        function renderGrid() {
+            const tbody = document.getElementById('grid-body');
+            tbody.innerHTML = '';
+            
+            students.forEach(s => {
+                let tr = document.createElement('tr');
+                let isViol = false;
+                let html = `
+                    <td class="ps-3 bg-white align-middle">
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="${s.name}">${s.name}</span>
+                            <div class="d-flex align-items-center mt-1 gap-2">
+                                <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses">🔍</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center fw-bold text-muted bg-white align-middle" style="font-size: 0.75rem;">${s.sex}</td>
+                `;
+
+                for (let p = 1; p <= 7; p++) {
+                    const isAct = (p === activePeriod);
+                    const hasData = historyData[p] && historyData[p][s.id];
+                    
+                    if (isAct) {
+                        if (hasData) {
+                            const rec = historyData[p][s.id];
+                            if (rec.code !== 'P') isViol = true;
+                            const currentOverride = (formData[s.id] && formData[s.id][p] !== undefined) ? formData[s.id][p] : '';
+                            
+                            let dropdown = '';
+                            if (batchStatus[p]) {
+                                dropdown = `<span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>`;
+                            } else {
+                                dropdown = `
+                                <select name="override_${rec.rec_id}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
+                                    <option value="">-- Keep ${rec.code} --</option>
+                                    <option value="P" ${currentOverride === 'P' ? 'selected' : ''}>Set Present (P)</option>
+                                    <option value="A" ${currentOverride === 'A' ? 'selected' : ''}>Set Absent (A)</option>
+                                    <option value="L" ${currentOverride === 'L' ? 'selected' : ''}>Set Late (L)</option>
+                                    <option value="UU" ${currentOverride === 'UU' ? 'selected' : ''}>Set Uniform (UU)</option>
+                                    <option value="UH" ${currentOverride === 'UH' ? 'selected' : ''}>Set Haircut (UH)</option>
+                                    <option value="ID" ${currentOverride === 'ID' ? 'selected' : ''}>Set No ID (ID)</option>
+                                    <option value="CL" ${currentOverride === 'CL' ? 'selected' : ''}>Set Leave (CL)</option>
+                                </select>`;
+                            }
+
+                            const badgeCls = rec.code === 'P' ? 'bg-success' : (rec.code === 'A' ? 'bg-danger' : 'bg-dark');
+                            html += `<td class="col-expanded p-2 align-middle"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><span class="badge ${badgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${rec.code}</span>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
+                        } else {
+                            html += `<td class="col-expanded p-2 align-middle text-center text-muted small fst-italic bg-light">No Data</td>`;
+                        }
+                    } else {
+                        if (hasData) {
+                            const rec = historyData[p][s.id];
+                            const color = rec.code === 'P' ? 'text-success' : (rec.code === 'A' ? 'text-danger' : 'text-dark');
+                            html += `<td class="col-narrow text-center fw-bold align-middle bg-white cursor-pointer hover-bg" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;"><span class="${color}">${rec.code}</span></td>`;
+                        } else {
+                            html += `<td class="col-narrow text-center text-muted opacity-25 fw-bold align-middle bg-white cursor-pointer hover-bg" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;">-</td>`;
+                        }
+                    }
+                }
+                tr.innerHTML = html;
+                tr.className = isViol ? 'violation-row border-bottom' : 'border-bottom';
+                tbody.appendChild(tr);
+            });
+        }
     </script>
 
-    <!-- DETAILED OFFENSES MODAL (WITH TABS) -->
-    <div class="modal fade" id="offenseModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header modal-legacy-header p-3" style="background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971;">
-                    <div>
-                        <div class="small fw-bold opacity-75 text-black">Student Number: <span id="modal-id-display">---</span></div>
-                        <h4 class="fw-bold m-0 text-black" id="modal-name-display">STUDENT NAME</h4>
-                        <div class="small opacity-75 text-black">Gender: <span id="modal-sex-display">---</span></div>
-                    </div>
-                    <div class="ms-auto d-flex align-items-center gap-3">
-                        <div class="student-photo-placeholder" style="width: 120px; height: 140px; border: 2px solid #283971; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #ccc;">PHOTO</div>
-                        <div class="d-flex flex-column gap-1">
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Take a Picture</button>
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Load a Picture</button>
-                            <button class="btn btn-light btn-sm fw-bold py-0" style="font-size:10px;">Clear Picture</button>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
-                    </div>
-                </div>
-                <div class="modal-body p-0" style="background-color: #f8f9fa;">
-                    
-                    <!-- Bootstrap Nav Tabs -->
-                    <ul class="nav nav-tabs px-3 pt-2 bg-white" id="offenseTabs" role="tablist" style="border-bottom: none;">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold small" id="tab-personal-info" data-bs-toggle="tab" data-bs-target="#pane-personal" type="button" role="tab" style="color: #444;">Personal Information</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-bold small" id="tab-offenses-this-year" data-bs-toggle="tab" data-bs-target="#pane-offenses" type="button" role="tab" style="color: #444;">Offenses this School Year</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold small" id="tab-summary-year" data-bs-toggle="tab" data-bs-target="#pane-summary-year" type="button" role="tab" style="color: #444;">Summary of Offenses this Year</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold small" id="tab-summary-hs" data-bs-toggle="tab" data-bs-target="#pane-summary-hs" type="button" role="tab" style="color: #444;">Summary throughout HS</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold small" id="tab-unserved-cs" data-bs-toggle="tab" data-bs-target="#pane-unserved-cs" type="button" role="tab" style="color: #444;">Unserved CS</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold small" id="tab-signature" data-bs-toggle="tab" data-bs-target="#pane-signature" type="button" role="tab" style="color: #444;">Signature</button>
-                        </li>
-                    </ul>
-
-                    <!-- Tab Content Container -->
-                    <div class="tab-content legacy-tab-content" id="offenseTabsContent" style="border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px;">
-                        
-                        <!-- TAB 1: PERSONAL INFORMATION -->
-                        <div class="tab-pane fade" id="pane-personal" role="tabpanel">
-                            <div class="row g-3">
-                                <!-- Left Column -->
-                                <div class="col-md-5">
-                                    <div class="info-group-box pt-3" style="border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px;">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
-                                            <div class="col-sm-8"><textarea class="form-control form-control-sm" rows="2" style="resize: none;"></textarea></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Home Phone #:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                    </div>
-                                    <div class="info-group-box pt-3 bg-legacy-blue" style="border: 1px solid #9aaecb; padding: 10px; border-radius: 4px; background-color: #bacbe6; margin-bottom: 15px;">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthday:</label>
-                                            <div class="col-sm-8"><input type="date" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthplace:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Nationality:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Religion:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Brothers:</label>
-                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Sisters:</label>
-                                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm"></div>
-                                        </div>
-                                    </div>
-                                    <div class="info-group-box pt-3" style="border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px;">
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Guardian Name:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Address:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                        <div class="row mb-1 align-items-center">
-                                            <label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Contact Number:</label>
-                                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Right Column -->
-                                <div class="col-md-7">
-                                    <div class="info-group-box mt-2 bg-legacy-blue" style="border: 1px solid #9aaecb; padding: 10px; border-radius: 4px; background-color: #bacbe6; margin-bottom: 15px;">
-                                        <span class="info-group-title" style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;">FATHER</span>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                    </div>
-                                    <div class="info-group-box mt-3" style="border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px;">
-                                        <span class="info-group-title" style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;">MOTHER</span>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Attainment:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Occupation:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Name:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Office Address:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-3 col-form-label col-form-label-sm fw-bold">Contact Number:</label><div class="col-sm-9"><input type="text" class="form-control form-control-sm"></div></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TAB 2: OFFENSES THIS SCHOOL YEAR -->
-                        <div class="tab-pane fade show active" id="pane-offenses" role="tabpanel">
-                            <table class="table table-bordered table-sm small align-middle" id="editable-offense-table">
-                                <thead class="table-light text-center">
-                                    <tr style="font-size: 11px;">
-                                        <th style="width: 100px;">Date (mm/dd/yy)</th>
-                                        <th style="width: 90px;">Time</th>
-                                        <th>Offense</th>
-                                        <th style="width: 60px;">Dem</th>
-                                        <th style="width: 100px;">Status</th>
-                                        <th style="width: 90px;">Sanction</th>
-                                        <th>Notes</th>
-                                        <th style="width: 50px;">Served</th>
-                                        <th style="width: 50px;">Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="detailed-offenses-body">
-                                    <tr><td colspan="9" class="text-center p-5 text-muted fw-bold">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-2" onclick="addNewOffenseRow()">
-                                + Add Manual Entry
-                            </button>
-                        </div>
-
-                        <!-- TAB 3: SUMMARY OF OFFENSES THIS YEAR -->
-                        <div class="tab-pane fade h-100" id="pane-summary-year" role="tabpanel">
-                            <div class="row g-3" style="min-height: 400px;">
-                                <div class="col-md-5 d-flex flex-column p-2 rounded border" style="background-color: #bacbe6;">
-                                    <table class="table table-bordered table-sm small mb-3 shadow-sm" style="background-color: #fcf4a3;">
-                                        <thead class="table-light"><tr><th>Offense Type</th><th>Demerits</th><th>Counts</th></tr></thead>
-                                        <tbody>
-                                            <tr><td>Absence</td><td></td><td>0.5</td></tr>
-                                        </tbody>
-                                    </table>
-                                    <div class="mt-auto text-center bg-white p-3 border rounded shadow-sm">
-                                        <div class="mb-2 text-muted fw-bold">Total Number of Demerits: <br><span class="fs-3 fw-bold text-success">0</span></div>
-                                        <div class="mb-3 text-muted fw-bold">Total Count of Offenses: <br><span class="fs-3 fw-bold" style="color: #0d6efd;">0</span></div>
-                                        <button class="btn btn-light border btn-sm fw-bold w-50 shadow-sm">Preview Report</button>
-                                    </div>
-                                </div>
-                                <div class="col-md-7 d-flex flex-column gap-2 p-2 rounded border" style="background-color: #bacbe6;">
-                                    <div class="h-50 overflow-auto border shadow-sm">
-                                        <table class="table table-bordered table-sm small mb-0" style="background-color: #fcf4a3;">
-                                            <thead class="table-light sticky-top"><tr><th>Offense</th><th>Demerits</th><th>Counts</th></tr></thead>
-                                            <tbody>
-                                                <tr><td>Absent-Whole Afternoon</td><td></td><td>0.5</td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="h-50 overflow-auto border shadow-sm">
-                                        <table class="table table-bordered table-sm small mb-0" style="background-color: #fcf4a3;">
-                                            <thead class="table-light sticky-top"><tr><th>Details</th><th>Status</th><th>Date</th><th>Served</th></tr></thead>
-                                            <tbody>
-                                                <tr><td></td><td></td><td></td><td></td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TAB 4: SUMMARY OF OFFENSES THROUGHOUT HS -->
-                        <div class="tab-pane fade h-100" id="pane-summary-hs" role="tabpanel">
-                            <div class="row g-3" style="min-height: 400px;">
-                                <div class="col-md-5 d-flex flex-column p-2 rounded border" style="background-color: #bacbe6;">
-                                    <table class="table table-bordered table-sm small mb-3 shadow-sm" style="background-color: #fcf4a3;">
-                                        <thead class="table-light"><tr><th>Offense Type</th><th>Demerits</th><th>Counts</th></tr></thead>
-                                        <tbody>
-                                            <tr><td colspan="3" class="text-center text-muted fst-italic">No Historical Data</td></tr>
-                                        </tbody>
-                                    </table>
-                                    <div class="mt-auto text-center bg-white p-3 border rounded shadow-sm">
-                                        <div class="mb-2 text-muted fw-bold">Total Number of Demerits (HS): <br><span class="fs-3 fw-bold text-success">0</span></div>
-                                        <div class="mb-3 text-muted fw-bold">Total Count of Offenses (HS): <br><span class="fs-3 fw-bold" style="color: #0d6efd;">0</span></div>
-                                        <button class="btn btn-light border btn-sm fw-bold w-50 shadow-sm">Preview Report</button>
-                                    </div>
-                                </div>
-                                <div class="col-md-7 d-flex flex-column gap-2 p-2 rounded border" style="background-color: #bacbe6;">
-                                    <div class="h-50 overflow-auto border shadow-sm">
-                                        <table class="table table-bordered table-sm small mb-0" style="background-color: #fcf4a3;">
-                                            <thead class="table-light sticky-top"><tr><th>Offense</th><th>Demerits</th><th>Counts</th></tr></thead>
-                                            <tbody>
-                                                <tr><td colspan="3" class="text-center text-muted fst-italic">No Historical Data</td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="h-50 overflow-auto border shadow-sm">
-                                        <table class="table table-bordered table-sm small mb-0" style="background-color: #fcf4a3;">
-                                            <thead class="table-light sticky-top"><tr><th>Details</th><th>Status</th><th>Date</th><th>Served</th></tr></thead>
-                                            <tbody>
-                                                <tr><td colspan="4" class="text-center text-muted fst-italic">No Historical Data</td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TAB 5: UNSERVED CS -->
-                        <div class="tab-pane fade" id="pane-unserved-cs" role="tabpanel">
-                            <div class="p-3 bg-light border rounded">
-                                <h6 class="fw-bold text-xu-blue mb-3">Pending Community Service Records</h6>
-                                <table class="table table-bordered table-sm small bg-white align-middle shadow-sm">
-                                    <thead class="table-light text-center">
-                                        <tr>
-                                            <th>Date of Offense</th>
-                                            <th>Offense Detail</th>
-                                            <th>Demerits</th>
-                                            <th>Sanction Assigned</th>
-                                            <th>Status</th>
-                                            <th style="width: 120px;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td colspan="6" class="text-center p-4 text-muted fw-bold">No unserved community service pending.</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- TAB 6: SIGNATURE -->
-                        <div class="tab-pane fade" id="pane-signature" role="tabpanel">
-                            <div class="row g-4 p-3 bg-light rounded border">
-                                <div class="col-md-4 text-center">
-                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Father</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999;">
-                                        <span class="text-muted small fst-italic">No Signature</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-center">
-                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Mother</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999;">
-                                        <span class="text-muted small fst-italic">No Signature</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-center">
-                                    <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Guardian</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999;">
-                                        <span class="text-muted small fst-italic">No Signature</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- INCLUDE YOUR STUDENT DETAIL MODAL HTML HERE -->
+    {% include 'core/student_detail_modal.html' %}
+    {% include 'core/modals/report_time_period_modal.html' %}
+    
+    <!-- =========================================
+         MODAL FUNCTIONALITY (IMPORTED FROM DASHBOARD)
+         ========================================= -->
     <script>
+    let globalOffenses =[];
+
+    // Fetch official offense list
+    fetch('/api/offenses/list/')
+        .then(res => res.json())
+        .then(data => { globalOffenses = data.offenses; })
+        .catch(err => console.error("Could not load offenses:", err));
+
     function openStudentModal(studentId, studentName, studentSex) {
         document.getElementById('modal-id-display').innerText = studentId;
         document.getElementById('modal-name-display').innerText = studentName;
@@ -546,6 +525,28 @@
         fetch(`/api/student/${studentId}/offenses/`)
             .then(response => response.json())
             .then(data => {
+                // Populate Personal Info Inputs
+                document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
+                if (data.student_info) {
+                    Object.keys(data.student_info).forEach(key => {
+                        const input = document.querySelector(`.personal-info-input[name="${key}"]`);
+                        if(input) input.value = data.student_info[key] || '';
+                    });
+                }
+
+                // Load Photo and Signatures
+                if (data.student_info && data.student_info.photo_url) {
+                    document.getElementById('student-photo-img').src = data.student_info.photo_url;
+                    document.getElementById('student-photo-img').style.display = 'block';
+                    document.getElementById('student-photo-text').style.display = 'none';
+                } else {
+                    setPhotoUI('');
+                }
+                setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
+
+                // Load Records
                 const tbody = document.getElementById('detailed-offenses-body');
                 tbody.innerHTML = ''; 
                 if (!data.records || data.records.length === 0) {
@@ -553,60 +554,397 @@
                 } else {
                     data.records.forEach(rec => createOffenseRow(rec));
                 }
-            }).catch(e => { document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="9" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; });
+            }).catch(e => { 
+                document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="9" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; 
+            });
     }
 
     function createOffenseRow(data = {}) {
         const tbody = document.getElementById('detailed-offenses-body');
         const row = document.createElement('tr');
+        row.dataset.recordId = data.id || ''; 
         
+        let optionsHTML = '<option value="">-- Select Offense --</option>';
+        let matchFound = false;
+
+        if (typeof globalOffenses !== 'undefined') {
+            globalOffenses.forEach(off => {
+                let isSelected = '';
+                if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
+                    isSelected = 'selected';
+                    matchFound = true;
+                }
+                optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
+            });
+        }
+
+        if (!matchFound && data.category) {
+            optionsHTML = `<option value="${data.category}" selected>${data.category}</option>` + optionsHTML;
+        }
+
+        let sanctionVal = data.sanction || '';
+        let demVal = parseInt(data.demerits) || 0;
+        
+        if (!sanctionVal && demVal > 0) {
+            if (demVal >= 50) sanctionVal = "2 Hrs CS";
+            else if (demVal >= 8) sanctionVal = "1 Hr CS";
+            else sanctionVal = "Warning";
+        }
+
         row.innerHTML = `
             <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
             <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.category || ''}"></td>
-            <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${data.demerits || 0}" oninput="calculateRow(this)"></td>
             <td>
-                <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
-                    <option value="Unexcused" ${data.status == 'Unexcused' ? 'selected' : ''}>Unexcused</option>
-                    <option value="Excused" ${data.status == 'Excused' ? 'selected' : ''}>Excused</option>
+                <select class="form-select form-select-sm border-0 val-offense fw-bold" onchange="applyOffenseDefaults(this)" style="min-width: 200px;">
+                    ${optionsHTML}
                 </select>
             </td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${data.sanction || ''}"></td>
+            <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
+            <td>
+                <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
+                    <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
+                    <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
             <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
-            <td class="text-center"><input type="checkbox" class="form-check-input" ${data.served ? 'checked' : ''}></td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count" readonly value="0"></td>
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
+            </td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${data.count || 0}"></td>
         `;
-        
         tbody.appendChild(row);
-        calculateRow(row.querySelector('.val-dem'));
+        if (typeof updateUnservedCSTable === "function") updateUnservedCSTable();
     }
 
     function addNewOffenseRow() {
         const tbody = document.getElementById('detailed-offenses-body');
-        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
-            tbody.innerHTML = '';
-        }
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = '';
         const today = new Date().toISOString().split('T')[0];
-        createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', offense: '', served: false });
+        createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
+    }
+
+    function applyOffenseDefaults(selectElem) {
+        const row = selectElem.closest('tr');
+        const selectedOption = selectElem.options[selectElem.selectedIndex];
+        const demField = row.querySelector('.val-dem');
+        const sancField = row.querySelector('.val-sanction');
+
+        if (selectedOption.value && selectedOption.dataset.dem !== undefined) {
+            demField.value = selectedOption.dataset.dem;
+            sancField.value = selectedOption.dataset.sanc || 'N/A';
+        } else {
+            demField.value = 0;
+            sancField.value = '';
+        }
+        calculateRow(selectElem);
+        updateUnservedCSTable();
     }
 
     function calculateRow(input) {
         const row = input.closest('tr');
-        const demerits = parseInt(row.querySelector('.val-dem').value) || 0;
         const status = row.querySelector('.val-status').value;
-        const sanctionField = row.querySelector('.val-sanction');
         const countField = row.querySelector('.val-count');
+        const selectElem = row.querySelector('.val-offense');
+        const selectedOption = selectElem.options[selectElem.selectedIndex];
 
-        if (demerits >= 50) {
-            sanctionField.value = "2 Hrs CS";
-        } else if (demerits >= 8) {
-            sanctionField.value = "1 Hr CS";
-        } else if (demerits > 0) {
-            sanctionField.value = "Warning";
+        if (status === "Unexcused") {
+            if (selectedOption && selectedOption.dataset.cnt !== undefined) countField.value = selectedOption.dataset.cnt;
+            else countField.value = "1"; 
         } else {
-            sanctionField.value = "N/A";
+            countField.value = "0";
         }
-        countField.value = (status === "Unexcused") ? "1" : "0";
+        updateUnservedCSTable();
+    }
+
+    function updateUnservedCSTable() {
+        const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
+        const targetBody = document.getElementById('unserved-cs-body');
+        if (!targetBody) return;
+        let html = '';
+        let count = 0;
+
+        sourceRows.forEach(row => {
+            if(row.cells.length < 9) return;
+            const dateInput = row.querySelector('input[type="date"]');
+            if(!dateInput) return; 
+
+            const date = dateInput.value;
+            const offense = row.querySelector('.val-offense').value;
+            const demerits = row.querySelector('.val-dem').value;
+            const sanction = row.querySelector('.val-sanction').value;
+            const status = row.querySelector('.val-status').value; 
+            const notes = row.querySelector('input[placeholder="Details..."]').value;
+            const isServed = row.querySelector('.val-served').checked;
+
+            if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
+                count++;
+                html += `
+                    <tr style="border-left: 3px solid #dc3545;">
+                        <td class="text-center fw-bold align-middle">${date}</td>
+                        <td class="align-middle fw-bold text-dark">${offense}</td>
+                        <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
+                        <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
+                        <td class="text-center align-middle">
+                            <span class="badge bg-warning text-dark shadow-sm">Pending</span><br>
+                            <span class="small text-muted" style="font-size: 0.65rem;">(${status})</span>
+                        </td>
+                        <td class="small fst-italic text-muted align-middle">${notes || 'No action notes added'}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        if (count === 0) targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-success fw-bold">🎉 All community service hours have been served!</td></tr>';
+        else targetBody.innerHTML = html;
+    }
+
+    function handleServedToggle(checkbox) {
+        const row = checkbox.closest('tr');
+        const recordId = row.dataset.recordId;
+        if (recordId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/api/record/${recordId}/toggle-served/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ is_served: checkbox.checked })
+            }).catch(err => console.error("Error saving served status:", err));
+        }
+        updateUnservedCSTable();
+    }
+    
+    // Bind Unserved CS live updating
+    document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
+
+    // ==========================================
+    // CAMERA / SIGNATURE / PHOTO LOGIC
+    // ==========================================
+    function savePersonalInfo() {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        const payload = {};
+        document.querySelectorAll('.personal-info-input').forEach(input => { payload[input.name] = input.value; });
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') { alert('Personal Information Saved Successfully!'); } 
+            else { alert('Error saving data: ' + data.message); }
+        });
+    }
+
+    let videoStream = null;
+    let isCameraActive = false;
+
+    function savePhotoInstantly(base64Str) {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        if (!studentId || studentId === '---') return;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ photo_base64: base64Str })
+        });
+    }
+
+    function setPhotoUI(base64Str, autoSave = false) {
+        const img = document.getElementById('student-photo-img');
+        const text = document.getElementById('student-photo-text');
+        if (base64Str) {
+            img.src = base64Str;
+            img.style.display = 'block';
+            text.style.display = 'none';
+            if (autoSave && base64Str.startsWith('data:image')) savePhotoInstantly(base64Str);
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            text.style.display = 'flex';
+            if (autoSave) savePhotoInstantly('DELETE');
+        }
+    }
+
+    function toggleCamera() {
+        const video = document.getElementById('webcam-video');
+        const btnCamera = document.getElementById('btn-camera');
+        const btnUpload = document.getElementById('btn-upload');
+        const img = document.getElementById('student-photo-img');
+        const text = document.getElementById('student-photo-text');
+
+        if (!isCameraActive) {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        img.style.display = 'none';
+                        text.style.display = 'none';
+                        
+                        btnCamera.innerHTML = '📸 Snap';
+                        btnCamera.classList.replace('btn-light', 'btn-primary');
+                        btnCamera.classList.add('text-white');
+                        
+                        btnUpload.innerHTML = 'Cancel';
+                        btnUpload.classList.add('text-danger');
+                        btnUpload.onclick = cancelCamera; 
+                        isCameraActive = true;
+                    }).catch(function(err) { alert("Camera access denied."); });
+            }
+        } else {
+            const canvas = document.getElementById('webcam-canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            cancelCamera(); 
+            setPhotoUI(dataURL, true); 
+        }
+    }
+
+    function cancelCamera() {
+        if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; }
+        document.getElementById('webcam-video').style.display = 'none';
+        
+        const btnCamera = document.getElementById('btn-camera');
+        const btnUpload = document.getElementById('btn-upload');
+        btnCamera.innerHTML = 'Take a Picture';
+        btnCamera.classList.replace('btn-primary', 'btn-light');
+        btnCamera.classList.remove('text-white');
+        btnUpload.innerHTML = 'Load a Picture';
+        btnUpload.classList.remove('text-danger');
+        btnUpload.onclick = () => document.getElementById('upload-photo-input').click(); 
+        isCameraActive = false;
+
+        const img = document.getElementById('student-photo-img');
+        if (img.src && img.src !== window.location.href) img.style.display = 'block';
+        else document.getElementById('student-photo-text').style.display = 'block';
+    }
+
+    function handlePhotoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) { setPhotoUI(e.target.result, true); };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearPhoto() {
+        if (confirm("Delete the current photo?")) {
+            setPhotoUI('', true);
+            document.getElementById('upload-photo-input').value = '';
+        }
+    }
+
+    let sigVideoStream = null;
+    let activeSigCamera = null; 
+
+    function saveSignatureInstantly(base64Str, type) {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        if (!studentId || studentId === '---') return;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const payload = {};
+        payload[`${type}_signature_base64`] = base64Str; 
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        });
+    }
+
+    function setSigUI(base64Str, type, autoSave = false) {
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+        if (base64Str) {
+            img.src = base64Str;
+            img.style.display = 'block';
+            text.style.display = 'none';
+            if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            text.style.display = 'block';
+            if (autoSave) saveSignatureInstantly('DELETE', type);
+        }
+    }
+
+    function toggleSigCamera(type) {
+        const video = document.getElementById(`sig-video-${type}`);
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+
+        if (activeSigCamera !== type) {
+            if (sigVideoStream) cancelSigCamera(activeSigCamera);
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    sigVideoStream = stream;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    img.style.display = 'none';
+                    text.style.display = 'none';
+                    btnCam.innerHTML = '📸 Snap';
+                    btnCam.classList.replace('btn-light', 'btn-primary');
+                    btnCam.classList.add('text-white');
+                    btnUp.innerHTML = 'Cancel';
+                    btnUp.classList.add('text-danger');
+                    btnUp.onclick = () => cancelSigCamera(type);
+                    activeSigCamera = type;
+                });
+        } else {
+            const canvas = document.getElementById(`sig-canvas-${type}`);
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            cancelSigCamera(type);
+            setSigUI(dataURL, type, true); 
+        }
+    }
+
+    function cancelSigCamera(type) {
+        if (!type) return;
+        if (sigVideoStream) { sigVideoStream.getTracks().forEach(track => track.stop()); sigVideoStream = null; }
+        document.getElementById(`sig-video-${type}`).style.display = 'none';
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        btnCam.innerHTML = 'Take Picture';
+        btnCam.classList.replace('btn-primary', 'btn-light');
+        btnCam.classList.remove('text-white');
+        btnUp.innerHTML = 'Load Picture';
+        btnUp.classList.remove('text-danger');
+        btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
+        activeSigCamera = null;
+        const img = document.getElementById(`sig-img-${type}`);
+        if (img.src && img.src !== window.location.href) img.style.display = 'block';
+        else document.getElementById(`sig-text-${type}`).style.display = 'block';
+    }
+
+    function handleSigUpload(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) { setSigUI(e.target.result, type, true); };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearSignature(type) {
+        if (confirm(`Delete the ${type}'s signature?`)) {
+            setSigUI('', type, true);
+            document.getElementById(`upload-sig-${type}`).value = '';
+        }
     }
     </script>
 </body>
