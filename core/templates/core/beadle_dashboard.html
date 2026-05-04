@@ -174,6 +174,7 @@
     </div>
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
         const codesConfig = {
             'P': { label: 'P', color: 'outline-success' },
@@ -200,9 +201,6 @@
                     {% for rec in period.records.all %}
                     "{{ rec.student.id }}": { code: "{{ rec.code }}", note: "{{ rec.note|escapejs }}" }{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                    {% for rec in period.attendancerecord_set.all %}
-                    "{{ rec.student.id }}": { code: "{{ rec.code }}", note: "{{ rec.note|escapejs }}" }{% if not forloop.last %},{% endif %}
-                    {% endfor %}
                 }
             }{% if not forloop.last %},{% endif %}
             {% endfor %}
@@ -220,38 +218,38 @@
         ];
 
         let activePeriod = 1;
-        let formData = {};
         
-        // Strict Locking Mechanism Variables
-        let firstChoices = {}; 
-        let isUnlocked = false;
+        // --- UPGRADED STATE MANAGEMENT ---
+        // These now hold data for EVERY period independently so switching tabs doesn't wipe them.
+        const formData = {}; 
+        const firstChoices = {}; 
+        const unlockedPeriods = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
 
         window.onload = function() {
+            // Initialize memory banks for all 7 periods
+            students.forEach(s => {
+                formData[s.id] = {};
+                firstChoices[s.id] = {};
+                for(let p=1; p<=7; p++) {
+                    formData[s.id][p] = { code: '', note: '' };
+                    firstChoices[s.id][p] = null;
+                }
+            });
+
+            // Find first unsubmitted period
             for(let i=1; i<=7; i++) {
                 if(!submittedPeriods.includes(i)) {
                     activePeriod = i;
                     break;
                 }
             }
-            initFormData();
             renderUI();
         };
-
-        function initFormData() {
-            firstChoices = {};
-            isUnlocked = false;
-            students.forEach(s => {
-                formData[s.id] = { code: '', note: '' };
-            });
-        }
 
         function setActivePeriod(p) {
             if (activePeriod === p) return;
             activePeriod = p;
-            if (!submittedPeriods.includes(p)) {
-                initFormData();
-            }
-            renderUI();
+            renderUI(); // No data wiping here anymore!
         }
 
         function renderUI() {
@@ -303,7 +301,7 @@
         }
 
         function getRowHTML(s) {
-            let isViol = formData[s.id]?.code && formData[s.id].code !== 'P' && !submittedPeriods.includes(activePeriod);
+            let isViol = formData[s.id][activePeriod]?.code && formData[s.id][activePeriod].code !== 'P' && !submittedPeriods.includes(activePeriod);
             let trClass = isViol ? "violation-row border-bottom" : "border-bottom";
             
             let html = `
@@ -334,17 +332,17 @@
                             </div>
                         </td>`;
                     } else {
-                        const currentCode = formData[s.id].code;
-                        const currentNote = formData[s.id].note;
+                        const currentCode = formData[s.id][activePeriod].code;
+                        const currentNote = formData[s.id][activePeriod].note;
                         
                         let buttonsHtml = '<div class="btn-group w-100 shadow-sm" role="group">';
                         for(let c in codesConfig) {
                             const id = `code_${p}_${s.id}_${c}`;
                             const isChecked = currentCode === c ? 'checked' : '';
                             
-                            // STRICT LOCKING LOGIC
+                            // Check lock for THIS specific period
                             let isDisabled = '';
-                            if (firstChoices[s.id] && !isUnlocked && firstChoices[s.id] !== c) {
+                            if (firstChoices[s.id][activePeriod] && !unlockedPeriods[activePeriod] && firstChoices[s.id][activePeriod] !== c) {
                                 isDisabled = 'disabled';
                             }
 
@@ -355,8 +353,7 @@
                         }
                         buttonsHtml += '</div>';
 
-                        // Show note field ONLY if unlocked AND they changed from their first choice (ANY choice)
-                        let showNote = (isUnlocked && currentCode !== firstChoices[s.id]);
+                        let showNote = (unlockedPeriods[activePeriod] && currentCode !== firstChoices[s.id][activePeriod]);
 
                         html += `
                         <td class="col-expanded p-2 align-middle">
@@ -395,24 +392,20 @@
         }
 
         window.updateForm = function(studentId, code) {
-            formData[studentId].code = code;
+            formData[studentId][activePeriod].code = code;
             
-            // Apply first choice lock
-            if (!firstChoices[studentId]) {
-                firstChoices[studentId] = code;
+            // Apply first choice lock for this specific period
+            if (!firstChoices[studentId][activePeriod]) {
+                firstChoices[studentId][activePeriod] = code;
             }
 
-            // Handle note requirement if changed
-            if (isUnlocked) {
-                if (code !== firstChoices[studentId]) {
-                    // Requires a note. Don't clear it if they are typing.
-                } else {
-                    // Reverted back to original choice
-                    formData[studentId].note = '';
+            if (unlockedPeriods[activePeriod]) {
+                if (code === firstChoices[studentId][activePeriod]) {
+                    formData[studentId][activePeriod].note = '';
                 }
             }
 
-            // Re-render just this specific row to apply disabled attributes instantly without losing focus
+            // Re-render just this specific row
             const s = students.find(st => st.id == studentId);
             const tr = document.getElementById(`tr_${studentId}`);
             let rowData = getRowHTML(s);
@@ -421,7 +414,7 @@
         };
 
         window.updateNote = function(studentId, val) {
-            formData[studentId].note = val;
+            formData[studentId][activePeriod].note = val;
         };
 
         function showReviewMode() {
@@ -432,8 +425,8 @@
             document.getElementById('review-period-display').innerText = `Period ${activePeriod}`;
 
             students.forEach(s => {
-                const data = formData[s.id];
-                if (!firstChoices[s.id]) {
+                const data = formData[s.id][activePeriod];
+                if (!firstChoices[s.id][activePeriod]) {
                     missing = true;
                     const tr = document.getElementById(`tr_${s.id}`);
                     tr.style.backgroundColor = "#fff3cd";
@@ -446,8 +439,8 @@
                     let badgeClass = data.code === 'P' ? 'bg-success' : (data.code === 'A' ? 'bg-danger' : 'bg-dark');
                     let noteHtml = '<span class="text-muted">-</span>';
 
-                    if (data.code !== firstChoices[s.id]) {
-                        noteHtml = `<span class="text-warning fw-bold">⚠️ Edited from ${fullNames[firstChoices[s.id]]}:</span> <span class="fst-italic text-dark">${data.note || '<span class="text-danger fw-bold">No reason provided!</span>'}</span>`;
+                    if (data.code !== firstChoices[s.id][activePeriod]) {
+                        noteHtml = `<span class="text-warning fw-bold">⚠️ Edited from ${fullNames[firstChoices[s.id][activePeriod]]}:</span> <span class="fst-italic text-dark">${data.note || '<span class="text-danger fw-bold">No reason provided!</span>'}</span>`;
                     } else if (data.code !== 'P') {
                         noteHtml = `<span class="text-muted small">Recorded as ${fullNames[data.code]}</span>`;
                     }
@@ -470,17 +463,17 @@
         }
 
         function unlockEditing() {
-            isUnlocked = true;
-            renderGrid(); // Re-render whole grid to unlock all buttons
+            unlockedPeriods[activePeriod] = true;
+            renderGrid(); 
         }
 
         function submitFinalForm() {
             const form = document.getElementById('attendanceForm');
             
-            // Strictly validate notes for ANY changed items
+            // Validate notes
             let invalid = false;
             students.forEach(s => {
-                if (formData[s.id].code !== firstChoices[s.id] && !formData[s.id].note) {
+                if (formData[s.id][activePeriod].code !== firstChoices[s.id][activePeriod] && !formData[s.id][activePeriod].note) {
                     invalid = true;
                 }
             });
@@ -504,14 +497,14 @@
                 let cInput = document.createElement('input');
                 cInput.type = 'hidden';
                 cInput.name = `code_${s.id}`;
-                cInput.value = formData[s.id].code;
+                cInput.value = formData[s.id][activePeriod].code;
                 dynamicInputs.appendChild(cInput);
 
-                if(formData[s.id].note) {
+                if(formData[s.id][activePeriod].note) {
                     let nInput = document.createElement('input');
                     nInput.type = 'hidden';
                     nInput.name = `note_${s.id}`;
-                    nInput.value = formData[s.id].note;
+                    nInput.value = formData[s.id][activePeriod].note;
                     dynamicInputs.appendChild(nInput);
                 }
             });
