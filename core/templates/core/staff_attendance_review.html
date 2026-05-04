@@ -4,64 +4,100 @@
 <head>
     <meta charset="UTF-8">
     <title>Review Attendance - {{ batch.daily_attendance.section.name }}</title>
-    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
-        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
+        :root {
+            --xu-blue-dark: #22356d; 
+            --xu-blue-light: #3a53a4;
+            --xu-gold: #b99430; /* EXACT GOLD */
+            --xu-light-gray: #f4f6f9;
+            --xu-border-color: #ced4da; /* Darkened slightly for better contrast */
+        }
+
+        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Nav & Headers */
+        .navbar-xu { background: white; padding: 10px 25px; border-bottom: 1px solid var(--xu-border-color); z-index: 10; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); z-index: 5; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; font-size: 0.85rem; }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
+        
+        .search-bar-container { background-color: transparent; padding: 20px 20px 0 20px; color: var(--xu-blue-dark); }
+
+        /* Card Structure matching PIS Home */
+        .review-card {
+            background: white; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--xu-border-color);
+            display: flex; flex-direction: column; flex-grow: 1;
+        }
+        .review-header {
+            background: var(--xu-blue-dark); color: white; padding: 15px 25px;
+            font-weight: bold; border-bottom: 4px solid var(--xu-gold);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Buttons & Badges */
+        .btn-xu-dark { background-color: var(--xu-blue-dark); color: white; border: none; transition: 0.2s; }
+        .btn-xu-dark:hover { background-color: var(--xu-blue-light); color: white; }
+        .btn-xu-gold { background-color: var(--xu-gold); color: white; font-weight: bold; border: none; }
+        .btn-xu-gold:hover { background-color: #a3822a; color: white; }
+        .badge-gold { background-color: var(--xu-gold); color: white; }
+
+        /* Table & Grid */
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: white; }
+        .grid-header { position: sticky; top: 0; z-index: 1; padding: 12px !important; white-space: nowrap; border-bottom: 1px solid var(--xu-border-color); }
+        
+        /* Dynamic JS Table Headers */
+        .active-grid-header { background-color: white !important; color: var(--xu-blue-dark) !important; border-bottom: 3px solid var(--xu-gold) !important; }
+        .inactive-grid-header { background-color: #f1f3f7 !important; color: #6c757d !important; border-bottom: 1px solid var(--xu-border-color) !important; }
+
+        .table-bordered th, .table-bordered td { border-color: #e9ecef; }
         .violation-row { background-color: #fffdf5 !important; border-left: 5px solid var(--xu-gold) !important; }
-        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        
-        .grid-header { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px !important; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
-        
-        /* Interactive Grid Styles */
-        .hover-bg:hover { background-color: rgba(40, 57, 113, 0.08); }
+        .hover-bg:hover { background-color: rgba(34, 53, 109, 0.05); }
         .cursor-pointer { cursor: pointer; }
         .col-name { min-width: 200px; max-width: 250px; }
-        .col-expanded { min-width: 280px; width: 280px; background-color: #fafbfc; border-left: 2px solid var(--xu-gold); border-right: 2px solid var(--xu-gold); }
+        .col-expanded { min-width: 280px; width: 280px; background-color: #fafbfc; border-left: 1px solid #e9ecef; border-right: 1px solid #e9ecef; }
         .col-narrow { width: 45px; min-width: 45px; }
 
         /* =========================================
            IMPORTED MODAL STYLES FROM DASHBOARD
            ========================================= */
-        .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
+        .modal-legacy-header { background: linear-gradient(90deg, rgba(34, 53, 109, 0.1) 0%, var(--xu-blue-dark) 100%); color: rgb(0, 0, 0); border-bottom: 3px solid var(--xu-blue-dark); }
         .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
         .info-group-box { border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px; }
-        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
+        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-dark); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
         .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
         .bg-legacy-yellow { background-color: #fcf4a3 !important; }
     </style>
 </head>
-<body class="d-flex flex-column vh-100">
+<body>
     <!-- Standard Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
+    <header class="navbar-xu d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
-                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Staff Attendance Review</div>
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div class="text-dark">
+                <div class="fw-bold mb-0" style="color: var(--xu-blue-dark);">XAVIER HIGH SCHOOL</div>
+                <div class="small text-muted fw-bold">Staff Attendance Review</div>
             </div>
         </div>
         
         <div class="d-flex align-items-center gap-3">
-            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-light p-1 rounded-pill px-3 border">
                 {% csrf_token %}
                 <label class="small fw-bold text-muted mb-0">School Year:</label>
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold bg-transparent" onchange="this.form.submit()" style="width: 120px; color: var(--xu-blue-dark);">
                     {% for sy in all_school_years %}
                     <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 shadow-sm">Log Off</a>
         </div>
     </header>
 
-    <nav class="main-nav d-flex z-1 shadow-sm">
+    <nav class="main-nav d-flex">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
@@ -70,86 +106,82 @@
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <!-- Review Header Bar -->
-    <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
-        <div class="d-flex flex-column">
-            <div class="fw-bold fs-5 mb-0">DAILY ATTENDANCE REVIEW: {{ batch.daily_attendance.section.name }}</div>
-            <div class="small opacity-75 fw-bold">
-                📅 Date: {{ batch.daily_attendance.date|date:'F j, Y' }} |
-                ⭐ Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 p-3 d-flex flex-column container-fluid" style="max-width: 1400px; margin: 0 auto;">
+        
+        <div class="search-bar-container d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-column">
+                <div class="fw-bold fs-5 mb-0"><i class="fa-solid fa-clipboard-check me-2 text-muted"></i> DAILY ATTENDANCE REVIEW: <span style="color: var(--xu-blue-dark);">{{ batch.daily_attendance.section.name }}</span></div>
+                <div class="small opacity-75 fw-bold text-muted mt-1">
+                    <i class="fa-regular fa-calendar me-1"></i> {{ batch.daily_attendance.date|date:'F j, Y' }} &nbsp;|&nbsp;
+                    <i class="fa-solid fa-user-pen me-1"></i> Beadle: {{ batch.submitted_by.first_name }} {{ batch.submitted_by.last_name }}
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'staff_attendance_list' %}" class="btn btn-outline-secondary btn-sm fw-bold px-4 rounded-pill shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> BACK TO LIST</a>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <a href="{% url 'staff_attendance_list' %}" class="btn btn-light btn-sm fw-bold px-4 shadow-sm text-xu-blue">⬅️ BACK TO LIST</a>
-        </div>
-    </div>
 
-    <main class="flex-grow-1 p-3 d-flex flex-column">
-        <div class="container-fluid" style="max-width: 1400px; margin: 0 auto;">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-success alert-dismissible fade show fw-bold border-0 shadow-sm mb-3" role="alert">
-                        <span class="me-2">ℹ️</span> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show fw-bold border-0 shadow-sm mb-3" role="alert">
+                    <span class="me-2"><i class="fa-solid fa-circle-check"></i></span> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
         
-        <div class="container-fluid d-flex flex-column flex-grow-1" style="min-height: 0; max-width: 1400px; margin: 0 auto; width: 100%;">
-            <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" id="approvalForm" class="d-flex flex-column h-100">
+        <div class="d-flex flex-column flex-grow-1 w-100" style="min-height: 0;">
+            <form method="POST" action="{% url 'approve_attendance_batch' batch.id %}" id="approvalForm" class="d-flex flex-column h-100 mb-0 pb-3">
                 {% csrf_token %}
                 
-                <div class="p-2 mb-0" style="background-color: #283971; border-radius: 8px 8px 0 0; border: 1px solid var(--xu-border-color); border-bottom: none;">
-                    <div class="d-flex justify-content-between align-items-center bg-white p-1 rounded shadow-sm">
-                        <div class="d-flex align-items-center gap-2 px-2">
-                            <span class="fw-bold text-xu-blue small mb-0" style="font-size: 0.75rem;">SELECT ACTIVE PERIOD:</span>
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold small mb-0 me-2" style="font-size: 0.8rem; letter-spacing: 0.5px;"><i class="fa-solid fa-layer-group me-1"></i> ACTIVE PERIOD:</span>
                             <div class="d-flex gap-1" id="period-nav-buttons"></div>
-                            <!-- NEW EXPAND BUTTON -->
-                            <button type="button" class="btn btn-sm btn-outline-primary ms-2 fw-bold shadow-sm" id="btn-toggle-expand" onclick="toggleExpandAll()">⤢ Expand All</button>
+                            <button type="button" class="btn btn-sm btn-outline-light ms-3 fw-bold px-3 rounded-pill" id="btn-toggle-expand" onclick="toggleExpandAll()"><i class="fa-solid fa-expand me-1"></i> Expand All</button>
                         </div>
-                        <div class="px-2">
+                        <div>
                             <span id="status-badge" class="badge bg-secondary py-1 px-3 fw-bold shadow-sm" style="font-size: 0.75rem;">...</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="table-container shadow-sm bg-white mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
-                    <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;" id="attendance-grid">
-                        <thead>
-                            <tr>
-                                <th class="grid-header ps-3 col-name">Student Name</th>
-                                <th class="grid-header text-center col-narrow">Sex</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(1)" id="th-1">1</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(2)" id="th-2">2</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(3)" id="th-3">3</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(4)" id="th-4">4</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(5)" id="th-5">5</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(6)" id="th-6">6</th>
-                                <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(7)" id="th-7">7</th>
-                            </tr>
-                        </thead>
-                        <tbody id="grid-body"></tbody>
-                    </table>
-                </div>
+                    <div class="table-container">
+                        <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;" id="attendance-grid">
+                            <thead>
+                                <tr>
+                                    <th class="grid-header ps-3 col-name inactive-grid-header">Student Name</th>
+                                    <th class="grid-header text-center col-narrow inactive-grid-header">Sex</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(1)" id="th-1">1</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(2)" id="th-2">2</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(3)" id="th-3">3</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(4)" id="th-4">4</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(5)" id="th-5">5</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(6)" id="th-6">6</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(7)" id="th-7">7</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grid-body"></tbody>
+                        </table>
+                    </div>
 
-                <div class="bg-white p-3 border rounded shadow-sm d-flex justify-content-end align-items-center gap-2" id="action-bar">
-                    <span class="text-muted small fw-bold me-3">Verify all attendance overrides for Period <span id="action-period"></span> before saving.</span>
-                    <!-- ORIGINAL SUBMIT BUTTON -->
-                    <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm" id="submit-btn">
-                        ✅ APPROVE & LOG PERIOD TO SYSTEM
-                    </button>
-                    <!-- NEW SUBMIT ALL BUTTON -->
-                    <button type="button" class="btn btn-primary px-4 py-2 fw-bold shadow-sm" id="submit-all-btn" onclick="approveAllPeriods()">
-                        🚀 APPROVE & LOG ALL PENDING
-                    </button>
+                    <div class="bg-light p-3 border-top d-flex justify-content-end align-items-center gap-2" id="action-bar">
+                        <span class="text-muted small fw-bold me-3">Verify all attendance overrides for <span id="action-period" class="text-dark"></span> before saving.</span>
+                        <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm" id="submit-btn" style="border-radius: 8px;">
+                            <i class="fa-solid fa-check-circle me-1"></i> APPROVE PERIOD
+                        </button>
+                        <button type="button" class="btn btn-xu-dark px-4 py-2 fw-bold shadow-sm" id="submit-all-btn" onclick="approveAllPeriods()" style="border-radius: 8px;">
+                            <i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </main>
 
     <!-- BOOTSTRAP SCRIPTS -->
-    <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- GRID & ATTENDANCE LOGIC -->
     <script>
@@ -170,14 +202,19 @@
         const formData = {}; 
         
         let activePeriod = {{ batch.period_number }};
-        let isExpandedAll = false; // NEW STATE
+        let isExpandedAll = false;
 
         {% for b in batch.daily_attendance.periods.all %}
             batchIds[{{ b.period_number }}] = "{{ b.id }}";
             batchStatus[{{ b.period_number }}] = {% if b.is_approved %}true{% else %}false{% endif %};
             historyData[{{ b.period_number }}] = {
                 {% for r in b.records.all %}
-                "{{ r.student.id }}": { code: "{{ r.code }}", note: "{{ r.note|escapejs }}", rec_id: "{{ r.id }}" }{% if not forloop.last %},{% endif %}
+                "{{ r.student.id }}": { 
+                    code: "{{ r.code }}", 
+                    original_code: "{{ r.original_code|default:'' }}", 
+                    note: "{{ r.note|escapejs }}", 
+                    rec_id: "{{ r.id }}" 
+                }{% if not forloop.last %},{% endif %}
                 {% endfor %}
             };
         {% endfor %}
@@ -187,51 +224,83 @@
             setActivePeriod(activePeriod);
         });
 
-        // Updated function to track values securely even across views
-        function updateForm(studentId, val, overridePeriod = null) {
-            if (!formData[studentId]) formData[studentId] = {};
-            formData[studentId][overridePeriod || activePeriod] = val;
+        // --- START NEW/FIXED LOGIC ---
+        // Determines if it shows normal badge or "Old ➔ New" badge
+        function getBadgeHTML(studentId, p, rec, currentOverride) {
+            // Determine the base state (what the beadle submitted)
+            const wasEditedByBeadle = rec.original_code && rec.original_code !== rec.code;
+            const baseOriginalCode = wasEditedByBeadle ? rec.original_code : rec.code;
+            const baseFinalCode = rec.code;
+
+            // Determine the final state (factoring in any live staff override)
+            const isOverriddenByStaff = currentOverride && currentOverride !== baseFinalCode;
+            const finalOriginalCode = isOverriddenByStaff ? baseFinalCode : baseOriginalCode;
+            const finalCode = isOverriddenByStaff ? currentOverride : baseFinalCode;
+
+            // Now, compare and render
+            const finalBadgeCls = finalCode === 'P' ? 'bg-success' : (finalCode === 'A' ? 'bg-danger' : 'bg-dark');
+
+            if (finalOriginalCode !== finalCode) {
+                // Show the "Old -> New" format
+                return `<div class="d-flex align-items-center gap-1 bg-white px-2 py-1 rounded border shadow-sm" style="font-size: 0.75rem;">
+                            <span class="text-muted text-decoration-line-through fw-bold">${finalOriginalCode}</span>
+                            <i class="fa-solid fa-arrow-right text-muted" style="font-size: 0.65rem;"></i>
+                            <span class="badge ${finalBadgeCls} px-1 py-0">${finalCode}</span>
+                        </div>`;
+            } else {
+                // Show the single status badge
+                return `<span class="badge ${finalBadgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${finalCode}</span>`;
+            }
         }
+
+        // Updated function dynamically re-renders just the specific badge immediately
+        function updateForm(studentId, val, overridePeriod = null) {
+            const p = overridePeriod || activePeriod;
+            if (!formData[studentId]) formData[studentId] = {};
+            formData[studentId][p] = val;
+            
+            const container = document.getElementById(`badge-container-${studentId}-${p}`);
+            if (container) {
+                const rec = historyData[p][studentId];
+                container.innerHTML = getBadgeHTML(studentId, p, rec, val);
+            }
+        }
+        // --- END NEW/FIXED LOGIC ---
 
         function renderNavButtons() {
             const container = document.getElementById('period-nav-buttons');
             container.innerHTML = '';
             for (let i = 1; i <= 7; i++) {
                 if (batchIds[i]) {
-                    container.innerHTML += `<button type="button" class="btn btn-sm px-3 py-1 period-nav-btn fw-bold shadow-none" style="border-radius: 4px; font-size: 0.75rem;" data-period="${i}" onclick="setActivePeriod(${i})">${batchStatus[i] ? '✔ ' : ''}${i}</button>`;
+                    container.innerHTML += `<button type="button" class="btn btn-sm px-3 py-1 period-nav-btn fw-bold shadow-none" style="border-radius: 6px; font-size: 0.75rem;" data-period="${i}" onclick="setActivePeriod(${i})">${batchStatus[i] ? '✔ ' : ''}${i}</button>`;
                 } else {
-                    container.innerHTML += `<button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 opacity-25 shadow-none" style="border-radius: 4px; font-size: 0.75rem;" disabled>${i}</button>`;
+                    container.innerHTML += `<button type="button" class="btn btn-sm btn-outline-light px-3 py-1 opacity-25 shadow-none" style="border-radius: 6px; font-size: 0.75rem;" disabled>${i}</button>`;
                 }
             }
         }
 
-        // --- NEW FEATURE LOGIC ADDED BELOW ---
         function toggleExpandAll() {
             isExpandedAll = !isExpandedAll;
             const btn = document.getElementById('btn-toggle-expand');
             if (isExpandedAll) {
-                btn.innerHTML = '⤡ Collapse All';
-                btn.classList.replace('btn-outline-primary', 'btn-primary');
-                document.getElementById('action-period').innerText = "ALL PENDING";
+                btn.innerHTML = '<i class="fa-solid fa-compress me-1"></i> Collapse All';
+                btn.classList.replace('btn-outline-light', 'btn-light');
+                btn.classList.add('text-dark');
+                document.getElementById('action-period').innerText = "ALL PENDING PERIODS";
                 document.getElementById('submit-btn').classList.add('d-none');
                 
-                // Set sticky header positions for scrolling
                 const thName = document.querySelector('th.col-name');
                 const thSex = document.querySelector('th.col-narrow');
-                thName.style.position = 'sticky';
-                thName.style.left = '0';
-                thName.style.zIndex = '4';
-                thName.style.width = '250px';
-                thName.style.minWidth = '250px';
-                thSex.style.position = 'sticky';
-                thSex.style.left = '250px';
-                thSex.style.zIndex = '4';
+                thName.style.position = 'sticky'; thName.style.left = '0'; thName.style.zIndex = '4';
+                thName.style.width = '250px'; thName.style.minWidth = '250px';
+                thSex.style.position = 'sticky'; thSex.style.left = '250px'; thSex.style.zIndex = '4';
                 thSex.style.borderRight = '2px solid var(--xu-gold)';
 
                 renderExpandedGrid();
             } else {
-                btn.innerHTML = '⤢ Expand All';
-                btn.classList.replace('btn-primary', 'btn-outline-primary');
+                btn.innerHTML = '<i class="fa-solid fa-expand me-1"></i> Expand All';
+                btn.classList.replace('btn-light', 'btn-outline-light');
+                btn.classList.remove('text-dark');
                 setActivePeriod(activePeriod); 
             }
         }
@@ -252,12 +321,11 @@
             if (pendingPeriods.length === 0) {
                 alert("No pending periods to approve.");
                 btn.disabled = false;
-                btn.innerHTML = '🚀 APPROVE & LOG ALL PENDING';
+                btn.innerHTML = '<i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING';
                 return;
             }
 
             try {
-                // Ensure form payload grabs any JS state tracking overrides even if not currently in DOM
                 const payload = new FormData(form);
                 for (const [studentId, periods] of Object.entries(formData)) {
                     for (const [p, val] of Object.entries(periods)) {
@@ -281,20 +349,19 @@
                 console.error("Error approving periods:", error);
                 alert("An error occurred while saving. Please try again.");
                 btn.disabled = false;
-                btn.innerHTML = '🚀 APPROVE & LOG ALL PENDING';
+                btn.innerHTML = '<i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING';
             }
         }
 
         function renderExpandedGrid() {
-            // Modify Headers for Expand
             for (let i = 1; i <= 7; i++) {
                 const th = document.getElementById(`th-${i}`);
-                th.className = 'grid-header text-center col-expanded';
+                th.className = 'grid-header text-center col-expanded active-grid-header';
                 th.innerHTML = `Period ${i}`;
             }
 
             document.querySelectorAll('.period-nav-btn').forEach(btn => {
-                btn.className = 'btn btn-sm btn-outline-secondary text-dark px-3 py-1 period-nav-btn fw-bold shadow-none';
+                btn.className = 'btn btn-sm btn-outline-light text-white px-3 py-1 period-nav-btn fw-bold shadow-none opacity-50';
             });
 
             const tbody = document.getElementById('grid-body');
@@ -308,15 +375,15 @@
                     if (historyData[p] && historyData[p][s.id] && historyData[p][s.id].code !== 'P') isViol = true;
                 }
 
-                tr.className = isViol ? 'violation-row border-bottom bg-white' : 'border-bottom bg-white';
+                tr.className = isViol ? 'violation-row bg-white' : 'bg-white';
 
                 let html = `
                     <td class="ps-3 align-middle" style="position: sticky; left: 0; z-index: 2; background-color: inherit;">
                         <div class="d-flex flex-column">
-                            <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="${s.name}">${s.name}</span>
+                            <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px; color: var(--xu-blue-dark);" title="${s.name}">${s.name}</span>
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
-                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses">🔍</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
                             </div>
                         </div>
                     </td>
@@ -335,7 +402,7 @@
                             dropdown = `<span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>`;
                         } else {
                             dropdown = `
-                            <select name="override_${rec.rec_id}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
+                            <select name="override_${rec.rec_id}" class="form-select form-select-sm border-secondary shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
                                 <option value="">-- Keep ${rec.code} --</option>
                                 <option value="P" ${currentOverride === 'P' ? 'selected' : ''}>Set Present (P)</option>
                                 <option value="A" ${currentOverride === 'A' ? 'selected' : ''}>Set Absent (A)</option>
@@ -347,8 +414,8 @@
                             </select>`;
                         }
 
-                        const badgeCls = rec.code === 'P' ? 'bg-success' : (rec.code === 'A' ? 'bg-danger' : 'bg-dark');
-                        html += `<td class="col-expanded p-2 align-middle border-end"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><span class="badge ${badgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${rec.code}</span>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem; white-space: normal;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
+                        let badgeHTML = getBadgeHTML(s.id, p, rec, currentOverride);
+                        html += `<td class="col-expanded p-2 align-middle border-end"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><div id="badge-container-${s.id}-${p}">${badgeHTML}</div>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem; white-space: normal;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
                     } else {
                         html += `<td class="col-expanded p-2 align-middle text-center text-muted small fst-italic bg-light border-end">No Data</td>`;
                     }
@@ -357,28 +424,22 @@
                 tbody.appendChild(tr);
             });
         }
-        // --- END NEW FEATURE LOGIC ---
 
         function setActivePeriod(p) {
             if (!batchIds[p]) return; 
             
-            // Revert Expand All if needed
             if (isExpandedAll) {
                 isExpandedAll = false;
                 const btn = document.getElementById('btn-toggle-expand');
-                btn.innerHTML = '⤢ Expand All';
-                btn.classList.replace('btn-primary', 'btn-outline-primary');
+                btn.innerHTML = '<i class="fa-solid fa-expand me-1"></i> Expand All';
+                btn.classList.replace('btn-light', 'btn-outline-light');
+                btn.classList.remove('text-dark');
                 
                 const thName = document.querySelector('th.col-name');
                 const thSex = document.querySelector('th.col-narrow');
-                thName.style.position = '';
-                thName.style.left = '';
-                thName.style.zIndex = '';
-                thName.style.width = '';
-                thName.style.minWidth = '';
-                thSex.style.position = '';
-                thSex.style.left = '';
-                thSex.style.zIndex = '';
+                thName.style.position = ''; thName.style.left = ''; thName.style.zIndex = '';
+                thName.style.width = ''; thName.style.minWidth = '';
+                thSex.style.position = ''; thSex.style.left = ''; thSex.style.zIndex = '';
                 thSex.style.borderRight = '';
             }
 
@@ -387,19 +448,19 @@
             for (let i = 1; i <= 7; i++) {
                 const th = document.getElementById(`th-${i}`);
                 if (i === activePeriod) {
-                    th.className = 'grid-header text-center bg-white text-dark shadow-sm cursor-pointer';
+                    th.className = 'grid-header text-center active-grid-header shadow-sm cursor-pointer';
                     th.innerHTML = `${i} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Current Review</small>`;
                 } else {
-                    th.className = 'grid-header text-center col-narrow cursor-pointer opacity-75 hover-bg';
+                    th.className = 'grid-header text-center col-narrow cursor-pointer inactive-grid-header hover-bg';
                     th.innerHTML = `${i}`;
                 }
             }
 
             document.querySelectorAll('.period-nav-btn').forEach(btn => {
                 if (parseInt(btn.dataset.period) === activePeriod) {
-                    btn.className = 'btn btn-sm btn-success text-white shadow-sm px-3 py-1 period-nav-btn fw-bold';
+                    btn.className = 'btn btn-sm bg-white text-dark shadow-sm px-3 py-1 period-nav-btn fw-bold';
                 } else {
-                    btn.className = 'btn btn-sm btn-outline-secondary text-dark px-3 py-1 period-nav-btn fw-bold shadow-none';
+                    btn.className = 'btn btn-sm btn-outline-light text-white px-3 py-1 period-nav-btn fw-bold shadow-none opacity-75';
                 }
             });
             
@@ -415,19 +476,18 @@
 
             if (batchStatus[activePeriod]) {
                 document.getElementById('submit-btn').classList.add('d-none');
-                document.getElementById('action-period').innerText = activePeriod + " (Locked)";
+                document.getElementById('action-period').innerHTML = "Period " + activePeriod + " <span class='badge bg-secondary ms-1'>Locked</span>";
                 document.getElementById('status-badge').className = 'badge bg-success py-1 px-3 fw-bold shadow-sm';
-                document.getElementById('status-badge').innerHTML = '✔ Approved';
+                document.getElementById('status-badge').innerHTML = '<i class="fa-solid fa-check me-1"></i> Approved';
                 
                 if (hasAnyPending) actionBar.classList.remove('d-none');
                 else actionBar.classList.add('d-none');
             } else {
                 actionBar.classList.remove('d-none');
                 document.getElementById('submit-btn').classList.remove('d-none');
-                document.getElementById('action-period').innerText = activePeriod;
-                document.getElementById('submit-btn').innerText = `✅ APPROVE & LOG PERIOD ${activePeriod} TO SYSTEM`;
+                document.getElementById('action-period').innerText = "Period " + activePeriod;
                 document.getElementById('status-badge').className = 'badge bg-warning text-dark py-1 px-3 fw-bold shadow-sm';
-                document.getElementById('status-badge').innerHTML = '⚠️ Pending Admin Approval';
+                document.getElementById('status-badge').innerHTML = '<i class="fa-solid fa-clock me-1"></i> Pending Admin Approval';
             }
         }
 
@@ -439,16 +499,16 @@
                 let tr = document.createElement('tr');
                 let isViol = false;
                 let html = `
-                    <td class="ps-3 bg-white align-middle">
+                    <td class="ps-3 bg-white align-middle border-end">
                         <div class="d-flex flex-column">
-                            <span class="fw-bold text-xu-blue text-truncate" style="font-size: 0.85rem; max-width: 220px;" title="${s.name}">${s.name}</span>
+                            <span class="fw-bold text-truncate" style="font-size: 0.85rem; max-width: 220px; color: var(--xu-blue-dark);" title="${s.name}">${s.name}</span>
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
-                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses">🔍</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
                             </div>
                         </div>
                     </td>
-                    <td class="text-center fw-bold text-muted bg-white align-middle" style="font-size: 0.75rem;">${s.sex}</td>
+                    <td class="text-center fw-bold text-muted bg-white align-middle border-end" style="font-size: 0.75rem;">${s.sex}</td>
                 `;
 
                 for (let p = 1; p <= 7; p++) {
@@ -466,7 +526,7 @@
                                 dropdown = `<span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">Locked</span>`;
                             } else {
                                 dropdown = `
-                                <select name="override_${rec.rec_id}" class="form-select form-select-sm border-dark shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
+                                <select name="override_${rec.rec_id}" class="form-select form-select-sm border-secondary shadow-sm fw-bold" style="width: 140px; font-size: 0.75rem;" onchange="updateForm(${s.id}, this.value, ${p})">
                                     <option value="">-- Keep ${rec.code} --</option>
                                     <option value="P" ${currentOverride === 'P' ? 'selected' : ''}>Set Present (P)</option>
                                     <option value="A" ${currentOverride === 'A' ? 'selected' : ''}>Set Absent (A)</option>
@@ -478,23 +538,31 @@
                                 </select>`;
                             }
 
-                            const badgeCls = rec.code === 'P' ? 'bg-success' : (rec.code === 'A' ? 'bg-danger' : 'bg-dark');
-                            html += `<td class="col-expanded p-2 align-middle"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><span class="badge ${badgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${rec.code}</span>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
+                            let badgeHTML = getBadgeHTML(s.id, p, rec, currentOverride);
+                            html += `<td class="col-expanded p-2 align-middle border-end"><div class="d-flex flex-column gap-1"><div class="d-flex align-items-center justify-content-between gap-2"><div id="badge-container-${s.id}-${p}">${badgeHTML}</div>${dropdown}</div>${rec.note ? `<div class="text-danger fw-bold mt-1" style="font-size: 0.7rem; white-space: normal;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}</div></td>`;
                         } else {
-                            html += `<td class="col-expanded p-2 align-middle text-center text-muted small fst-italic bg-light">No Data</td>`;
+                            html += `<td class="col-expanded p-2 align-middle text-center text-muted small fst-italic bg-light border-end">No Data</td>`;
                         }
                     } else {
                         if (hasData) {
                             const rec = historyData[p][s.id];
-                            const color = rec.code === 'P' ? 'text-success' : (rec.code === 'A' ? 'text-danger' : 'text-dark');
-                            html += `<td class="col-narrow text-center fw-bold align-middle bg-white cursor-pointer hover-bg" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;"><span class="${color}">${rec.code}</span></td>`;
+                            const currentOverride = (formData[s.id] && formData[s.id][p] !== undefined) ? formData[s.id][p] : '';
+                            const finalCode = currentOverride ? currentOverride : rec.code;
+                            const color = finalCode === 'P' ? 'text-success' : (finalCode === 'A' ? 'text-danger' : 'text-dark');
+                            
+                            let editedMark = '';
+                            if (currentOverride || (rec.original_code && rec.original_code !== rec.code)) {
+                                editedMark = '<sup class="text-warning fw-bold ms-1">*</sup>';
+                            }
+
+                            html += `<td class="col-narrow text-center fw-bold align-middle bg-white cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;"><span class="${color}">${finalCode}${editedMark}</span></td>`;
                         } else {
-                            html += `<td class="col-narrow text-center text-muted opacity-25 fw-bold align-middle bg-white cursor-pointer hover-bg" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;">-</td>`;
+                            html += `<td class="col-narrow text-center text-muted opacity-25 fw-bold align-middle bg-white cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;">-</td>`;
                         }
                     }
                 }
                 tr.innerHTML = html;
-                tr.className = isViol ? 'violation-row border-bottom' : 'border-bottom';
+                tr.className = isViol ? 'violation-row' : '';
                 tbody.appendChild(tr);
             });
         }
