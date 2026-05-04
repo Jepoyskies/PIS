@@ -13,18 +13,19 @@
         :root {
             --xu-blue-dark: #22356d; 
             --xu-blue-light: #3a53a4;
-            --xu-gold: #f3bc2c;
+            --xu-gold: #b99430; /* EXACT XU GOLD */
         }
+
         body {
             background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-light) 100%);
             height: 100vh;
             display: flex; align-items: center; justify-content: center;
             font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; overflow: hidden;
         }
+
         .discovery-container { width: 100%; max-width: 460px; text-align: center; color: white; padding: 20px; }
         .xu-logo-main { width: 130px; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2)); }
-        
-        /* Card Styles */
+
         .selection-card {
             background: white; border-radius: 15px; padding: 18px 22px; margin-bottom: 16px;
             display: flex; align-items: center; text-decoration: none !important;
@@ -32,19 +33,39 @@
             border-left: 6px solid transparent; width: 100%; text-align: left;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
         }
-        .selection-card:hover { transform: translateY(-5px); border-left: 6px solid var(--xu-gold); box-shadow: 0 12px 24px rgba(0,0,0,0.25); }
-        .icon-box { background-color: #f1f3f7; width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 20px; color: var(--xu-blue-dark); font-size: 1.3rem; }
+
+        .selection-card:hover {
+            transform: translateY(-5px);
+            border-left: 6px solid var(--xu-gold); /* GOLD BAR */
+            box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+        }
+
+        .icon-box {
+            background-color: #f1f3f7; width: 54px; height: 54px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 20px; color: var(--xu-blue-dark); font-size: 1.3rem;
+        }
+
         .text-content .title { display: block; color: var(--xu-blue-dark); font-weight: 700; font-size: 1.1rem; }
         .text-content .subtitle { display: block; color: #6c757d; font-size: 0.88rem; }
 
-        /* Form Card */
-        #login-form-section { display: none; background: white; padding: 40px 30px; border-radius: 20px; color: #333; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: left; }
+        #login-form-section {
+            display: none; background: white; padding: 40px 30px;
+            border-radius: 20px; color: #333; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+
         .form-control { border-radius: 10px; padding: 12px; border: 1px solid #ddd; }
-        .btn-xu-primary { background-color: var(--xu-blue-dark); color: white; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; border: none; }
-        .back-btn { color: var(--xu-blue-dark); text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 20px; font-weight: 600; }
-        .alert-error { background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #fecaca; }
         
-        /* Footer Style */
+        .btn-xu-primary {
+            background-color: var(--xu-blue-dark); color: white; border-radius: 10px;
+            padding: 12px; font-weight: 600; width: 100%; border: none; transition: 0.2s;
+        }
+        .btn-xu-primary:hover { background-color: var(--xu-gold); color: white; }
+
+        .back-btn { color: var(--xu-blue-dark); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+        .back-btn:hover { color: var(--xu-gold); }
+
         .copyright { margin-top: 40px; font-size: 0.75rem; opacity: 0.8; font-weight: 400; }
     </style>
 </head>
@@ -53,7 +74,6 @@
     <div class="discovery-container">
         <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" class="xu-logo-main">
 
-        <!-- STEP 1: SELECTION -->
         <div id="selection-section">
             <h2 class="fw-bold mb-2">Log in to XU PIS</h2>
             <p class="mb-5" style="opacity: 0.9;">Select your account type to continue</p>
@@ -75,15 +95,14 @@
             </div>
         </div>
 
-        <!-- STEP 2: LOGIN FORM -->
         <div id="login-form-section">
             <a href="#" class="back-btn" onclick="showSelection()"><i class="fa-solid fa-arrow-left me-2"></i> Back</a>
-            <h4 class="fw-bold mb-1" id="form-title">Login</h4>
+            <h4 class="fw-bold mb-1 mt-3" id="form-title">Login</h4>
             <p class="text-muted small mb-4">Please enter your credentials to proceed.</p>
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert-error"><i class="fa-solid fa-circle-exclamation me-2"></i> {{ message }}</div>
+                    <div class="alert alert-danger py-2 small mb-3">{{ message }}</div>
                 {% endfor %}
             {% endif %}
 
@@ -101,11 +120,10 @@
                     <label class="form-label small fw-bold">Password</label>
                     <input type="password" name="password" id="passwordField" class="form-control" required placeholder="Enter password" autocomplete="new-password">
                 </div>
-                <button type="submit" class="btn btn-xu-primary shadow-sm">Login to System</button>
+                <button type="submit" class="btn btn-xu-primary">Login to System</button>
             </form>
         </div>
 
-        <!-- FOOTER: Placed outside the sections so it shows on both steps -->
         <div class="copyright">
             © Xavier University - Ateneo de Cagayan
         </div>
@@ -119,10 +137,7 @@
         const userField = document.getElementById('usernameField');
         const passField = document.getElementById('passwordField');
 
-        const roleMap = {
-            'staff': 'Faculty & Staff',
-            'student': 'Student'
-        };
+        const roleMap = { 'staff': 'Faculty & Staff', 'student': 'Student' };
 
         function showLoginForm(roleKey) {
             if (!roleKey || !roleMap[roleKey]) return;
@@ -130,27 +145,19 @@
             roleInput.value = roleKey;
             selectionSection.style.display = 'none';
             loginFormSection.style.display = 'block';
-            userField.value = '';
-            passField.value = '';
+            userField.value = ''; passField.value = '';
         }
 
         function showSelection() {
             selectionSection.style.display = 'block';
             loginFormSection.style.display = 'none';
             roleInput.value = '';
-            userField.value = '';
-            passField.value = '';
         }
 
-        window.onload = () => {
-            userField.value = '';
-            passField.value = '';
-        };
+        window.onload = () => { userField.value = ''; passField.value = ''; };
 
         {% if selected_role %}
             showLoginForm("{{ selected_role|safe }}");
-            userField.value = '';
-            passField.value = '';
         {% endif %}
     </script>
 </body>
