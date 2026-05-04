@@ -36,4 +36,7 @@ urlpatterns = [
     path('staff/attendance/review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
     path('staff/attendance/approve/<int:batch_id>/', views.approve_attendance_batch, name='approve_attendance_batch'),
     path('api/offenses/list/', views.api_get_offenses, name='api_get_offenses'),
+    path('staff/report/student/<str:student_id>/', views.generate_student_report, name='student_report'),
+    path('api/record/<int:record_id>/toggle-served/', views.api_toggle_served, name='api_toggle_served'),
+    path('api/record/<int:record_id>/toggle-served/', views.api_toggle_served, name='api_toggle_served'),
 ]

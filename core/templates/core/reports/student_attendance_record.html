@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report - {{ student.last_name }}</title>
+    <style>
+        @page { size: portrait; margin: 0.5in; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 11pt; color: #000; line-height: 1.2; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header img { width: 60px; margin-bottom: 5px; }
+        .header-title { font-weight: bold; font-size: 12pt; text-transform: uppercase; }
+        
+        .report-title { text-align: center; font-weight: bold; font-size: 14pt; margin-top: 10px; text-decoration: underline; }
+        .school-year { text-align: center; font-size: 10pt; margin-bottom: 20px; }
+
+        .student-info { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        
+        .section-header { font-weight: bold; text-transform: uppercase; margin-top: 20px; border-bottom: 1px solid #000; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th { text-align: left; font-size: 9pt; border-bottom: 1px solid #ccc; padding: 4px; }
+        td { font-size: 10pt; padding: 4px; vertical-align: top; }
+        
+        .total-row { border-top: 1px solid #000; font-weight: bold; text-align: right; font-size: 9pt; padding-top: 5px; margin-bottom: 10px; }
+        
+        /* Summary Table */
+        .summary-table { width: 60%; margin: 30px auto; border: 1px solid #000; }
+        .summary-table th, .summary-table td { border: 1px solid #000; text-align: center; padding: 5px; }
+        .summary-table th { background-color: #f2f2f2; }
+
+        @media print {
+            .no-print { display: none; }
+            body { margin: 0; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="header">
+        <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo">
+        <div class="header-title">Xavier University - Ateneo de Cagayan</div>
+        <div style="font-size: 10pt;">Junior High School</div>
+        <div style="font-size: 10pt;">Office of the Prefect of Students</div>
+    </div>
+
+    <div class="report-title">Student's Attendance / Department Record</div>
+    <div class="school-year">{{ report_period_label }}</div>
+
+    <div class="student-info">
+        <span>Name: {{ student.last_name|upper }}, {{ student.first_name|upper }}</span>
+        <span>Section: {{ student.section.name|default:"Unassigned" }}</span>
+    </div>
+
+    <!-- ABSENCE SECTION -->
+    <div class="section-header">Absence</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Date</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 10%;">Demerit</th>
+                <th style="width: 15%;">Sanction</th>
+                <th style="width: 5%;">Served</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in absences %}
+            <tr>
+                <td>{{ r.date_of_incident|date:"n/j/Y" }}</td>
+                <td>{{ r.offense_name }}</td>
+                <td>{{ r.is_excused|yesno:"Excused,Unexcused" }}</td>
+                <td>{{ r.demerits }}</td>
+                <td>{{ r.sanction|default:"-" }}</td>
+                <td>[{{ r.is_served|yesno:"X, " }}]</td>
+            </tr>
+            {% empty %}<tr><td colspan="6">No records found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    <div class="total-row">Total Demerits for this Offense Type: {{ total_absence_demerits }}</div>
+
+    <!-- TARDINESS SECTION -->
+    <div class="section-header">Tardiness</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Date</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 20%;">Reason</th>
+                <th style="width: 10%;">Demerits</th>
+                <th style="width: 15%;">Sanction</th>
+                <th style="width: 5%;">Served</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in tardiness %}
+            <tr>
+                <td>{{ r.date_of_incident|date:"n/j/Y" }}</td>
+                <td>{{ r.offense_name }}</td>
+                <td>{{ r.remarks|default:"-" }}</td>
+                <td>{{ r.demerits }}</td>
+                <td>{{ r.sanction|default:"-" }}</td>
+                <td>[{{ r.is_served|yesno:"X, " }}]</td>
+            </tr>
+            {% empty %}<tr><td colspan="6">No records found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    <div class="total-row">Total Demerits for this Offense Type: {{ total_tardiness_demerits }}</div>
+
+    <!-- CONDUCT SECTION -->
+    <div class="section-header">Conduct</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Date</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 10%;">Demerits</th>
+                <th style="width: 15%;">Sanction</th>
+                <th style="width: 5%;">Served</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in conduct %}
+            <tr>
+                <td>{{ r.date_of_incident|date:"n/j/Y" }}</td>
+                <td>{{ r.offense_name }}</td>
+                <td>{{ r.is_excused|yesno:"Excused,Unexcused" }}</td>
+                <td>{{ r.demerits }}</td>
+                <td>{{ r.sanction|default:"-" }}</td>
+                <td>[{{ r.is_served|yesno:"X, " }}]</td>
+            </tr>
+            {% empty %}<tr><td colspan="6">No records found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    <div class="total-row">Total Demerits for this Offense Type: {{ total_conduct_demerits }}</div>
+
+    <div style="text-align: right; font-weight: bold; margin-top: 10px;">Overall Total Demerits: {{ overall_total }}</div>
+
+    <!-- SUMMARY TABLE -->
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>Offense Type</th>
+                <th>Q1</th>
+                <th>Q2</th>
+                <th>Q3</th>
+                <th>Q4</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Absence</td>
+                <td>{{ q_stats.absence.Q1 }}</td>
+                <td>{{ q_stats.absence.Q2 }}</td>
+                <td>{{ q_stats.absence.Q3 }}</td>
+                <td>{{ q_stats.absence.Q4 }}</td>
+                <td>{{ total_absence_count }}</td>
+            </tr>
+            <tr>
+                <td>Conduct</td>
+                <td>{{ q_stats.conduct.Q1 }}</td>
+                <td>{{ q_stats.conduct.Q2 }}</td>
+                <td>{{ q_stats.conduct.Q3 }}</td>
+                <td>{{ q_stats.conduct.Q4 }}</td>
+                <td>{{ total_conduct_count }}</td>
+            </tr>
+            <tr>
+                <td>Tardiness</td>
+                <td>{{ q_stats.tardiness.Q1 }}</td>
+                <td>{{ q_stats.tardiness.Q2 }}</td>
+                <td>{{ q_stats.tardiness.Q3 }}</td>
+                <td>{{ q_stats.tardiness.Q4 }}</td>
+                <td>{{ total_tardiness_count }}</td>
+            </tr>
+            <tr style="font-weight: bold;">
+                <td>Total</td>
+                <td>{{ q_stats.total.Q1 }}</td>
+                <td>{{ q_stats.total.Q2 }}</td>
+                <td>{{ q_stats.total.Q3 }}</td>
+                <td>{{ q_stats.total.Q4 }}</td>
+                <td>{{ grand_total_count }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="font-size: 8pt; color: #666; position: fixed; bottom: 0; width: 100%;">
+        Generated on: {% now "l, F j, Y" %} | PIS Student Record System
+    </div>
+</body>
+</html>

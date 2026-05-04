@@ -514,11 +514,14 @@ def api_student_offenses(request, student_id):
     # 2. HANDLE GETTING DATA
     active_sy_id = request.session.get('active_sy_id')
     sy_filter = {'school_year_id': active_sy_id} if active_sy_id else {'school_year__is_active': True}
+    
+    # Notice there is NO `category=` filter here. This guarantees ALL records (Conduct, Absence, Tardiness) load.
     records = DisciplinaryRecord.objects.filter(student=student, **sy_filter).order_by('-date_of_incident')
     
     detailed_records =[]
     for r in records:
         detailed_records.append({
+            'id': r.id,
             'date_raw': r.date_of_incident.strftime('%Y-%m-%d'),
             'time': r.time_of_incident.strftime('%I:%M %p') if r.time_of_incident else '12:00 PM',
             'category': r.offense_name if r.offense_name else r.category,
@@ -638,34 +641,112 @@ def api_get_offenses(request):
     offenses = list(Offense.objects.values('id', 'name', 'default_demerits', 'default_sanction', 'default_count'))
     return JsonResponse({'offenses': offenses})
 
+import calendar # Add this at the top of views.py if not already there
+
 @login_required
 def generate_student_report(request, student_id):
     student = get_object_or_404(Student, student_number=student_id)
-    period_type = request.GET.get('type')
+    
+    # 1. Get filter parameters
+    p_type = request.GET.get('type', 'SY')
     start_date = request.GET.get('start')
     end_date = request.GET.get('end')
-    
+    month_val = request.GET.get('month')
+
+    # Get active SY from session or DB
+    active_sy_id = request.session.get('active_sy_id')
+    active_sy = SchoolYear.objects.filter(id=active_sy_id).first() or SchoolYear.objects.filter(is_active=True).first()
+
     records = DisciplinaryRecord.objects.filter(student=student)
+    report_period_label = ""
 
-    # Apply Filters
-    if period_type == 'CUSTOM' or period_type == 'TODAY':
+    # 2. Apply Filtering Logic
+    if p_type == 'CUSTOM' and start_date and end_date:
         records = records.filter(date_of_incident__range=[start_date, end_date])
-    elif period_type == 'MONTH':
-        month = request.GET.get('month')
-        records = records.filter(date_of_incident__month=month)
-    elif period_type.startswith('Q'):
-        # Quarterly logic usually mapped to the PH school year
-        quarters = {
-            'Q1': [8, 9, 10], 'Q2': [11, 12], 'Q3': [1, 2, 3], 'Q4': [4, 5]
-        }
-        records = records.filter(date_of_incident__month__in=quarters.get(period_type))
+        report_period_label = f"{start_date} to {end_date}"
+    elif p_type == 'MONTH' and month_val:
+        m_int = int(month_val)
+        records = records.filter(date_of_incident__month=m_int)
+        report_period_label = f"{calendar.month_name[m_int]} {timezone.now().year}"
+    elif p_type == 'TODAY':
+        today = timezone.now().date()
+        records = records.filter(date_of_incident=today)
+        report_period_label = today.strftime("%B %d, %Y")
+    elif p_type.startswith('Q'):
+        quarters = {'Q1': [8, 9, 10], 'Q2': [11, 12], 'Q3': [1, 2, 3], 'Q4': [4, 5]}
+        records = records.filter(date_of_incident__month__in=quarters.get(p_type, []))
+        report_period_label = f"{p_type} of SY {active_sy.code if active_sy else ''}"
+    else:
+        # Default: Entire School Year
+        if active_sy:
+            records = records.filter(school_year=active_sy)
+            report_period_label = f"Entire School Year {active_sy.code}"
+        else:
+            report_period_label = "All Recorded Offenses"
 
-    # For now, we return a simple summary. Later you can use a PDF library like WeasyPrint.
-    data = {
-        'student': f"{student.last_name}, {student.first_name}",
-        'period': period_type,
-        'offense_count': records.count(),
-        'total_demerits': sum(r.demerits for r in records),
-        'records': list(records.values('date_of_incident', 'offense_name', 'demerits'))
+    # 3. Categorize Records
+    absences = records.filter(category="ABSENCE").order_by('date_of_incident')
+    tardiness = records.filter(category="TARDINESS").order_by('date_of_incident')
+    conduct = records.exclude(category__in=["ABSENCE", "TARDINESS"]).order_by('date_of_incident')
+
+    # 4. Quarterly Stats Helper
+    def get_quarter_stats(queryset):
+        qs = {'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0}
+        for r in queryset:
+            m = r.date_of_incident.month
+            if m in [8, 9, 10]: qs['Q1'] += 1
+            elif m in [11, 12]: qs['Q2'] += 1
+            elif m in [1, 2, 3]: qs['Q3'] += 1
+            elif m in [4, 5]: qs['Q4'] += 1
+        return qs
+
+    q_absence = get_quarter_stats(absences)
+    q_conduct = get_quarter_stats(conduct)
+    q_tardiness = get_quarter_stats(tardiness)
+    q_total = {k: q_absence[k] + q_conduct[k] + q_tardiness[k] for k in ['Q1', 'Q2', 'Q3', 'Q4']}
+
+    context = {
+        'student': student,
+        'absences': absences,
+        'tardiness': tardiness,
+        'conduct': conduct,
+        'total_absence_demerits': sum(r.demerits for r in absences),
+        'total_tardiness_demerits': sum(r.demerits for r in tardiness),
+        'total_conduct_demerits': sum(r.demerits for r in conduct),
+        'overall_total': sum(r.demerits for r in records),
+        'q_stats': {'absence': q_absence, 'conduct': q_conduct, 'tardiness': q_tardiness, 'total': q_total},
+        'total_absence_count': absences.count(),
+        'total_conduct_count': conduct.count(),
+        'total_tardiness_count': tardiness.count(),
+        'grand_total_count': records.count(),
+        'report_period_label': report_period_label, # Use this new label
     }
-    return JsonResponse(data)
+    
+    return render(request, 'core/reports/student_attendance_record.html', context)
+
+@login_required
+def api_toggle_served(request, record_id):
+    """Saves the 'Served' checkbox state instantly with User ID & Timestamp"""
+    if request.method == 'POST':
+        record = get_object_or_404(DisciplinaryRecord, id=record_id)
+        data = json.loads(request.body)
+        
+        is_served = data.get('is_served', False)
+        record.is_served = is_served
+        
+        # FULFILLING: "Saves state to backend with user ID & timestamp"
+        if is_served:
+            timestamp = timezone.now().strftime("%b %d, %Y %I:%M %p")
+            log_msg = f"[Verified Served by {request.user.first_name} {request.user.last_name} on {timestamp}]"
+            
+            # Appends the timestamp to the notes so it is permanently recorded
+            if record.remarks:
+                if "Verified Served by" not in record.remarks:
+                    record.remarks = f"{record.remarks} {log_msg}"
+            else:
+                record.remarks = log_msg
+                
+        record.save()
+        return JsonResponse({'status': 'success'})
+        
+    return JsonResponse({'status': 'error'}, status=400)
