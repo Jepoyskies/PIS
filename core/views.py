@@ -491,6 +491,20 @@ def api_student_offenses(request, student_id):
             
             # --- FIXED PHOTO SAVING LOGIC ---
             photo_b64 = data.get('photo_base64')
+            # --- SIGNATURE SAVING LOGIC ---
+            for sig_type in ['father', 'mother', 'guardian']:
+                sig_b64 = data.get(f'{sig_type}_signature_base64')
+                if sig_b64:
+                    sig_field = getattr(student, f'{sig_type}_signature', None)
+                    if sig_b64 == 'DELETE':
+                        if sig_field: sig_field.delete(save=False)
+                    elif sig_b64.startswith('data:image'):
+                        format, imgstr = sig_b64.split(';base64,')
+                        ext = format.split('/')[-1]
+                        if ext == 'jpeg': ext = 'jpg'
+                        filename = f"{student.student_number}_{sig_type}_{uuid.uuid4().hex[:8]}.{ext}"
+                        if sig_field: sig_field.delete(save=False) # Delete old file
+                        getattr(student, f'{sig_type}_signature').save(filename, ContentFile(base64.b64decode(imgstr)), save=False)
             if photo_b64:
                 if photo_b64 == 'DELETE':
                     if student.photo:
@@ -510,6 +524,7 @@ def api_student_offenses(request, student_id):
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        
 
     # 2. HANDLE GETTING DATA
     active_sy_id = request.session.get('active_sy_id')
@@ -536,8 +551,13 @@ def api_student_offenses(request, student_id):
     summary_list = [{'category': s['category'], 'count': s['count']} for s in summary]
     
     # 3. BUILD PERSONAL INFO PAYLOAD
+    # 3. BUILD PERSONAL INFO PAYLOAD
     student_info = {
         'photo_url': student.photo.url if student.photo else '', 
+        # Add these 3 lines:
+        'father_sig_url': student.father_signature.url if getattr(student, 'father_signature', None) else '',
+        'mother_sig_url': student.mother_signature.url if getattr(student, 'mother_signature', None) else '',
+        'guardian_sig_url': student.guardian_signature.url if getattr(student, 'guardian_signature', None) else '',
         'address': student.address, 'home_phone': student.home_phone, 
         'date_of_birth': student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '',
         'birthplace': student.birthplace, 'citizenship': student.citizenship, 'nationality': student.nationality,

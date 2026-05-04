@@ -308,6 +308,9 @@ fetch('/api/offenses/list/')
                     setPhotoUI('');
                 }
                 document.getElementById('student-photo-base64').value = ''; 
+                setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
 
                 const summaryBody = document.getElementById('offenses-by-type-body');
                 summaryBody.innerHTML = ''; 
@@ -332,6 +335,10 @@ fetch('/api/offenses/list/')
         row.addEventListener('click', (e) => {
             if (e.target.closest('.action-stop')) return;
             selectStudent(row);
+            // Load Signatures if they exist
+                setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
         });
     });
 
@@ -878,6 +885,136 @@ function updateUnservedCSTable() {
     }
 }
 
+// ==========================================
+    // SIGNATURE CAMERA & UPLOAD LOGIC
+    // ==========================================
+    let sigVideoStream = null;
+    let activeSigCamera = null; // 'father', 'mother', or 'guardian'
+
+    function saveSignatureInstantly(base64Str, type) {
+        const studentId = document.getElementById('modal-id-display').innerText;
+        if (!studentId || studentId === '---') return;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const payload = {};
+        payload[`${type}_signature_base64`] = base64Str; 
+
+        fetch(`/api/student/${studentId}/offenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Error saving signature:", err));
+    }
+
+    function setSigUI(base64Str, type, autoSave = false) {
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+        
+        if (base64Str) {
+            img.src = base64Str;
+            img.style.display = 'block';
+            text.style.display = 'none';
+            if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            text.style.display = 'block';
+            if (autoSave) saveSignatureInstantly('DELETE', type);
+        }
+    }
+
+    function toggleSigCamera(type) {
+        const video = document.getElementById(`sig-video-${type}`);
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        const img = document.getElementById(`sig-img-${type}`);
+        const text = document.getElementById(`sig-text-${type}`);
+
+        if (activeSigCamera !== type) {
+            // Turn off any currently running camera first
+            if (sigVideoStream) cancelSigCamera(activeSigCamera);
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        sigVideoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        img.style.display = 'none';
+                        text.style.display = 'none';
+
+                        btnCam.innerHTML = '📸 Snap';
+                        btnCam.classList.replace('btn-light', 'btn-primary');
+                        btnCam.classList.remove('text-muted');
+                        btnCam.classList.add('text-white');
+                        
+                        btnUp.innerHTML = 'Cancel';
+                        btnUp.classList.add('text-danger');
+                        btnUp.onclick = () => cancelSigCamera(type);
+                        activeSigCamera = type;
+                    }).catch(err => alert("Camera access denied."));
+            }
+        } else {
+            // SNAP THE PICTURE
+            const canvas = document.getElementById(`sig-canvas-${type}`);
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            cancelSigCamera(type);
+            setSigUI(dataURL, type, true); // True = auto-save
+        }
+    }
+
+    function cancelSigCamera(type) {
+        if (!type) return;
+        if (sigVideoStream) {
+            sigVideoStream.getTracks().forEach(track => track.stop());
+            sigVideoStream = null;
+        }
+        document.getElementById(`sig-video-${type}`).style.display = 'none';
+        
+        const btnCam = document.getElementById(`btn-cam-${type}`);
+        const btnUp = document.getElementById(`btn-up-${type}`);
+        
+        btnCam.innerHTML = 'Take Picture';
+        btnCam.classList.replace('btn-primary', 'btn-light');
+        btnCam.classList.replace('text-white', 'text-muted');
+        
+        btnUp.innerHTML = 'Load Picture';
+        btnUp.classList.remove('text-danger');
+        btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
+        
+        activeSigCamera = null;
+
+        const img = document.getElementById(`sig-img-${type}`);
+        if (img.src && img.src !== window.location.href) {
+             img.style.display = 'block';
+        } else {
+             document.getElementById(`sig-text-${type}`).style.display = 'block';
+        }
+    }
+
+    function handleSigUpload(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) return alert("File is too large.");
+            const reader = new FileReader();
+            reader.onload = function(e) { setSigUI(e.target.result, type, true); };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearSignature(type) {
+        if (confirm(`Would you like to delete the ${type}'s signature?`)) {
+            setSigUI('', type, true);
+            document.getElementById(`upload-sig-${type}`).value = '';
+        }
+    }
     </script>
 </body>
 </html>

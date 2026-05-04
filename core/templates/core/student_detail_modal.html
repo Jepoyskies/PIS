@@ -246,43 +246,63 @@
                             </div>
                         </div>
 
-                        <!-- TAB 6: SIGNATURE -->
+<!-- TAB 6: SIGNATURE -->
                         <div class="tab-pane fade" id="pane-signature" role="tabpanel">
                             <div class="row g-4 p-3 bg-light rounded border">
+                                
+                                <!-- FATHER -->
                                 <div class="col-md-4 text-center">
                                     <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Father</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
-                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    <div class="signature-box position-relative d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999; overflow: hidden; border-radius: 4px;">
+                                        <span id="sig-text-father" class="text-muted small fst-italic">No Signature</span>
+                                        <img id="sig-img-father" src="" style="width: 100%; height: 100%; object-fit: contain; display: none; position: absolute; top: 0; left: 0;">
+                                        <video id="sig-video-father" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; transform: scaleX(-1);"></video>
+                                        <canvas id="sig-canvas-father" style="display: none;"></canvas>
                                     </div>
                                     <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                        <button type="button" id="btn-cam-father" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="toggleSigCamera('father')">Take Picture</button>
+                                        <button type="button" id="btn-up-father" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="document.getElementById('upload-sig-father').click()">Load Picture</button>
+                                        <button type="button" class="btn btn-light border fw-bold text-danger" style="font-size: 10px;" onclick="clearSignature('father')">Clear</button>
                                     </div>
+                                    <input type="file" id="upload-sig-father" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleSigUpload(event, 'father')">
                                 </div>
+
+                                <!-- MOTHER -->
                                 <div class="col-md-4 text-center">
                                     <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Mother</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
-                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    <div class="signature-box position-relative d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999; overflow: hidden; border-radius: 4px;">
+                                        <span id="sig-text-mother" class="text-muted small fst-italic">No Signature</span>
+                                        <img id="sig-img-mother" src="" style="width: 100%; height: 100%; object-fit: contain; display: none; position: absolute; top: 0; left: 0;">
+                                        <video id="sig-video-mother" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; transform: scaleX(-1);"></video>
+                                        <canvas id="sig-canvas-mother" style="display: none;"></canvas>
                                     </div>
                                     <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                        <button type="button" id="btn-cam-mother" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="toggleSigCamera('mother')">Take Picture</button>
+                                        <button type="button" id="btn-up-mother" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="document.getElementById('upload-sig-mother').click()">Load Picture</button>
+                                        <button type="button" class="btn btn-light border fw-bold text-danger" style="font-size: 10px;" onclick="clearSignature('mother')">Clear</button>
                                     </div>
+                                    <input type="file" id="upload-sig-mother" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleSigUpload(event, 'mother')">
                                 </div>
+
+                                <!-- GUARDIAN -->
                                 <div class="col-md-4 text-center">
                                     <div class="fw-bold text-start mb-1 small text-uppercase text-muted">Guardian</div>
-                                    <div class="signature-box d-flex align-items-center justify-content-center bg-white shadow-sm">
-                                        <span class="text-muted small fst-italic">No Signature</span>
+                                    <div class="signature-box position-relative d-flex align-items-center justify-content-center bg-white shadow-sm" style="height: 160px; border: 1px solid #999; overflow: hidden; border-radius: 4px;">
+                                        <span id="sig-text-guardian" class="text-muted small fst-italic">No Signature</span>
+                                        <img id="sig-img-guardian" src="" style="width: 100%; height: 100%; object-fit: contain; display: none; position: absolute; top: 0; left: 0;">
+                                        <video id="sig-video-guardian" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; transform: scaleX(-1);"></video>
+                                        <canvas id="sig-canvas-guardian" style="display: none;"></canvas>
                                     </div>
                                     <div class="btn-group btn-group-sm w-100 shadow-sm mt-1">
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Take a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Load a Picture</button>
-                                        <button class="btn btn-light border fw-bold text-muted" style="font-size: 10px;">Clear Picture</button>
+                                        <button type="button" id="btn-cam-guardian" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="toggleSigCamera('guardian')">Take Picture</button>
+                                        <button type="button" id="btn-up-guardian" class="btn btn-light border fw-bold text-muted" style="font-size: 10px;" onclick="document.getElementById('upload-sig-guardian').click()">Load Picture</button>
+                                        <button type="button" class="btn btn-light border fw-bold text-danger" style="font-size: 10px;" onclick="clearSignature('guardian')">Clear</button>
                                     </div>
+                                    <input type="file" id="upload-sig-guardian" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleSigUpload(event, 'guardian')">
                                 </div>
+
                             </div>
+                        </div>
                         </div>
 
                     </div>
