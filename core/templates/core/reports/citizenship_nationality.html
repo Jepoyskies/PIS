@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Citizenship & Nationality</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3"><a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a> <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button></div>
+        <h4 class="text-center fw-bold">Citizenship / Nationality Report</h4>
+        <table class="table table-bordered table-striped mt-4">
+            <thead><tr><th>Name</th><th>Citizenship</th><th>Nationality</th></tr></thead>
+            <tbody>
+                {% for s in students %}
+                <tr><td>{{ s.last_name }}, {{ s.first_name }}</td><td>{{ s.citizenship|default:"-" }}</td><td>{{ s.nationality|default:"-" }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

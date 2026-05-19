@@ -1,8 +1,17 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Student, DisciplinaryRecord, Section
+from .models import Student, DisciplinaryRecord, Section, Offense
 
-# Used in the Staff Dashboard (XP UI)
+# ... existing forms ...
+
+class OffenseForm(forms.ModelForm):
+    class Meta:
+        model = Offense
+        fields = ['code', 'name', 'default_demerits', 'default_sanction', 'classification']
+        widgets = {
+            'classification': forms.Select(choices=[('Major', 'Major'), ('Minor', 'Minor')])
+        }
+
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student

@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Coming Soon</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+    <div class="text-center">
+        <h2 class="text-muted">This report is under development.</h2>
+        <p>Check back later!</p>
+        <a href="{% url 'reports_dashboard' %}" class="btn btn-primary mt-3">Back to Reports</a>
+    </div>
+</body>
+</html>

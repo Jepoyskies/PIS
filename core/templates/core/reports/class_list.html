@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Class List - {{ active_sy.code }}</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button>
+        </div>
+        <h4 class="text-center fw-bold">Class Lists (SY {{ active_sy.code }})</h4>
+        
+        {% for section in sections %}
+        <h5 class="mt-4 fw-bold">Grade {{ section.grade_level }} - {{ section.name }}</h5>
+        <table class="table table-bordered table-sm mb-5">
+            <thead>
+                <tr>
+                    <th>Student Number</th>
+                    <th>Name</th>
+                    <th>Sex</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in section.students.all %}
+                <tr>
+                    <td>{{ student.student_number }}</td>
+                    <td>{{ student.last_name }}, {{ student.first_name }}</td>
+                    <td>{{ student.sex }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+    </div>
+</body>
+</html>

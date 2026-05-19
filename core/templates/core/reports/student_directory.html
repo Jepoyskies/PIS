@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Directory</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3"><a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a> <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button></div>
+        <h4 class="text-center fw-bold">Student Directory</h4>
+        <table class="table table-bordered table-striped mt-4">
+            <thead><tr><th>Name</th><th>Student Number</th><th>Address</th></tr></thead>
+            <tbody>
+                {% for s in students %}
+                <tr><td>{{ s.last_name }}, {{ s.first_name }}</td><td>{{ s.student_number }}</td><td>{{ s.address|default:"-" }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation" class="no-print mt-4">
+            <ul class="pagination justify-content-center">
+                {% if students.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ students.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ students.number }} of {{ students.paginator.num_pages }}</span></li>
+                {% if students.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ students.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ students.paginator.num_pages }}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

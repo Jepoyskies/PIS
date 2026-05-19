@@ -44,6 +44,7 @@
             border-radius: 8px;
             text-decoration: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            cursor: pointer;
         }
         .report-card:hover {
             background-color: var(--xu-blue-1);
@@ -89,38 +90,26 @@
 
     <main class="flex-grow-1 reports-container">
         <div class="container-fluid max-w-6xl mx-auto">
-            <h4 class="fw-bold mb-4 text-secondary">Reports</h4>
+            <h4 class="fw-bold mb-4 text-secondary">Reports Dashboard</h4>
             
             <div class="row g-3">
                 <!-- ROW 1 -->
-                <div class="col-md-4"><a href="#" class="report-card">Overall Enrolment Summary</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Class List</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">List of Birthdays</a></div>
+                <div class="col-md-3"><a href="{% url 'report_enrolment_summary' %}" class="report-card">Overall Enrolment Summary</a></div>
+                <div class="col-md-3"><a href="{% url 'report_class_list' %}" class="report-card">Class List</a></div>
+                <div class="col-md-3"><a href="{% url 'report_birthdays' %}" class="report-card">List of Birthdays</a></div>
+                <div class="col-md-3"><a href="{% url 'report_student_demerits' %}" class="report-card">List of Students' Demerits</a></div>
                 
                 <!-- ROW 2 -->
-                <div class="col-md-4"><a href="#" class="report-card">List of Student Offenses by Section (Current)</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">List of Students' Demerits</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Age Profile</a></div>
-                
+                <div class="col-md-3"><a href="{% url 'report_student_status' %}" class="report-card">Student Status</a></div>
+                <div class="col-md-3"><a href="{% url 'report_conduct_marks' %}" class="report-card">All Conduct Marks</a></div>
+                <div class="col-md-3"><a href="{% url 'report_student_record' %}" class="report-card">Attendance/Deportment Record</a></div>
+                <div class="col-md-3"><a href="{% url 'report_attendance_registrar' %}" class="report-card">Attendance Summary (Registrar)</a></div>
+
                 <!-- ROW 3 -->
-                <div class="col-md-4"><a href="#" class="report-card">List of Student Offenses by Name (Throughout HS)</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Students' Conduct Graph</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Student Status</a></div>
-                
-                <!-- ROW 4 -->
-                <div class="col-md-4"><a href="#" class="report-card">Detailed Deportment Report</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Deportment Report</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Citizenship / Nationality Report</a></div>
-                
-                <!-- ROW 5 -->
-                <div class="col-md-4"><a href="#" class="report-card">Daily Attendance Summary</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">List of Unserved CS</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Student Directory</a></div>
-                
-                <!-- ROW 6 -->
-                <div class="col-md-4"><a href="#" class="report-card">Attendance Summary for Registrar</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">All Conduct Marks</a></div>
-                <div class="col-md-4"><a href="#" class="report-card">Student's Attendance/Deportment Record</a></div>
+                <div class="col-md-3"><a href="{% url 'report_unserved_cs' %}" class="report-card">List of Unserved CS</a></div>
+                <div class="col-md-3"><a href="{% url 'report_student_directory' %}" class="report-card">Student Directory</a></div>
+                <div class="col-md-3"><a href="{% url 'report_conduct_graph' %}" class="report-card">Students' Conduct Graph</a></div>
+                <div class="col-md-3"><a href="{% url 'report_citizenship_nationality' %}" class="report-card">Citizenship / Nationality</a></div>
             </div>
         </div>
     </main>

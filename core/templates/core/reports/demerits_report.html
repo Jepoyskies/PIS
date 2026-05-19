@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demerits Report - {{ active_sy.code }}</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        :root { --primary-blue: #003366; --gold: #C5A059; }
+        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 2rem; }
+        .report-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 2rem; }
+        .header-bar { border-left: 5px solid var(--primary-blue); padding-left: 15px; margin-bottom: 2rem; }
+        .table thead { background: var(--primary-blue); color: white; }
+        @media print { .no-print { display: none; } body { background: white; padding: 0; } .report-container { box-shadow: none; } }
+    </style>
+</head>
+<body>
+    <div class="container report-container">
+        <div class="no-print d-flex justify-content-between mb-4">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-outline-secondary">&larr; Back to Dashboard</a>
+            <button onclick="window.print()" class="btn btn-primary" style="background-color: var(--primary-blue);">Print Report</button>
+        </div>
+        
+        <div class="header-bar">
+            <h3 class="fw-bold m-0">Student Demerits Report</h3>
+            <p class="text-muted">School Year: {{ active_sy.code }} | Generated: {% now "F j, Y" %}</p>
+        </div>
+        
+        <table class="table table-hover align-middle">
+            <thead class="text-uppercase small">
+                <tr>
+                    <th>Student Name</th>
+                    <th>ID Number</th>
+                    <th class="text-center">Total Demerits</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td class="fw-bold">{{ student.last_name }}, {{ student.first_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ student.student_number }}</span></td>
+                    <td class="text-center fw-bold text-danger">{{ student.total_demerits|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

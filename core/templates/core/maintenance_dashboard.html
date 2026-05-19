@@ -2,32 +2,49 @@
 {% load static %}
 
 {% block maintenance_content %}
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" class="xu-logo-lg mb-3 shadow-sm rounded p-1">
-        </div>
-        <h3 class="fw-bold mb-1" style="color: var(--xu-blue-1);">MAINTENANCE CONTROL CENTER</h3>
-        <p class="text-muted mb-5">Xavier High School - Prefect Information System</p>
-
+    <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card card-xu border-0 bg-light p-4">
-                    <p class="lead mb-4">Welcome, <strong>{{ request.user.first_name|default:request.user.username }}</strong>.</p>
-                    <p class="text-muted">This specialized administrative module allows staff to manage student masterlists, section assignments, and system users without requiring technical access to the database backend.</p>
-                    
-                    <div class="alert border-0 shadow-sm mt-4 text-start d-flex align-items-center gap-3" style="background-color: white; color: var(--xu-blue-2);">
-                        <div class="fs-4">👈</div>
-                        <div>
-                            <div class="fw-bold small text-uppercase">Getting Started</div>
-                            <div class="small">Select a management module from the sidebar navigation to begin reviewing or modifying system records.</div>
+            <div class="col-lg-10">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-5 border-bottom pb-3">
+                    <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" class="rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                    <div class="ms-3">
+                        <h3 class="fw-bold m-0 text-primary">Maintenance Control Center</h3>
+                        <p class="text-muted small m-0">Xavier University - Junior High School | Administration Portal</p>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">System Administration</h5>
+                        <p class="text-muted mb-4">Manage core system data including student masterlists, faculty, sections, and violation records. Use the sidebar navigation to manage specific modules or access the advanced system console below.</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded d-flex align-items-center">
+                                    <div class="me-3 fs-3">⚙️</div>
+                                    <div>
+                                        <div class="fw-bold small text-uppercase">Module Management</div>
+                                        <div class="text-muted small">Manage staff, students, and sections from the sidebar.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'admin:index' %}" class="btn btn-outline-dark d-flex align-items-center justify-content-center h-100 py-3">
+                                    <i class="bi bi-gear-fill me-2"></i> Launch Advanced Admin Console
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="mt-5 pt-4 text-muted small border-top opacity-50">
-            System Version 2.0 (Bootstrap 5 Modern) &copy; {% now "Y" %} Xavier University - Ateneo de Cagayan
+                <!-- Footer -->
+                <div class="mt-5 text-center text-muted small">
+                    <hr>
+                    <p>System Version 2.0 &copy; {% now "Y" %} Xavier University - Ateneo de Cagayan</p>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

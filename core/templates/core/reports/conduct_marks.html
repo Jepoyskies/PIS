@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Conduct Marks</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button>
+        </div>
+        <h4 class="text-center fw-bold">All Conduct Marks</h4>
+        <table class="table table-bordered table-striped mt-4">
+            <thead><tr><th>Student</th><th>Offense</th><th>Demerits</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for r in records %}
+                <tr><td>{{ r.student.last_name }}, {{ r.student.first_name }}</td><td>{{ r.offense_name }}</td><td>{{ r.demerits }}</td><td>{{ r.date_of_incident }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <nav class="no-print mt-4"><ul class="pagination justify-content-center">
+            {% if records.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ records.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ records.number }} / {{ records.paginator.num_pages }}</span></li>
+            {% if records.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ records.next_page_number }}">Next</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ records.paginator.num_pages }}">&raquo;</a></li>
+            {% endif %}
+        </ul></nav>
+    </div>
+</body>
+</html>

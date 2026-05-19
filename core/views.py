@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,8 +14,9 @@ import uuid
 import base64
 from django.core.files.base import ContentFile
 
-from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, DailyAttendance, PeriodAttendance, StudentPeriodRecord
-from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm
+from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, DailyAttendance, PeriodAttendance, StudentPeriodRecord, Offense
+from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm, OffenseForm
+from .services import sync_student_attendance_logs
 
 # ==========================================
 # HELPER FUNCTIONS
@@ -285,7 +286,11 @@ def staff_dashboard(request):
     search_name = request.GET.get('searchName', '')
     search_id = request.GET.get('searchId', '')
     
-    students = Student.objects.filter(enrollments__school_year=active_sy, is_deleted=False)
+    # OPTIMIZED QUERY
+    students = Student.objects.filter(enrollments__school_year=active_sy, is_deleted=False)\
+        .select_related('section')\
+        .prefetch_related('enrollments')\
+        .distinct()
     
     if search_name:
         students = students.filter(last_name__icontains=search_name) | students.filter(first_name__icontains=search_name)
@@ -293,7 +298,7 @@ def staff_dashboard(request):
         students = students.filter(student_number__icontains=search_id)
         
     context.update({
-        'students': students.distinct(), 
+        'students': students, 
         'search_name': search_name, 
         'search_id': search_id,
         'sections': Section.objects.all().order_by('grade_level')
@@ -371,20 +376,20 @@ def approve_attendance_batch(request, batch_id):
 
     if request.method == 'POST':
         with transaction.atomic():
-            # 1. Update the codes based on any overrides made by the staff in the UI
+            # 1. Update codes based on overrides
             for rec in batch.records.all():
                 override_code = request.POST.get(f'override_{rec.id}')
                 if override_code and override_code != rec.code:
                     rec.code = override_code
                     rec.save()
 
-            # 2. Lock and Approve the batch
+            # 2. Lock and Approve
             batch.is_approved = True
             batch.save()
             
-            # 3. TRIGGER INTELLIGENT AUTO-LOGGING
-            # We look at every student in this batch and sync their logs for the WHOLE day
-            for rec in batch.records.all():
+            # 3. Trigger Sync (Inside the same transaction to prevent inconsistency)
+            # We re-fetch to ensure the sync uses the most up-to-date data
+            for rec in batch.records.select_related('student').all():
                 sync_student_attendance_logs(rec.student, batch.daily_attendance, request.user)
 
             messages.success(request, f"✅ Period {batch.period_number} approved and student records consolidated.")
@@ -395,77 +400,67 @@ def sync_student_attendance_logs(student, daily_attendance, staff_user):
     """
     Intelligently maps a student's period absences to the best official Offense.
     """
-    from .models import StudentPeriodRecord, DisciplinaryRecord, Offense, SchoolYear
-    
-    # 1. Clear existing attendance-based disciplinary logs for this student on this day
-    # This prevents duplication when approving multiple periods
-    DisciplinaryRecord.objects.filter(
-        student=student, 
-        date_of_incident=daily_attendance.date,
-        category="ATTENDANCE"
-    ).delete()
-
-    # 2. Get all approved period records for this student today
-    # We only count absences in periods that have been officially 'Approved' by staff
-    absent_periods = list(StudentPeriodRecord.objects.filter(
-        student=student,
-        period__daily_attendance=daily_attendance,
-        period__is_approved=True,
-        code='A' # 'A' for Absent
-    ).values_list('period__period_number', flat=True))
-
-    if not absent_periods:
-        return
-
-    # 3. CONSOLIDATION LOGIC
-    # Period Mapping: Morning (1-4), Afternoon (5-7)
-    all_day = {1, 2, 3, 4, 5, 6, 7}
-    morning = {1, 2, 3, 4}
-    afternoon = {5, 6, 7}
-    
-    absent_set = set(absent_periods)
-    offenses_to_log = []
-
-    # Check for Whole Day (WD)
-    if all_day.issubset(absent_set):
-        offenses_to_log.append("WD")
-    else:
-        # Check for Whole Morning (AWM)
-        if morning.issubset(absent_set):
-            offenses_to_log.append("AWM")
-        else:
-            # If not whole morning, log individual periods
-            for p in [1, 2, 3, 4]:
-                if p in absent_set: offenses_to_log.append(f"AM{p}")
+    # Use select_for_update to lock the row and prevent race conditions
+    with transaction.atomic():
+        from .models import StudentPeriodRecord, DisciplinaryRecord, Offense, SchoolYear
         
-        # Check for Whole Afternoon (AWA)
-        if afternoon.issubset(absent_set):
-            offenses_to_log.append("AWA")
-        else:
-            # If not whole afternoon, log individual periods
-            # Map periods 5-7 to your PM codes (PM5, PM6, PM7)
-            for p in [5, 6, 7]:
-                if p in absent_set: offenses_to_log.append(f"PM{p}")
+        # 1. Clear existing attendance-based disciplinary logs for this student on this day
+        DisciplinaryRecord.objects.filter(
+            student=student, 
+            date_of_incident=daily_attendance.date,
+            category="ATTENDANCE"
+        ).delete()
 
-    # 4. CREATE THE DISCIPLINARY RECORDS
-    active_sy = SchoolYear.objects.filter(is_active=True).first()
-    
-    for code in offenses_to_log:
-        # Look up the official data from your seeded Offense table
-        official_offense = Offense.objects.filter(code=code).first()
+        # 2. Get all approved period records for this student today
+        absent_periods = list(StudentPeriodRecord.objects.filter(
+            student=student,
+            period__daily_attendance=daily_attendance,
+            period__is_approved=True,
+            code='A' # 'A' for Absent
+        ).values_list('period__period_number', flat=True))
+
+        if not absent_periods:
+            return
+
+        # 3. Consolidation logic remains the same...
+        all_day = {1, 2, 3, 4, 5, 6, 7}
+        morning = {1, 2, 3, 4}
+        afternoon = {5, 6, 7}
         
-        if official_offense:
-            DisciplinaryRecord.objects.create(
-                student=student,
-                category="ATTENDANCE",
-                offense_name=official_offense.name,
-                date_of_incident=daily_attendance.date,
-                demerits=official_offense.default_demerits,
-                sanction=official_offense.default_sanction,
-                recorded_by=staff_user,
-                school_year=active_sy,
-                remarks="Auto-generated from Beadle Attendance"
-            )
+        absent_set = set(absent_periods)
+        offenses_to_log = []
+
+        if all_day.issubset(absent_set):
+            offenses_to_log.append("WD")
+        else:
+            if morning.issubset(absent_set):
+                offenses_to_log.append("AWM")
+            else:
+                for p in [1, 2, 3, 4]:
+                    if p in absent_set: offenses_to_log.append(f"AM{p}")
+            
+            if afternoon.issubset(absent_set):
+                offenses_to_log.append("AWA")
+            else:
+                for p in [5, 6, 7]:
+                    if p in absent_set: offenses_to_log.append(f"PM{p}")
+
+        # 4. Create disciplinary records
+        active_sy = SchoolYear.objects.filter(is_active=True).first()
+        for code in offenses_to_log:
+            official_offense = Offense.objects.filter(code=code).first()
+            if official_offense:
+                DisciplinaryRecord.objects.create(
+                    student=student,
+                    category="ATTENDANCE",
+                    offense_name=official_offense.name,
+                    date_of_incident=daily_attendance.date,
+                    demerits=official_offense.default_demerits,
+                    sanction=official_offense.default_sanction,
+                    recorded_by=staff_user,
+                    school_year=active_sy,
+                    remarks="Auto-generated from Beadle Attendance"
+                )
 
 @login_required
 def api_student_offenses(request, student_id):
@@ -743,6 +738,151 @@ def generate_student_report(request, student_id):
     }
     
     return render(request, 'core/reports/student_attendance_record.html', context)
+
+@login_required
+def report_birthdays(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    # Get students with DOB and group by month
+    students = Student.objects.filter(is_deleted=False, date_of_birth__isnull=False).order_by('date_of_birth__month', 'date_of_birth__day')
+    
+    # Grouping logic
+    birthdays_by_month = {}
+    for student in students:
+        month = student.date_of_birth.strftime('%B')
+        if month not in birthdays_by_month:
+            birthdays_by_month[month] = []
+        birthdays_by_month[month].append(student)
+    
+    context['birthdays_by_month'] = birthdays_by_month
+    return render(request, 'core/reports/birthdays_report.html', context)
+
+@login_required
+def report_enrolment_summary(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    active_sy = context.get('active_sy')
+    
+    summary = Enrollment.objects.filter(school_year=active_sy, is_enrolled=True).values('student__section__grade_level', 'student__section__name').annotate(total=Count('student')).order_by('student__section__grade_level', 'student__section__name')
+    
+    context['summary'] = summary
+    return render(request, 'core/reports/enrolment_summary.html', context)
+
+@login_required
+def report_class_list(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    active_sy = context.get('active_sy')
+    
+    sections = Section.objects.all().order_by('grade_level', 'name')
+    
+    context['sections'] = sections
+    return render(request, 'core/reports/class_list.html', context)
+
+@login_required
+def report_attendance_registrar(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    batches = PeriodAttendance.objects.filter(is_approved=True).order_by('-daily_attendance__date')
+    context['batches'] = batches
+    return render(request, 'core/reports/attendance_registrar.html', context)
+
+@login_required
+def report_unserved_cs(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    # Filter for records where hours_served is 0 or less
+    from .models import CommunityServiceRecord
+    unserved = CommunityServiceRecord.objects.filter(hours_served__lte=0).order_by('student__last_name')
+    context['records'] = unserved
+    return render(request, 'core/reports/unserved_cs.html', context)
+
+from django.core.paginator import Paginator
+
+@login_required
+def report_student_directory(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    student_list = Student.objects.filter(is_deleted=False).order_by('last_name')
+    paginator = Paginator(student_list, 20) # Show 20 students per page
+    
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context['students'] = page_obj
+    return render(request, 'core/reports/student_directory.html', context)
+
+@login_required
+def report_conduct_graph(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    # Simple count by offense category
+    stats = DisciplinaryRecord.objects.values('category').annotate(count=Count('id'))
+    context['stats'] = stats
+    return render(request, 'core/reports/conduct_graph.html', context)
+
+@login_required
+def report_citizenship_nationality(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    students = Student.objects.filter(is_deleted=False).values('last_name', 'first_name', 'citizenship', 'nationality')
+    context['students'] = students
+    return render(request, 'core/reports/citizenship_nationality.html', context)
+
+@login_required
+def report_student_status(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    student_list = Student.objects.filter(is_deleted=False).order_by('last_name')
+    paginator = Paginator(student_list, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context['students'] = page_obj
+    return render(request, 'core/reports/student_status.html', context)
+
+@login_required
+def report_conduct_marks(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    record_list = DisciplinaryRecord.objects.all().order_by('student__section__grade_level')
+    paginator = Paginator(record_list, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context['records'] = page_obj
+    return render(request, 'core/reports/conduct_marks.html', context)
+
+@login_required
+def report_student_record(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    student_list = Student.objects.filter(is_deleted=False).order_by('last_name')
+    paginator = Paginator(student_list, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context['students'] = page_obj
+    return render(request, 'core/reports/student_record_list.html', context)
+
+@login_required
+def report_student_demerits(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    # Get students with aggregated demerits for the active school year
+    active_sy = context.get('active_sy')
+    students = Student.objects.filter(is_deleted=False).annotate(
+        total_demerits=Sum('disciplinary_records__demerits', filter=Q(disciplinary_records__school_year=active_sy))
+    ).order_by('-total_demerits')
+    
+    context['students'] = students
+    return render(request, 'core/reports/demerits_report.html', context)
 
 @login_required
 def api_toggle_served(request, record_id):

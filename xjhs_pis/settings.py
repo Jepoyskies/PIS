@@ -5,12 +5,20 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-i=7l@thcf344ik!5fsjh18oibi1h@mddgoqz!=i(-g_3(cfc_#'
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-DEBUG = True
+# Allow specific hosts for production
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
-# Allow all devices on the network to access the web app
-ALLOWED_HOSTS = ['*']
+# Security Settings
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_AGE = 3600  # 1 hour session expiry
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 INSTALLED_APPS =[
     'django.contrib.admin',
@@ -76,6 +84,7 @@ USE_TZ = True
 
 # Standard web static files setup
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'core', 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

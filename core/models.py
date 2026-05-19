@@ -178,20 +178,12 @@ class PeriodAttendance(TimeStampedModel):
     class Meta:
         unique_together = ('daily_attendance', 'period_number')
 
+from .constants import ATTENDANCE_CHOICES
+
 class StudentPeriodRecord(TimeStampedModel):
-    CODE_CHOICES =[
-        ('P', 'Present'),
-        ('A', 'Absent'),
-        ('L', 'Late'),
-        ('UU', 'Unprescribed Uniform'),
-        ('UH', 'Unprescribed Haircut'),
-        ('ID', 'No ID'),
-        ('CL', 'Campus Leave')
-    ]
-    
     period = models.ForeignKey(PeriodAttendance, related_name='records', on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    code = models.CharField(max_length=2, choices=CODE_CHOICES, default='P')
+    code = models.CharField(max_length=2, choices=ATTENDANCE_CHOICES, default='P')
     
     # --- ADD THESE TWO LINES ---
     original_code = models.CharField(max_length=50, blank=True, null=True)
