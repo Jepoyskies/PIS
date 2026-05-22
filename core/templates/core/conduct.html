@@ -5,59 +5,52 @@
     <meta charset="UTF-8">
     <title>PIS - Disciplinary Module</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif;}
         
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
 
-        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;}
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+
+        .search-bar-container { background-color: #f8f9fa; padding: 12px 20px; color: var(--xu-blue-dark); border-bottom: 1px solid var(--xu-border-color); flex-shrink: 0;}
         
-        .table-container { 
-            background-color: white; 
-            border: 1px solid var(--xu-border-color);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            max-height: 350px; /* Provides a fixed scrollable area */
-            overflow-y: auto;
-        }
+        .table-container { background-color: white; border: 1px solid var(--xu-border-color); border-radius: 8px; max-height: 350px; overflow-y: auto; }
+        .table-container th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; border-bottom: 2px solid var(--xu-border-color) !important; padding: 12px 10px !important;}
 
-        .action-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--xu-border-color); background: white;}
-        .action-btn-group .btn { border: none; border-radius: 0; padding: 6px 16px; font-size: 0.85rem; }
-        .action-btn-group .btn:not(:last-child) { border-right: 1px solid var(--xu-border-color); }
-
-        .card-xu { border: 1px solid var(--xu-border-color); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-xu-primary { background-color: var(--xu-blue-dark) !important; color: white !important; border: none; }
+        .btn-xu-gold { background-color: var(--xu-gold) !important; color: white !important; border: none; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <!-- Standard Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm z-2">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Disciplinary Module - {{ module_name }}</div>
+                <div class="small opacity-75">Prefect Information System</div>
             </div>
         </div>
         
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label class="small fw-bold text-muted mb-0">School Year:</label>
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent; width: 120px;">
                     {% for sy in all_school_years %}
-                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 shadow-sm">Log Off</a>
         </div>
     </header>
 
-    <!-- Standard 6-Tab Navigation -->
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'staff_home' %}" class="nav-link active">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
@@ -67,107 +60,112 @@
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <!-- Unified Search Bar -->
-    <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
-        <form method="GET" class="d-flex align-items-center gap-4 m-0">
-            <div class="d-flex align-items-center gap-2">
-                <label class="small fw-bold mb-0 text-uppercase opacity-75">Filter Records by ID:</label>
-                <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search table history...">
-            </div>
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-xu-gold btn-sm px-4 fw-bold">FILTER TABLE</button>
-                <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light btn-sm px-3 text-muted fw-bold">CLEAR</a>
-            </div>
-        </form>
-    </div>
-
-    <main class="flex-grow-1 p-4 overflow-auto">
-        <div class="container-fluid d-flex flex-column gap-3" style="max-width: 1400px; margin: 0 auto;">
-            
-            <!-- Module Fast-Switch Ribbon -->
-            <div class="d-flex gap-2">
-                <a href="{% url 'disciplinary_module' 'CONDUCT' %}" class="btn btn-sm {% if module_name == 'CONDUCT' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">CONDUCT</a>
-                <a href="{% url 'disciplinary_module' 'ABSENCES' %}" class="btn btn-sm {% if module_name == 'ABSENCES' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">ABSENCES</a>
-                <a href="{% url 'disciplinary_module' 'TARDINESS' %}" class="btn btn-sm {% if module_name == 'TARDINESS' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">TARDINESS</a>
-                <a href="{% url 'disciplinary_module' 'SUSPENSION' %}" class="btn btn-sm {% if module_name == 'SUSPENSION' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">SUSPENSION</a>
+    <main class="flex-grow-1 p-3 overflow-auto d-flex flex-column container-fluid" style="max-width: 1400px; margin: 0 auto; min-height: 0;">
+        <div class="main-card my-2">
+            <div class="card-header-custom">
+                <span><i class="fa-solid fa-gavel me-2"></i> DISCIPLINARY MODULE - {{ module_name }}</span>
             </div>
 
-            <!-- Incident History Table -->
-            <div class="table-container shadow-sm">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                    <thead style="position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1;">
-                        <tr>
-                            <th class="ps-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">DATE</th>
-                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">STUDENT</th>
-                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">OFFENSE</th>
-                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">REMARKS/DETAILS</th>
-                            <th class="py-3" style="border-bottom: 3px solid var(--xu-gold);">DEMERITS</th>
-                            <th class="pe-4 py-3" style="border-bottom: 3px solid var(--xu-gold);">RECORDED BY</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for record in records %}
-                        <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ record.student.student_number }}', '{{ record.student.last_name|escapejs }}, {{ record.student.first_name|escapejs }}', '{{ record.student.sex|default:'-' }}')" title="View Student Offenses">
-                            <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
-                            <td class="fw-bold text-xu-blue">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
-                            <td class="fw-bold">{{ record.offense_name|default:record.category }}</td>
-                            <td>{{ record.remarks }}</td>
-                            <td><span class="badge bg-danger px-2 py-1 shadow-sm">{{ record.demerits }}</span></td>
-                            <td class="pe-4 small text-muted fst-italic">{{ record.recorded_by.username }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <div class="display-6 text-muted opacity-25 mb-3">📂</div>
-                                <h6 class="fw-bold">No records found for this module.</h6>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Unified Search Bar -->
+            <div class="search-bar-container shadow-sm z-1 d-flex justify-content-between align-items-center">
+                <form method="GET" class="d-flex align-items-center gap-4 m-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small fw-bold mb-0 text-uppercase opacity-75">Filter Records by ID:</label>
+                        <input type="text" name="search_id" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search table history...">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-xu-gold btn-sm px-4 fw-bold shadow-sm">FILTER TABLE</button>
+                        <a href="{% url 'disciplinary_module' module_name %}" class="btn btn-light btn-sm px-3 text-muted fw-bold">CLEAR</a>
+                    </div>
+                </form>
             </div>
 
-            <!-- Log New Record Form -->
-            <div class="card card-xu border-0 mb-4 shadow-sm mt-2">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 fw-bold text-uppercase" style="color: var(--xu-blue-1);">➕ Log New {{ module_name|title }} Record</h6>
+            <div class="d-flex flex-column p-4 gap-4 flex-grow-1 overflow-auto">
+                
+                <!-- Module Fast-Switch Ribbon -->
+                <div class="d-flex gap-2">
+                    <a href="{% url 'disciplinary_module' 'CONDUCT' %}" class="btn btn-sm {% if module_name == 'CONDUCT' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">CONDUCT</a>
+                    <a href="{% url 'disciplinary_module' 'ABSENCES' %}" class="btn btn-sm {% if module_name == 'ABSENCES' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">ABSENCES</a>
+                    <a href="{% url 'disciplinary_module' 'TARDINESS' %}" class="btn btn-sm {% if module_name == 'TARDINESS' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">TARDINESS</a>
+                    <a href="{% url 'disciplinary_module' 'SUSPENSION' %}" class="btn btn-sm {% if module_name == 'SUSPENSION' %}btn-xu-primary{% else %}btn-white border{% endif %} fw-bold px-4 shadow-sm">SUSPENSION</a>
                 </div>
-                <div class="card-body p-4 bg-light">
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="row g-4 mb-3">
-                            <div class="col-md-2">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Student ID</label>
-                                <input type="text" name="student_number" class="form-control border-0 shadow-sm fw-bold" required placeholder="e.g. 2024-0001">
+
+                <!-- Incident History Table -->
+                <div class="table-container shadow-sm flex-shrink-0">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th class="ps-4 py-3">DATE</th>
+                                <th class="py-3">STUDENT</th>
+                                <th class="py-3">OFFENSE</th>
+                                <th class="py-3">REMARKS/DETAILS</th>
+                                <th class="py-3">DEMERITS</th>
+                                <th class="pe-4 py-3">RECORDED BY</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('{{ record.student.student_number }}', '{{ record.student.last_name|escapejs }}, {{ record.student.first_name|escapejs }}', '{{ record.student.sex|default:'-' }}')" title="View Student Offenses">
+                                <td class="ps-4 fw-bold text-muted">{{ record.date_of_incident|date:"m/d/Y" }}</td>
+                                <td class="fw-bold" style="color: var(--xu-blue-dark);">{{ record.student.last_name }}, {{ record.student.first_name }}</td> 
+                                <td class="fw-bold text-dark">{{ record.offense_name|default:record.category }}</td>
+                                <td>{{ record.remarks }}</td>
+                                <td><span class="badge bg-danger px-2 py-1 shadow-sm">{{ record.demerits }}</span></td>
+                                <td class="pe-4 small text-muted fst-italic">{{ record.recorded_by.username }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <div class="display-6 text-muted opacity-25 mb-3"><i class="fa-solid fa-folder-open"></i></div>
+                                    <h6 class="fw-bold">No records found for this module.</h6>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Log New Record Form -->
+                <div class="card border border-primary-subtle shadow-sm flex-shrink-0 mb-2">
+                    <div class="card-header bg-light py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-uppercase" style="color: var(--xu-blue-dark);"><i class="fa-solid fa-plus me-2"></i> Log New {{ module_name|title }} Record</h6>
+                    </div>
+                    <div class="card-body p-4 bg-white">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="row g-4 mb-3">
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted text-uppercase mb-1">Student ID</label>
+                                    <input type="text" name="student_number" class="form-control bg-light border-0 shadow-sm fw-bold" required placeholder="e.g. 2024-0001">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted text-uppercase mb-1">Date of Incident</label>
+                                    <input type="date" name="date_of_incident" class="form-control bg-light border-0 shadow-sm" required value="{{ today|date:'Y-m-d' }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
+                                    <input type="number" name="demerits" value="0" class="form-control bg-light border-0 shadow-sm fw-bold text-danger">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="fw-bold small text-muted text-uppercase mb-1">Offense Category</label>
+                                    <input type="text" name="offense_name" value="{{ module_name }}" class="form-control bg-light border-0 shadow-sm fw-bold" style="color: var(--xu-blue-dark);" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
+                                    <input type="text" value="{{ request.user.username|default:'Prefect Staff' }}" class="form-control bg-light border-0 text-muted fw-bold shadow-sm" readonly>
+                                </div>
                             </div>
-                            <div class="col-md-2">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Date of Incident</label>
-                                <input type="date" name="date_of_incident" class="form-control border-0 shadow-sm" required value="{{ today|date:'Y-m-d' }}">
+                            <div class="mb-4">
+                                <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details / Remarks</label>
+                                <textarea name="remarks" rows="2" class="form-control bg-light border-0 shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..." required></textarea>
                             </div>
-                            <div class="col-md-2">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Demerits</label>
-                                <input type="number" name="demerits" value="0" class="form-control border-0 shadow-sm fw-bold text-danger">
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-xu-primary px-5 py-2 fw-bold shadow-sm"><i class="fa-solid fa-floppy-disk me-2"></i> SAVE INCIDENT RECORD</button>
                             </div>
-                            <div class="col-md-3">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Offense Category</label>
-                                <input type="text" name="offense_name" value="{{ module_name }}" class="form-control border-0 shadow-sm fw-bold text-xu-blue" readonly>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="fw-bold small text-muted text-uppercase mb-1">Recorded By</label>
-                                <input type="text" value="{{ request.user.username|default:'Prefect Staff' }}" class="form-control bg-white border-0 text-muted fw-bold shadow-sm" readonly>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="fw-bold small text-muted text-uppercase mb-1">Specific Details / Remarks</label>
-                            <textarea name="remarks" rows="2" class="form-control border-0 shadow-sm" style="resize: none;" placeholder="Enter details regarding this incident..." required></textarea>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-xu-primary px-5 py-2 fw-bold shadow-sm">SAVE INCIDENT RECORD</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-            
         </div>
     </main>
 
@@ -223,7 +221,6 @@
             }).catch(e => { document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="8" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; });
     }
     </script>
-
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

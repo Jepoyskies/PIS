@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -7,17 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIS - Beadle Attendance</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; flex-shrink: 0; }
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif;}
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; display: inline-block; }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
         
         .dashboard-container { max-width: 1200px; margin: 20px auto; width: 100%; height: 100%; display: flex; flex-direction: column; }
-        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
-        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 12px 20px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1;}
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 12px 20px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
 
         .table-container { flex-grow: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background-color: white; }
         .violation-row { background-color: #fffdf5 !important; border-left: 4px solid var(--xu-gold); }
@@ -25,35 +26,27 @@
         /* Optimized Grid Styles */
         .hover-bg:hover { background-color: rgba(40, 57, 113, 0.08); }
         .cursor-pointer { cursor: pointer; }
-        
-        /* Compact columns to fit screen */
         .col-name { min-width: 180px; max-width: 220px; }
         .col-sex { width: 40px; min-width: 40px; }
         .col-narrow { width: 40px; min-width: 40px; }
-        
-        /* The active period column */
         .col-expanded { width: 320px; min-width: 320px; border-left: 2px solid var(--xu-gold); border-right: 2px solid var(--xu-gold); background-color: #fafbfc; }
-        .col-locked { width: 280px; min-width: 280px; border-left: 2px solid var(--xu-blue-1); border-right: 2px solid var(--xu-blue-1); background-color: #f8f9fa; }
-        
-        .grid-header { position: sticky; top: 0; background-color: var(--xu-light-gray); color: var(--xu-blue-1); z-index: 2; padding: 10px 8px !important; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
-        
-        /* Make radio buttons smaller */
+        .col-locked { width: 280px; min-width: 280px; border-left: 2px solid var(--xu-blue-dark); border-right: 2px solid var(--xu-blue-dark); background-color: #f8f9fa; }
+        .grid-header { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 2; padding: 10px 8px !important; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
         .btn-attendance { padding: 4px 6px !important; font-size: 0.75rem !important; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <!-- Main Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center z-2 shadow-sm flex-shrink-0">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold shadow-sm">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background-color: var(--xu-gold); color: white; border: none;">Log Off</a>
         </div>
     </header>
 
@@ -62,15 +55,14 @@
         <a href="{% url 'beadle_dashboard' %}" class="nav-link active">TAKE ATTENDANCE</a>
     </nav>
 
-    <main class="flex-grow-1 overflow-hidden p-3 d-flex flex-column bg-light">
+    <main class="flex-grow-1 overflow-hidden p-3 d-flex flex-column">
         <div class="dashboard-container pb-2">
-            
-            <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0">
+            <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0 text-white">
                 <div>
-                    <h4 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Daily Attendance Grid</h4>
-                    <div class="text-muted fw-bold small mt-1">
-                        Section: <span class="text-dark me-3">{{ student.section.name }}</span> 
-                        Date: <span class="text-dark">{{ today|date:'l, F j, Y' }}</span>
+                    <h4 class="fw-bold mb-0" style="letter-spacing: -0.5px;">Daily Attendance Grid</h4>
+                    <div class="opacity-75 fw-bold small mt-1">
+                        Section: <span class="text-white me-3">{{ student.section.name }}</span> 
+                        Date: <span class="text-white">{{ today|date:'l, F j, Y' }}</span>
                     </div>
                 </div>
             </div>
@@ -78,33 +70,26 @@
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm fw-bold border-0 flex-shrink-0 py-2" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                        {{ message }}<button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
 
-            <!-- Form Wrapper -->
-            <form method="POST" id="attendanceForm" action="" class="menu-card flex-grow-1 m-0">
+            <form method="POST" id="attendanceForm" action="" class="main-card m-0">
                 {% csrf_token %}
                 <input type="hidden" name="attendance_date" value="{{ today|date:'Y-m-d' }}">
                 <div id="dynamic-inputs"></div>
 
-                <div class="menu-header">
-                    <span class="small"><i class="me-2">📋</i> 1-7 PERIOD CLASS ROSTER</span>
+                <div class="card-header-custom">
+                    <span class="small"><i class="fa-solid fa-list-ol me-2"></i> 1-7 PERIOD CLASS ROSTER</span>
                 </div>
                 
-                <!-- Period Selectors above grid -->
                 <div class="bg-light border-bottom px-3 py-2 shadow-sm z-1 d-flex justify-content-between align-items-center flex-wrap">
                     <div class="d-flex align-items-center gap-2">
                         <span class="small fw-bold text-muted me-2">SELECT ACTIVE PERIOD:</span>
-                        <div class="btn-group btn-group-sm shadow-sm" role="group" id="period-selectors">
-                            <!-- Populated by JS -->
-                        </div>
+                        <div class="btn-group btn-group-sm shadow-sm" role="group" id="period-selectors"></div>
                     </div>
-                    <div>
-                        <span id="period-status-indicator" class="badge bg-secondary px-3 py-1 shadow-sm fs-6">Select a period</span>
-                    </div>
+                    <div><span id="period-status-indicator" class="badge bg-secondary px-3 py-1 shadow-sm fs-6">Select a period</span></div>
                 </div>
 
                 <div class="table-container p-0">
@@ -122,16 +107,13 @@
                                 <th class="grid-header text-center col-narrow cursor-pointer" onclick="setActivePeriod(7)" id="th-7">7</th>
                             </tr>
                         </thead>
-                        <tbody id="grid-body">
-                            <!-- Populated by JS -->
-                        </tbody>
+                        <tbody id="grid-body"></tbody>
                     </table>
                 </div>
                 
-                <!-- Action Bar -->
                 <div id="action-bar" class="d-flex justify-content-between align-items-center flex-shrink-0 p-3 bg-white" style="border-top: 1px solid var(--xu-border-color);">
-                    <span class="small fw-bold text-muted ms-2"><i class="me-1">ℹ️</i> Verify all entries in the active period before submitting to teacher.</span>
-                    <button type="button" class="btn fw-bold px-4 shadow-sm text-white btn-sm" style="background-color: var(--xu-blue-1); border-radius: 6px;" onclick="showReviewMode()">🔍 Review Submission</button>
+                    <span class="small fw-bold text-muted ms-2"><i class="fa-solid fa-circle-info me-1"></i> Verify all entries in the active period before submitting to teacher.</span>
+                    <button type="button" class="btn fw-bold px-4 shadow-sm text-white btn-sm" style="background-color: var(--xu-blue-dark); border-radius: 6px;" onclick="showReviewMode()"><i class="fa-solid fa-magnifying-glass me-1"></i> Review Submission</button>
                 </div>
             </form>
         </div>
@@ -141,7 +123,7 @@
     <div class="modal fade" id="reviewModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-                <div class="menu-header px-4 py-3">
+                <div class="card-header-custom px-4 py-3">
                     <div class="text-white">
                         <h5 class="fw-bold m-0 text-white" style="letter-spacing: 0.5px;">CONFIRM SUBMISSION</h5>
                         <div class="small fw-bold opacity-75 mt-1">Period: <span id="review-period-display" class="text-white"></span></div>
@@ -150,20 +132,12 @@
                 </div>
                 <div class="modal-body p-0 bg-white" style="max-height: 50vh; overflow-y: auto;">
                     <table class="table table-sm table-bordered align-middle mb-0 small">
-                        <thead class="sticky-top bg-light text-muted">
-                            <tr>
-                                <th class="ps-4 py-2">Student Name</th>
-                                <th class="py-2">Status</th>
-                                <th class="pe-4 py-2">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody id="review-full-list">
-                            <!-- Populated by JS -->
-                        </tbody>
+                        <thead class="sticky-top bg-light text-muted"><tr><th class="ps-4 py-2">Student Name</th><th class="py-2">Status</th><th class="pe-4 py-2">Remarks</th></tr></thead>
+                        <tbody id="review-full-list"></tbody>
                     </table>
                 </div>
                 <div class="modal-footer bg-light justify-content-between p-3" style="border-top: 1px solid var(--xu-border-color);">
-                    <div class="small fw-bold text-danger"><i class="me-1">⚠️</i> Submitting will permanently lock this period.</div>
+                    <div class="small fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Submitting will permanently lock this period.</div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-4" data-bs-dismiss="modal" onclick="unlockEditing()">Go Back & Edit</button>
                         <button type="button" class="btn btn-success btn-sm fw-bold px-4 shadow-sm" onclick="submitFinalForm()">Confirm & Submit to Office</button>
@@ -174,7 +148,6 @@
     </div>
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
         const codesConfig = {
             'P': { label: 'P', color: 'outline-success' },
@@ -218,15 +191,11 @@
         ];
 
         let activePeriod = 1;
-        
-        // --- UPGRADED STATE MANAGEMENT ---
-        // These now hold data for EVERY period independently so switching tabs doesn't wipe them.
         const formData = {}; 
         const firstChoices = {}; 
         const unlockedPeriods = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
 
         window.onload = function() {
-            // Initialize memory banks for all 7 periods
             students.forEach(s => {
                 formData[s.id] = {};
                 firstChoices[s.id] = {};
@@ -236,7 +205,6 @@
                 }
             });
 
-            // Find first unsubmitted period
             for(let i=1; i<=7; i++) {
                 if(!submittedPeriods.includes(i)) {
                     activePeriod = i;
@@ -249,13 +217,12 @@
         function setActivePeriod(p) {
             if (activePeriod === p) return;
             activePeriod = p;
-            renderUI(); // No data wiping here anymore!
+            renderUI(); 
         }
 
         function renderUI() {
             renderSelectors();
             renderGrid();
-            
             const bar = document.getElementById('action-bar');
             if (submittedPeriods.includes(activePeriod)) {
                 bar.classList.add('d-none');
@@ -267,16 +234,13 @@
         function renderSelectors() {
             const container = document.getElementById('period-selectors');
             container.innerHTML = '';
-            
             for(let p = 1; p <= 7; p++) {
                 const isSub = submittedPeriods.includes(p);
                 const isAct = (p === activePeriod);
                 let btnClass = isAct ? 'btn-primary text-white fw-bold' : 'btn-outline-primary fw-bold bg-white text-dark';
                 let icon = isSub ? '✔️ ' : '';
-                
                 if(isSub && isAct) btnClass = 'btn-success text-white fw-bold';
                 else if(isSub) btnClass = 'btn-outline-success fw-bold bg-white text-dark';
-
                 container.innerHTML += `<button type="button" class="btn ${btnClass} px-3 py-1" onclick="setActivePeriod(${p})">${icon}${p}</button>`;
                 
                 const th = document.getElementById(`th-${p}`);
@@ -305,7 +269,7 @@
             let trClass = isViol ? "violation-row border-bottom" : "border-bottom";
             
             let html = `
-                <td class="fw-bold text-xu-blue ps-3 align-middle" style="font-size: 0.8rem; line-height: 1.1;">
+                <td class="fw-bold ps-3 align-middle" style="font-size: 0.8rem; line-height: 1.1; color: var(--xu-blue-dark);">
                     <div class="text-truncate" style="max-width: 180px;" title="${s.name}">${s.name}</div>
                     <small class="text-muted fw-normal" style="font-size: 0.65rem;">${s.no}</small>
                 </td>
@@ -323,7 +287,6 @@
                         const note = rec?.note || '';
                         const badgeCls = code === 'P' ? 'bg-success' : (code === 'A' ? 'bg-danger' : 'bg-dark');
                         const dispCode = fullNames[code] || code;
-                        
                         html += `
                         <td class="col-locked p-2 align-middle">
                             <div class="d-flex flex-column align-items-start gap-1">
@@ -334,32 +297,21 @@
                     } else {
                         const currentCode = formData[s.id][activePeriod].code;
                         const currentNote = formData[s.id][activePeriod].note;
-                        
                         let buttonsHtml = '<div class="btn-group w-100 shadow-sm" role="group">';
                         for(let c in codesConfig) {
                             const id = `code_${p}_${s.id}_${c}`;
                             const isChecked = currentCode === c ? 'checked' : '';
-                            
-                            // Check lock for THIS specific period
                             let isDisabled = '';
-                            if (firstChoices[s.id][activePeriod] && !unlockedPeriods[activePeriod] && firstChoices[s.id][activePeriod] !== c) {
-                                isDisabled = 'disabled';
-                            }
-
-                            buttonsHtml += `
-                                <input type="radio" class="btn-check" name="ui_code_${s.id}" id="${id}" value="${c}" ${isChecked} ${isDisabled} onchange="updateForm(${s.id}, '${c}')">
-                                <label class="btn btn-${codesConfig[c].color} btn-attendance fw-bold" for="${id}">${codesConfig[c].label}</label>
-                            `;
+                            if (firstChoices[s.id][activePeriod] && !unlockedPeriods[activePeriod] && firstChoices[s.id][activePeriod] !== c) { isDisabled = 'disabled'; }
+                            buttonsHtml += `<input type="radio" class="btn-check" name="ui_code_${s.id}" id="${id}" value="${c}" ${isChecked} ${isDisabled} onchange="updateForm(${s.id}, '${c}')"><label class="btn btn-${codesConfig[c].color} btn-attendance fw-bold" for="${id}">${codesConfig[c].label}</label>`;
                         }
                         buttonsHtml += '</div>';
 
                         let showNote = (unlockedPeriods[activePeriod] && currentCode !== firstChoices[s.id][activePeriod]);
-
                         html += `
                         <td class="col-expanded p-2 align-middle">
                             ${buttonsHtml}
-                            <input type="text" class="form-control form-control-sm border-warning shadow-sm mt-1 fw-bold text-dark ${showNote ? '' : 'd-none'}" 
-                                   style="font-size: 0.75rem;" id="note_input_${s.id}" placeholder="📝 Reason for change..." value="${currentNote}" onchange="updateNote(${s.id}, this.value)">
+                            <input type="text" class="form-control form-control-sm border-warning shadow-sm mt-1 fw-bold text-dark ${showNote ? '' : 'd-none'}" style="font-size: 0.75rem;" id="note_input_${s.id}" placeholder="📝 Reason for change..." value="${currentNote}" onchange="updateNote(${s.id}, this.value)">
                         </td>`;
                     }
                 } else {
@@ -367,9 +319,7 @@
                         const rec = historyData[p].records[s.id];
                         const code = rec?.code || '-';
                         let color = code === 'P' ? 'text-success' : (code === 'A' ? 'text-danger' : 'text-dark');
-                        html += `<td class="text-center align-middle cursor-pointer hover-bg" onclick="setActivePeriod(${p})">
-                                    <span class="fw-bold ${color}" style="font-size: 0.8rem;">${code}</span>
-                                 </td>`;
+                        html += `<td class="text-center align-middle cursor-pointer hover-bg" onclick="setActivePeriod(${p})"><span class="fw-bold ${color}" style="font-size: 0.8rem;">${code}</span></td>`;
                     } else {
                         html += `<td class="text-center align-middle cursor-pointer hover-bg text-muted opacity-25" onclick="setActivePeriod(${p})">-</td>`;
                     }
@@ -393,19 +343,8 @@
 
         window.updateForm = function(studentId, code) {
             formData[studentId][activePeriod].code = code;
-            
-            // Apply first choice lock for this specific period
-            if (!firstChoices[studentId][activePeriod]) {
-                firstChoices[studentId][activePeriod] = code;
-            }
-
-            if (unlockedPeriods[activePeriod]) {
-                if (code === firstChoices[studentId][activePeriod]) {
-                    formData[studentId][activePeriod].note = '';
-                }
-            }
-
-            // Re-render just this specific row
+            if (!firstChoices[studentId][activePeriod]) { firstChoices[studentId][activePeriod] = code; }
+            if (unlockedPeriods[activePeriod]) { if (code === firstChoices[studentId][activePeriod]) { formData[studentId][activePeriod].note = ''; } }
             const s = students.find(st => st.id == studentId);
             const tr = document.getElementById(`tr_${studentId}`);
             let rowData = getRowHTML(s);
@@ -413,15 +352,12 @@
             tr.innerHTML = rowData.html;
         };
 
-        window.updateNote = function(studentId, val) {
-            formData[studentId][activePeriod].note = val;
-        };
+        window.updateNote = function(studentId, val) { formData[studentId][activePeriod].note = val; };
 
         function showReviewMode() {
             const list = document.getElementById('review-full-list');
             list.innerHTML = '';
             let missing = false;
-
             document.getElementById('review-period-display').innerText = `Period ${activePeriod}`;
 
             students.forEach(s => {
@@ -435,80 +371,35 @@
                     const tr = document.getElementById(`tr_${s.id}`);
                     tr.style.borderLeft = "";
                     tr.style.backgroundColor = "";
-
                     let badgeClass = data.code === 'P' ? 'bg-success' : (data.code === 'A' ? 'bg-danger' : 'bg-dark');
                     let noteHtml = '<span class="text-muted">-</span>';
-
                     if (data.code !== firstChoices[s.id][activePeriod]) {
                         noteHtml = `<span class="text-warning fw-bold">⚠️ Edited from ${fullNames[firstChoices[s.id][activePeriod]]}:</span> <span class="fst-italic text-dark">${data.note || '<span class="text-danger fw-bold">No reason provided!</span>'}</span>`;
                     } else if (data.code !== 'P') {
                         noteHtml = `<span class="text-muted small">Recorded as ${fullNames[data.code]}</span>`;
                     }
-
-                    list.innerHTML += `
-                        <tr class="border-bottom">
-                            <td class="ps-4 fw-bold py-2 text-dark">${s.name}</td>
-                            <td><span class="badge ${badgeClass} px-2 py-1 shadow-sm">${fullNames[data.code]}</span></td>
-                            <td class="pe-4 small py-2">${noteHtml}</td>
-                        </tr>
-                    `;
+                    list.innerHTML += `<tr class="border-bottom"><td class="ps-4 fw-bold py-2 text-dark">${s.name}</td><td><span class="badge ${badgeClass} px-2 py-1 shadow-sm">${fullNames[data.code]}</span></td><td class="pe-4 small py-2">${noteHtml}</td></tr>`;
                 }
             });
 
-            if(missing) {
-                alert("Please ensure every student has a status selected before reviewing.");
-            } else {
-                new bootstrap.Modal(document.getElementById('reviewModal')).show();
-            }
+            if(missing) alert("Please ensure every student has a status selected before reviewing.");
+            else new bootstrap.Modal(document.getElementById('reviewModal')).show();
         }
 
-        function unlockEditing() {
-            unlockedPeriods[activePeriod] = true;
-            renderGrid(); 
-        }
+        function unlockEditing() { unlockedPeriods[activePeriod] = true; renderGrid(); }
 
         function submitFinalForm() {
             const form = document.getElementById('attendanceForm');
-            
-            // Validate notes
             let invalid = false;
-            students.forEach(s => {
-                if (formData[s.id][activePeriod].code !== firstChoices[s.id][activePeriod] && !formData[s.id][activePeriod].note) {
-                    invalid = true;
-                }
-            });
-
-            if(invalid) {
-                bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
-                alert("You changed a status but forgot to provide a reason in the Note field!");
-                return;
-            }
-
+            students.forEach(s => { if (formData[s.id][activePeriod].code !== firstChoices[s.id][activePeriod] && !formData[s.id][activePeriod].note) invalid = true; });
+            if(invalid) { bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide(); alert("You changed a status but forgot to provide a reason in the Note field!"); return; }
             const dynamicInputs = document.getElementById('dynamic-inputs');
             dynamicInputs.innerHTML = '';
-            
-            let pInput = document.createElement('input');
-            pInput.type = 'hidden';
-            pInput.name = 'period_number';
-            pInput.value = activePeriod;
-            dynamicInputs.appendChild(pInput);
-
+            let pInput = document.createElement('input'); pInput.type = 'hidden'; pInput.name = 'period_number'; pInput.value = activePeriod; dynamicInputs.appendChild(pInput);
             students.forEach(s => {
-                let cInput = document.createElement('input');
-                cInput.type = 'hidden';
-                cInput.name = `code_${s.id}`;
-                cInput.value = formData[s.id][activePeriod].code;
-                dynamicInputs.appendChild(cInput);
-
-                if(formData[s.id][activePeriod].note) {
-                    let nInput = document.createElement('input');
-                    nInput.type = 'hidden';
-                    nInput.name = `note_${s.id}`;
-                    nInput.value = formData[s.id][activePeriod].note;
-                    dynamicInputs.appendChild(nInput);
-                }
+                let cInput = document.createElement('input'); cInput.type = 'hidden'; cInput.name = `code_${s.id}`; cInput.value = formData[s.id][activePeriod].code; dynamicInputs.appendChild(cInput);
+                if(formData[s.id][activePeriod].note) { let nInput = document.createElement('input'); nInput.type = 'hidden'; nInput.name = `note_${s.id}`; nInput.value = formData[s.id][activePeriod].note; dynamicInputs.appendChild(nInput); }
             });
-
             form.submit();
         }
     </script>

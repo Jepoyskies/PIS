@@ -5,53 +5,50 @@
     <meta charset="UTF-8">
     <title>Attendance - {{ student.section.name }}</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); display: flex; flex-direction: column; min-height: 100vh; }
-        .dashboard-container { max-width: 900px; margin: 40px auto; width: 100%; display: flex; flex-direction: column; }
-        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
-        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; display: flex; flex-direction: column; min-height: 100vh; font-family: 'Segoe UI', sans-serif;}
         
-        .table-xu-dashboard th { background-color: var(--xu-light-gray); color: var(--xu-blue-1); padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; }
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .dashboard-container { max-width: 900px; margin: 40px auto; width: 100%; display: flex; flex-direction: column; }
+        
+        .main-card { background-color: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; }
+        .card-header-custom { background-color: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        
+        .table-xu-dashboard th { background-color: #f1f3f7; color: var(--xu-blue-dark); padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; }
         .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
     </style>
 </head>
 <body>
-    <!-- Standard Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center shadow-sm">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold shadow-sm">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background-color: var(--xu-gold); color: white; border: none;">Log Off</a>
         </div>
     </header>
 
     <main class="flex-grow-1 p-4">
         <div class="dashboard-container">
-            <!-- Clean Page Title Area -->
-            <div class="d-flex justify-content-between align-items-end mb-4">
+            <div class="d-flex justify-content-between align-items-end mb-4 text-white">
                 <div>
-                    <h3 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Attendance Fallback</h3>
-                    <div class="text-muted fw-bold small mt-1">
-                        Section: <span class="text-dark">{{ student.section.name }} (Gr {{ student.section.grade_level }})</span>
-                    </div>
+                    <h3 class="fw-bold mb-0" style="letter-spacing: -0.5px;">Attendance Fallback</h3>
+                    <div class="small mt-1 opacity-75 fw-bold">Section: <span class="text-white">{{ student.section.name }} (Gr {{ student.section.grade_level }})</span></div>
                 </div>
             </div>
 
-            <div class="menu-card">
-                <div class="menu-header">
-                    <span><i class="me-2">📋</i> ATTENDANCE INPUT</span>
-                </div>
+            <div class="main-card">
+                <div class="card-header-custom"><span><i class="fa-solid fa-clipboard-check me-2"></i> ATTENDANCE INPUT</span></div>
                 
                 <form method="POST" class="bg-white p-4 m-0">
                     {% csrf_token %}
-                    
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="fw-bold small text-muted text-uppercase mb-2">Select Date</label>
@@ -82,8 +79,8 @@
                         </table>
                     </div>
                     
-                    <button type="submit" class="btn text-white w-100 fw-bold py-3 shadow-sm" style="background-color: var(--xu-blue-1); border-radius: 8px;">
-                        🚀 SUBMIT ATTENDANCE TO OFFICE
+                    <button type="submit" class="btn text-white w-100 fw-bold py-3 shadow-sm" style="background-color: var(--xu-blue-dark); border-radius: 8px;">
+                        <i class="fa-solid fa-paper-plane me-2"></i> SUBMIT ATTENDANCE TO OFFICE
                     </button>
                 </form>
             </div>

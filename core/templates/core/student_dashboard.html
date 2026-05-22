@@ -5,49 +5,45 @@
     <meta charset="UTF-8">
     <title>PIS - Student Portal</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif;}
         
-        /* Standard Navigation Styles */
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; flex-shrink: 0; }
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; display: inline-block;}
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
 
-        /* Unified Card Styles - Matching PIS Home exactly */
         .dashboard-container { max-width: 1100px; margin: 30px auto; width: 100%; height: 100%; display: flex; flex-direction: column; }
-        .menu-card { background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; display: flex; flex-direction: column; }
-        .menu-header { background-color: var(--xu-blue-1); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;}
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--xu-gold); flex-shrink: 0; }
 
-        /* Custom Tabs under Menu Header */
         .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 600; padding: 12px 25px; border-bottom: 3px solid transparent; border-radius: 0; }
-        .nav-tabs .nav-link:hover { color: var(--xu-blue-1); background-color: transparent; border-color: transparent; }
-        .nav-tabs .nav-link.active { color: var(--xu-blue-1) !important; background-color: transparent !important; border-bottom: 3px solid var(--xu-blue-1); }
+        .nav-tabs .nav-link:hover { color: var(--xu-blue-dark); background-color: transparent; border-color: transparent; }
+        .nav-tabs .nav-link.active { color: var(--xu-blue-dark) !important; background-color: transparent !important; border-bottom: 3px solid var(--xu-blue-dark); }
 
-        /* Formal Tables */
         .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
-        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-light-gray); color: var(--xu-blue-1); z-index: 1; padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
+        .table-xu-dashboard th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
         .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <!-- Standard Header -->
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center z-2 shadow-sm flex-shrink-0">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 fw-bold shadow-sm">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background-color: var(--xu-gold); color: white; border: none;">Log Off</a>
         </div>
     </header>
 
-    <!-- Standard Nav -->
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'student_dashboard' %}" class="nav-link active">HOME</a>
         {% if student.is_beadle %}
@@ -57,38 +53,25 @@
 
     <main class="flex-grow-1 overflow-hidden p-4 d-flex flex-column">
         <div class="dashboard-container pb-4">
-            
-            <!-- Clean Page Title Area -->
             <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0">
-                <div>
-                    <h3 class="fw-bold mb-0" style="color: var(--xu-blue-1); letter-spacing: -0.5px;">Personal Dashboard</h3>
-                </div>
+                <div><h3 class="fw-bold mb-0 text-white" style="letter-spacing: -0.5px;">Personal Dashboard</h3></div>
             </div>
 
-            <!-- Single Unified Menu Card (Matches PIS Home layout) -->
-            <div class="menu-card flex-grow-1">
-                <div class="menu-header">
-                    <span><i class="me-2">👤</i> STUDENT PROFILE & RECORDS</span>
+            <div class="main-card flex-grow-1">
+                <div class="card-header-custom">
+                    <span><i class="fa-solid fa-user me-2"></i> STUDENT PROFILE & RECORDS</span>
                 </div>
                 
                 <div class="row g-0 flex-grow-1" style="min-height: 0;">
-                    
-                    <!-- LEFT COLUMN: Profile Sidebar -->
                     <div class="col-md-4 col-lg-3 bg-light border-end d-flex flex-column align-items-center justify-content-center text-center p-4 overflow-auto">
-                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3 text-xu-blue fw-bold" style="width: 120px; height: 120px; font-size: 4rem; border: 4px solid var(--xu-gold);">
+                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3 fw-bold" style="width: 120px; height: 120px; font-size: 4rem; border: 4px solid var(--xu-gold); color: var(--xu-blue-dark);">
                             {% if student.sex == 'M' %}👦{% else %}👧{% endif %}
                         </div>
+                        <h4 class="fw-bold mb-0" style="color: var(--xu-blue-dark);">{{ student.last_name|upper }},</h4>
+                        <h5 class="fw-bold mb-2 text-dark">{{ student.first_name|upper }}</h5>
                         
-                        <h4 class="fw-bold mb-0" style="color: var(--xu-blue-1);">{{ student.last_name|upper }},</h4>
-                        <h5 class="fw-bold mb-2">{{ student.first_name|upper }}</h5>
-                        
-                        <div class="bg-white px-4 py-1 rounded-pill border fw-bold text-muted small mb-3 shadow-sm">
-                            ID: {{ student.student_number }}
-                        </div>
-
-                        <div class="text-muted fw-bold small mb-4">
-                            Section: <span class="text-dark">{{ student.section.name|default:"Unassigned" }}</span>
-                        </div>
+                        <div class="bg-white px-4 py-1 rounded-pill border fw-bold text-muted small mb-3 shadow-sm">ID: {{ student.student_number }}</div>
+                        <div class="text-muted fw-bold small mb-4">Section: <span class="text-dark">{{ student.section.name|default:"Unassigned" }}</span></div>
 
                         <hr class="w-100 my-3 opacity-25">
 
@@ -98,8 +81,8 @@
                                     <span class="text-uppercase fw-bold mb-1" style="color: #856404; font-size: 0.85rem; letter-spacing: 1px;">⭐ Classroom Beadle</span>
                                     <span class="small opacity-75" style="color: #856404;">Assigned to: <strong>{{ student.section.name }}</strong></span>
                                 </div>
-                                <a href="{% url 'beadle_dashboard' %}" class="btn w-100 fw-bold py-3 shadow-sm text-white" style="background-color: var(--xu-blue-1); border-radius: 8px; transition: all 0.2s;">
-                                    <i class="me-2">📋</i> CLASS ATTENDANCE
+                                <a href="{% url 'beadle_dashboard' %}" class="btn w-100 fw-bold py-3 shadow-sm text-white" style="background-color: var(--xu-blue-dark); border-radius: 8px; transition: all 0.2s;">
+                                    <i class="fa-solid fa-clipboard-list me-2"></i> CLASS ATTENDANCE
                                 </a>
                             {% else %}
                                 <div class="badge bg-secondary text-white w-100 py-3 mb-3 shadow-sm text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px; border-radius: 8px;">Regular Student</div>
@@ -107,53 +90,32 @@
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: Tabbed Data Area -->
                     <div class="col-md-8 col-lg-9 d-flex flex-column bg-white h-100">
-                        
-                        <!-- Clean Bootstrap Tabs -->
                         <div class="bg-white border-bottom px-4 pt-3 shadow-sm z-1 flex-shrink-0">
                             <ul class="nav nav-tabs border-bottom-0" id="studentTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="discipline-tab" data-bs-toggle="pill" data-bs-target="#discipline" type="button" role="tab">
-                                        🛑 Disciplinary History
-                                    </button>
+                                    <button class="nav-link active" id="discipline-tab" data-bs-toggle="pill" data-bs-target="#discipline" type="button" role="tab">🛑 Disciplinary History</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button" role="tab">
-                                        📅 Recent Attendance
-                                    </button>
+                                    <button class="nav-link" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button" role="tab">📅 Recent Attendance</button>
                                 </li>
                             </ul>
                         </div>
                         
-                        <!-- Tab Content -->
                         <div class="tab-content flex-grow-1 d-flex flex-column" id="studentTabsContent" style="min-height: 0;">
-                            
                             <!-- TAB 1: Disciplinary History -->
                             <div class="tab-pane fade show active h-100" id="discipline" role="tabpanel">
                                 <div class="table-container p-0 h-100">
                                     <table class="table table-hover table-xu-dashboard mb-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th class="ps-4" style="width: 150px;">Date of Incident</th>
-                                                <th style="width: 150px;">Category</th>
-                                                <th class="pe-4">Remarks / Action Taken</th>
-                                            </tr>
-                                        </thead>
+                                        <thead><tr><th class="ps-4" style="width: 150px;">Date of Incident</th><th style="width: 150px;">Category</th><th class="pe-4">Remarks / Action Taken</th></tr></thead>
                                         <tbody>
                                             {% for rec in discipline_history %}
                                             <tr>
                                                 <td class="ps-4 fw-bold text-muted">{{ rec.date_of_incident|date:'M j, Y' }}</td>
-                                                <td>
-                                                    <span class="badge {% if 'Conduct' in rec.category %}bg-info text-dark{% else %}bg-warning text-dark border{% endif %} px-3 py-1 shadow-sm">
-                                                        {{ rec.category }}
-                                                    </span>
-                                                </td>
+                                                <td><span class="badge {% if 'Conduct' in rec.category %}bg-info text-dark{% else %}bg-warning text-dark border{% endif %} px-3 py-1 shadow-sm">{{ rec.category }}</span></td>
                                                 <td class="pe-4 text-dark fw-bold">
-                                                    <!-- FIX: Show the specific offense name from attendance, fallback to remarks -->
                                                     {% if rec.offense_name %}
-                                                        {{ rec.offense_name }} 
-                                                        {% if rec.remarks %}<span class="text-muted fw-normal fst-italic ms-2">- {{ rec.remarks }}</span>{% endif %}
+                                                        {{ rec.offense_name }} {% if rec.remarks %}<span class="text-muted fw-normal fst-italic ms-2">- {{ rec.remarks }}</span>{% endif %}
                                                     {% else %}
                                                         {{ rec.remarks|default:"No specific remarks provided." }}
                                                     {% endif %}
@@ -162,7 +124,7 @@
                                             {% empty %}
                                             <tr>
                                                 <td colspan="3" class="text-center py-5">
-                                                    <div class="display-6 mb-2 mt-4">🏅</div>
+                                                    <div class="display-6 mb-2 mt-4"><i class="fa-solid fa-medal text-success"></i></div>
                                                     <div class="fw-bold text-success fs-5">CLEAN DISCIPLINARY RECORD</div>
                                                     <p class="text-muted small">Keep up the good work!</p>
                                                 </td>
@@ -177,14 +139,7 @@
                             <div class="tab-pane fade h-100" id="attendance" role="tabpanel">
                                 <div class="table-container p-0 h-100">
                                     <table class="table table-hover table-xu-dashboard mb-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th class="ps-4" style="width: 150px;">Date</th>
-                                                <th style="width: 120px;">Period</th>
-                                                <th style="width: 150px;">Status</th>
-                                                <th class="pe-4">Beadle / Admin Remarks</th>
-                                            </tr>
-                                        </thead>
+                                        <thead><tr><th class="ps-4" style="width: 150px;">Date</th><th style="width: 120px;">Period</th><th style="width: 150px;">Status</th><th class="pe-4">Beadle / Admin Remarks</th></tr></thead>
                                         <tbody>
                                             {% for att in attendance_history %}
                                             <tr>
@@ -195,23 +150,15 @@
                                                         {{ att.get_code_display }}
                                                     </span>
                                                 </td>
-                                                <td class="pe-4 text-muted fst-italic">
-                                                    {% if att.note %}⚠️ {{ att.note }}{% else %}-{% endif %}
-                                                </td>
+                                                <td class="pe-4 text-muted fst-italic">{% if att.note %}⚠️ {{ att.note }}{% else %}-{% endif %}</td>
                                             </tr>
                                             {% empty %}
-                                            <tr>
-                                                <td colspan="4" class="text-center py-5 text-muted">
-                                                    <div class="display-6 mb-2 mt-4">📅</div>
-                                                    <div class="fw-bold fs-6">No attendance records found yet.</div>
-                                                </td>
-                                            </tr>
+                                            <tr><td colspan="4" class="text-center py-5 text-muted"><div class="display-6 mb-2 mt-4"><i class="fa-regular fa-calendar-xmark"></i></div><div class="fw-bold fs-6">No attendance records found yet.</div></td></tr>
                                             {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>

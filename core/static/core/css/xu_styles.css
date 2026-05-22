@@ -7,6 +7,16 @@
     --xu-border-color: #dee2e6;
 }
 
+:root {
+    --xu-blue-dark: #22356d;
+    --xu-blue-1: #22356d; /* Standardised to dark blue */
+    --xu-blue-2: #3a53a4;
+    --xu-gold: #b99430;
+    --xu-red: #ec282a;
+    --xu-light-gray: #f8f9fa;
+    --xu-border-color: #ced4da;
+}
+
 body {
     background-color: var(--xu-light-gray);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

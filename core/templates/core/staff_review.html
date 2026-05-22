@@ -4,34 +4,45 @@
 <head>
     <meta charset="UTF-8"><title>Review Submission</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .violation-row { background-color: #ffcccc !important; color: #990000; font-weight: bold; }
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 800px; display: flex; flex-direction: column; max-height: 90vh; border: none; }
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .violation-row { background-color: #fffdf5 !important; border-left: 4px solid var(--xu-gold); font-weight: bold; }
+        .table-container { overflow-y: auto; flex-grow: 1; }
+        .table th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; border-bottom: 2px solid var(--xu-border-color) !important; }
     </style>
 </head>
-<body style="background-color: #d4d0c8; font-family: Tahoma;">
-    <div class="container mt-5">
-        <div class="card border-dark shadow" style="border-radius:0;">
-            <div class="card-header text-white fw-bold" style="background:#003366;">
-                REVIEW: {{ batch.section.name }} ({{ batch.date }})
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-light"><tr><th>ID Number</th><th>Name</th><th>Status</th></tr></thead>
-                    <tbody>
-                        {% for r in records %}
-                        <tr class="{% if r.status != 'PRESENT' %}violation-row{% endif %}">
-                            <td>{{ r.student.student_number }}</td>
-                            <td>{{ r.student.last_name }}, {{ r.student.first_name }}</td>
-                            <td>{{ r.status }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer d-flex justify-content-between">
-                <a href="{% url 'staff_home' %}" class="btn btn-sm btn-secondary border-dark">Cancel</a>
-                <a href="{% url 'staff_attendance_confirm' batch.id %}" class="btn btn-sm btn-danger border-dark fw-bold">CONFIRM & LOG VIOLATIONS</a>
-            </div>
+<body>
+    <div class="main-card">
+        <div class="card-header-custom">
+            <span><i class="fa-solid fa-list-check me-2"></i> REVIEW: {{ batch.section.name }} ({{ batch.date }})</span>
+        </div>
+        <div class="table-container p-0">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <thead><tr><th class="ps-4">ID Number</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr class="{% if r.status != 'PRESENT' %}violation-row{% endif %}">
+                        <td class="ps-4">{{ r.student.student_number }}</td>
+                        <td class="text-dark fw-bold">{{ r.student.last_name }}, {{ r.student.first_name }}</td>
+                        <td>
+                            {% if r.status == 'PRESENT' %}
+                                <span class="badge bg-success px-3 py-1 shadow-sm">PRESENT</span>
+                            {% else %}
+                                <span class="badge bg-danger px-3 py-1 shadow-sm">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="bg-light p-3 border-top d-flex justify-content-between align-items-center">
+            <a href="{% url 'staff_home' %}" class="btn btn-outline-secondary fw-bold px-4 rounded-pill">Cancel</a>
+            <a href="{% url 'staff_attendance_confirm' batch.id %}" class="btn btn-success fw-bold px-4 shadow-sm rounded-pill"><i class="fa-solid fa-check-circle me-1"></i> CONFIRM & LOG VIOLATIONS</a>
         </div>
     </div>
 </body>

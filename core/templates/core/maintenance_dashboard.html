@@ -2,49 +2,64 @@
 {% load static %}
 
 {% block maintenance_content %}
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <!-- Header -->
-                <div class="d-flex align-items-center mb-5 border-bottom pb-3">
-                    <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" class="rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
-                    <div class="ms-3">
-                        <h3 class="fw-bold m-0 text-primary">Maintenance Control Center</h3>
-                        <p class="text-muted small m-0">Xavier University - Junior High School | Administration Portal</p>
-                    </div>
-                </div>
+<style>
+    .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: none; display: flex; flex-direction: column; flex-grow: 1; }
+    .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; }
+    
+    .btn-xu-dark { background-color: var(--xu-blue-dark); color: white; border: none; transition: 0.3s ease; }
+    .btn-xu-dark:hover { background-color: var(--xu-blue-2); color: white; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+</style>
 
-                <!-- Main Content -->
-                <div class="card border-0 shadow-sm p-4">
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-3">System Administration</h5>
-                        <p class="text-muted mb-4">Manage core system data including student masterlists, faculty, sections, and violation records. Use the sidebar navigation to manage specific modules or access the advanced system console below.</p>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="p-3 bg-light rounded d-flex align-items-center">
-                                    <div class="me-3 fs-3">⚙️</div>
-                                    <div>
-                                        <div class="fw-bold small text-uppercase">Module Management</div>
-                                        <div class="text-muted small">Manage staff, students, and sections from the sidebar.</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <a href="{% url 'admin:index' %}" class="btn btn-outline-dark d-flex align-items-center justify-content-center h-100 py-3">
-                                    <i class="bi bi-gear-fill me-2"></i> Launch Advanced Admin Console
-                                </a>
-                            </div>
+<div class="container-fluid flex-grow-1 d-flex flex-column" style="max-width: 1200px; margin: 0 auto;">
+    <div class="main-card my-2">
+        <!-- Header -->
+        <div class="card-header-custom flex-shrink-0">
+            <span><i class="fa-solid fa-screwdriver-wrench me-2"></i> MAINTENANCE CONTROL CENTER</span>
+        </div>
+        
+        <div class="p-5 flex-grow-1">
+            <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
+                <img src="{% static 'images/xu-logo-stacked.png' %}" alt="XU Logo" class="rounded p-2 border shadow-sm" style="width: 80px; height: 80px; object-fit: contain; background: white;">
+                <div class="ms-4">
+                    <h3 class="fw-bold m-0" style="color: var(--xu-blue-dark);">System Administration</h3>
+                    <p class="text-muted small m-0 fw-bold mt-1">Xavier University - Junior High School | Prefect Information System</p>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="card bg-light border-0 shadow-sm rounded-4 mb-4" style="border-left: 5px solid var(--xu-blue-dark) !important;">
+                <div class="card-body p-4">
+                    <p class="text-dark fw-bold mb-0" style="font-size: 0.95rem;">
+                        Manage core system data including student masterlists, faculty, sections, and violation records. Use the sidebar navigation to manage specific modules or access the advanced system console below.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Cards Row -->
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="p-4 bg-white border rounded-4 shadow-sm h-100 d-flex align-items-center" style="border-left: 5px solid var(--xu-gold) !important;">
+                        <div class="me-4 text-muted" style="font-size: 2.5rem;"><i class="fa-solid fa-sliders"></i></div>
+                        <div>
+                            <div class="fw-bold" style="color: var(--xu-blue-dark); font-size: 1.1rem;">Module Management</div>
+                            <div class="text-muted small mt-1 fw-bold opacity-75">Manage staff, students, and sections from the sidebar.</div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Footer -->
-                <div class="mt-5 text-center text-muted small">
-                    <hr>
-                    <p>System Version 2.0 &copy; {% now "Y" %} Xavier University - Ateneo de Cagayan</p>
+                <div class="col-md-6">
+                    <a href="{% url 'admin:index' %}" class="btn btn-xu-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4 rounded-4 shadow-sm text-decoration-none" target="_blank">
+                        <i class="fa-solid fa-server mb-2" style="font-size: 2rem;"></i>
+                        <span class="fw-bold fs-5">Launch Advanced Admin Console</span>
+                        <span class="small opacity-75 mt-1 fw-normal">Django Administration Backend</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <div class="mt-2 mb-3 text-center text-white small fw-bold opacity-75 flex-shrink-0">
+        <p class="mb-0">System Version 2.0 &copy; {% now "Y" %} Xavier University - Ateneo de Cagayan</p>
+    </div>
+</div>
 {% endblock %}

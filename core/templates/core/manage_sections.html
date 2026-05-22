@@ -6,80 +6,56 @@
     <title>PIS - Sections</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        /* Forcefully define the variables so we don't rely on cached external CSS */
+        :root {
+            --xu-blue-dark: #22356d; 
+            --xu-blue-2: #3a53a4;
+            --xu-gold: #b99430;
+            --xu-border-color: #ced4da;
+        }
+
+        body { 
+            background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif; 
+        }
         
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { 
-            color: #555; 
-            font-weight: 600; 
-            padding: 15px 20px; 
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; font-size: 0.85rem; }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
 
-        .content-area { 
-            padding: 1.5rem; 
-            overflow-y: auto;
-            height: calc(100vh - 125px); 
-        }
+        .content-area { padding: 2rem; overflow-y: auto; height: calc(100vh - 125px); }
 
-        .table-container { 
-            height: 100%;
-            overflow-y: auto; 
-            background-color: white; 
-            border: 1px solid var(--xu-border-color);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; height: 100%; }
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; }
+        
+        .table-container { height: 100%; overflow-y: auto; background-color: white; }
+        .table-xu th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; }
 
-        .table-xu th { 
-            position: sticky; 
-            top: 0; 
-            background-color: var(--xu-blue-1); 
-            color: white;
-            z-index: 1; 
-            padding: 12px 10px !important;
-            font-size: 0.85rem;
-            border-bottom: 3px solid var(--xu-gold) !important;
-        }
-
-        .card-xu {
-            background-color: white;
-            border: 1px solid var(--xu-border-color);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .card-xu-header {
-            background-color: var(--xu-blue-1);
-            color: white;
-            padding: 15px 20px;
-            border-bottom: 3px solid var(--xu-gold);
-        }
+        /* General Button Fallbacks just in case */
+        .btn-xu-primary { background-color: var(--xu-blue-dark) !important; color: white !important; border: none; }
+        .btn-xu-gold { background-color: var(--xu-gold) !important; color: white !important; border: none; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Section & Grade Management</div>
+                <div class="small opacity-75">Prefect Information System</div>
             </div>
         </div>
         
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label class="small fw-bold text-muted mb-0">School Year:</label>
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent; width: 120px;">
                     {% for sy in all_school_years %}
-                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
@@ -96,52 +72,58 @@
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <main class="flex-grow-1 bg-light content-area">
+    <main class="flex-grow-1 content-area container-fluid" style="max-width: 1400px; margin: 0 auto;">
         <div class="row g-4 h-100">
             <!-- Left Side: Table -->
             <div class="col-md-8 h-100">
-                <div class="table-container">
-                    <table class="table table-hover align-middle mb-0 small">
-                        <thead class="table-xu">
-                            <tr>
-                                <th class="ps-4">Grade Level</th>
-                                <th>Section Name</th>
-                                <th class="pe-4">Assigned Classroom Beadle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sec in sections %}
-<tr style="cursor: pointer;" onclick="window.location.href='{% url 'staff_dashboard' %}?sectionName={{ sec.name|urlencode }}'" title="Click to view students in this section">                                <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
-                                <td class="fw-bold" style="color: var(--xu-blue-1);">{{ sec.name }}</td>
-                                <td class="pe-4">
-                                    {% if sec.beadle %}
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="text-warning">⭐</span>
-                                            <span class="fw-bold text-success">{{ sec.beadle.last_name }}, {{ sec.beadle.first_name }}</span>
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted fst-italic small opacity-75">No beadle assigned</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center py-5">
-                                    <div class="display-6 text-muted opacity-25 mb-2">🏫</div>
-                                    <p class="text-muted fw-bold">No sections have been created yet.</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="main-card">
+                    <div class="card-header-custom">
+                        <span><i class="fa-solid fa-layer-group me-2"></i> CURRENT SECTIONS</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-xu">
+                                <tr>
+                                    <th class="ps-4">Grade Level</th>
+                                    <th>Section Name</th>
+                                    <th class="pe-4">Assigned Classroom Beadle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sec in sections %}
+                                <tr style="cursor: pointer;" onclick="window.location.href='{% url 'staff_dashboard' %}?sectionName={{ sec.name|urlencode }}'" title="Click to view students in this section">                                
+                                    <td class="ps-4"><span class="badge bg-light text-dark border px-3">Grade {{ sec.grade_level }}</span></td>
+                                    <td class="fw-bold" style="color: var(--xu-blue-dark);">{{ sec.name }}</td>
+                                    <td class="pe-4">
+                                        {% if sec.beadle %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="text-warning">⭐</span>
+                                                <span class="fw-bold text-success">{{ sec.beadle.last_name }}, {{ sec.beadle.first_name }}</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted fst-italic small opacity-75">No beadle assigned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5">
+                                        <div class="display-6 text-muted opacity-25 mb-2">🏫</div>
+                                        <p class="text-muted fw-bold">No sections have been created yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <!-- Right Side: Form -->
             <div class="col-md-4">
-                <div class="card-xu h-100">
-                    <div class="card-xu-header">
-                        <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;">➕ Create New Section</span>
+                <div class="main-card h-100">
+                    <div class="card-header-custom">
+                        <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-plus me-2"></i> Create Section</span>
                     </div>
                     <div class="card-body p-4 bg-white h-100">
                         <form method="POST">
@@ -154,7 +136,7 @@
                                 <label class="fw-bold small text-muted text-uppercase mb-1">Section Name</label>
                                 <input type="text" name="name" class="form-control bg-light border-0 shadow-sm" placeholder="e.g. ST. IGNATIUS" required>
                             </div>
-                            <button type="submit" class="btn btn-xu-primary w-100 fw-bold py-2 shadow-sm text-white" style="background-color: var(--xu-blue-1);">
+                            <button type="submit" class="btn btn-xu-primary w-100 fw-bold py-2 shadow-sm">
                                 SAVE SECTION RECORD
                             </button>
                         </form>
@@ -168,7 +150,7 @@
                         {% if messages %}
                         <div class="mt-3">
                             {% for message in messages %}
-                            <div class="alert alert-success py-2 small fw-bold text-center">
+                            <div class="alert alert-success py-2 small fw-bold text-center border-0 shadow-sm">
                                 {{ message }}
                             </div>
                             {% endfor %}

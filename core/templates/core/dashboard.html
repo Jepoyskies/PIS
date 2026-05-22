@@ -6,24 +6,34 @@
     <title>PIS - Students List</title>
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
-    <style>
-        body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
-        .search-bar-container { background-color: var(--xu-blue-2); padding: 12px 20px; color: white; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05); }
-        
-        .table-container { 
-            flex-grow: 1; 
-            min-height: 0; 
-            overflow-y: auto; 
-            background-color: white; 
-            border: 1px solid var(--xu-border-color); 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+        /* Forcefully define the variables so we don't rely on cached external CSS */
+        :root {
+            --xu-blue-dark: #22356d; 
+            --xu-blue-2: #3a53a4;
+            --xu-gold: #b99430;
+            --xu-border-color: #ced4da;
         }
-        .table-xu-dashboard th { position: sticky; top: 0; background-color: var(--xu-blue-1); color: white; z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 3px solid var(--xu-gold) !important; white-space: nowrap; }
+
+        body { 
+            background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif; 
+        }
+        
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; font-size: 0.85rem; }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
+
+        .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+        .card-header-custom { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; }
+        
+        .search-bar-container { background-color: #f8f9fa; padding: 12px 20px; color: var(--xu-blue-dark); border-bottom: 1px solid var(--xu-border-color); }
+        
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
+        .table-xu-dashboard th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
         .selected-row { background-color: rgba(58, 83, 164, 0.1) !important; }
         .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
         
@@ -35,9 +45,13 @@
         /* Detail Modal Tab Styles */
         .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
         .info-group-box { border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px; }
-        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-1); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
+        .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-dark); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
         .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
         .bg-legacy-yellow { background-color: #fcf4a3 !important; }
+
+        /* General Button Fallbacks just in case */
+        .btn-xu-primary { background-color: var(--xu-blue-dark) !important; color: white !important; border: none; }
+        .btn-xu-gold { background-color: var(--xu-gold) !important; color: white !important; border: none; }
 
         /* Fix for notifications so they don't push the table layout */
         .messages-container {
@@ -57,22 +71,21 @@
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
-    <header class="navbar-xu py-2 px-4 d-flex justify-content-between align-items-center flex-shrink-0">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" class="xu-logo-sm bg-white rounded p-1">
-            <div class="text-white">
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Student Masterlist Dashboard</div>
+                <div class="small opacity-75">Prefect Information System</div>
             </div>
         </div>
         
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label class="small fw-bold text-muted mb-0">School Year:</label>
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="width: 120px; background: transparent;">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent; width: 120px;">
                     {% for sy in all_school_years %}
-                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
@@ -89,126 +102,133 @@
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
-    <main class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
-        <!-- Search Bar -->
-        <div class="search-bar-container flex-shrink-0">
-            <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small fw-bold mb-0 text-uppercase opacity-75">Student Name:</label>
-                    <input type="text" name="searchName" value="{{ search_name|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search by name...">
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small fw-bold mb-0 text-uppercase opacity-75">Student ID:</label>
-                    <input type="text" name="searchId" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;" placeholder="Search ID...">
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-xu-gold btn-sm px-4">FIND RECORD</button>
-                    <a href="{% url 'staff_dashboard' %}" class="btn btn-light btn-sm px-3 text-muted">CLEAR</a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Working Area -->
-        <div class="flex-grow-1 p-3 d-flex flex-column" style="min-height: 0;">
-            
-            <!-- Floating Messages -->
-            <div class="messages-container">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show fw-bold border-0 shadow-sm mb-1" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+    <main class="flex-grow-1 p-3 d-flex flex-column container-fluid" style="max-width: 1600px; margin: 0 auto; min-height: 0;">
+        <div class="main-card my-2">
+            <!-- Card Header -->
+            <div class="card-header-custom">
+                <span><i class="fa-solid fa-users me-2"></i> STUDENT MASTERLIST</span>
             </div>
 
-            <!-- Main Table -->
-            <div class="table-container shadow-sm bg-white">
-                <table class="table table-hover table-xu-dashboard mb-0" style="font-size: 0.85rem;">
-                    <thead>
-                        <tr>
-                            <th class="ps-3" style="width: 100px;">Student No.</th>
-                            <th style="min-width: 220px;">Name</th>
-                            <th style="width: 90px;">Status</th>
-                            <th style="width: 150px;">Section</th>
-                            <th style="width: 70px;" class="text-center">Active</th>
-                            <th>Address</th>
-                            <th class="text-center pe-3" style="width: 130px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="student-table-body">
-                        {% for student in students %}
-                        <tr class="student-row align-middle" style="cursor: pointer;" 
-                            data-id="{{ student.student_number }}"
-                            data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
-                            data-sex="{{ student.sex }}"
-                            data-section="{{ student.section.name|default:'' }}"
-                            data-address="{{ student.address|default:'' }}">
-                            
-                            <td class="ps-3 fw-bold">{{ student.student_number }}</td>
-                            <td class="fw-bold" style="color: var(--xu-blue-1);">
-                                {{ student.last_name|upper }}, {{ student.first_name|upper }}
-                                {% if student.is_beadle %}
-                                    <span class="badge bg-xu-gold text-white ms-2 px-2 py-1 shadow-sm" style="font-size: 0.6rem;">⭐ BEADLE</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ student.status|default:"OLD" }}</td>
-                            <td>{{ student.section.name|default:"<span class='text-muted small fst-italic'>Unassigned</span>"|safe }}</td>
-                            <td class="text-center">
-                                {% if not student.is_deleted %}
-                                    <span class="text-success fw-bold">Yes</span>
-                                {% else %}
-                                    <span class="text-danger fw-bold">No</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-truncate text-muted" style="max-width: 200px;" title="{{ student.address|default:'' }}">
-                                {{ student.address|default:"" }}
-                            </td>
-                            
-                            <td class="text-center pe-3">
-                                <div class="action-btn-group shadow-sm mx-auto" style="width: max-content;">
-                                    <button type="button" class="btn btn-light fw-bold edit-btn text-muted action-stop"
-                                        data-bs-toggle="modal" data-bs-target="#editStudentModal"
-                                        data-id="{{ student.student_number }}" data-fname="{{ student.first_name }}"
-                                        data-lname="{{ student.last_name }}" data-mi="{{ student.middle_initial|default:'' }}"
-                                        data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}"
-                                        data-address="{{ student.address|default:'' }}" data-section="{{ student.section.id|default:'' }}">
-                                        ✏️ Edit
-                                    </button>
-                                    
-                                    <form method="POST" class="m-0 d-inline action-stop">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="toggle_beadle" value="1">
-                                        <input type="hidden" name="student_number" value="{{ student.student_number }}">
-                                        {% if student.is_beadle %}
-                                            <button type="submit" class="btn btn-danger fw-bold">Revoke</button>
-                                        {% else %}
-                                            <button type="submit" class="btn btn-xu-primary fw-bold" {% if not student.section %}disabled title="Assign to a section first"{% endif %}>⭐ Beadle</button>
-                                        {% endif %}
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="7" class="text-center p-5 text-danger fw-bold">No student records found.</td></tr>
+            <!-- Search Bar -->
+            <div class="search-bar-container flex-shrink-0">
+                <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small fw-bold mb-0 text-uppercase opacity-75">Student Name:</label>
+                        <input type="text" name="searchName" value="{{ search_name|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 250px;" placeholder="Search by name...">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small fw-bold mb-0 text-uppercase opacity-75">Student ID:</label>
+                        <input type="text" name="searchId" value="{{ search_id|default:'' }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;" placeholder="Search ID...">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-xu-gold btn-sm px-4">FIND RECORD</button>
+                        <a href="{% url 'staff_dashboard' %}" class="btn btn-light btn-sm px-3 text-muted">CLEAR</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Working Area -->
+            <div class="flex-grow-1 p-3 d-flex flex-column" style="min-height: 0;">
+                
+                <!-- Floating Messages -->
+                <div class="messages-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show fw-bold border-0 shadow-sm mb-1" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% endif %}
+                </div>
 
-            <!-- Action Buttons -->
-            <div class="d-flex gap-2 mt-3 align-items-center flex-shrink-0">
-                <div class="small text-muted me-auto" id="record-count-display">Record 1 of {{ students|length }}</div>
-                
-                <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
-                <button type="button" id="btn-preview-letter" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal" disabled>Preview Letter</button>
-                <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
-                <button type="button" id="btn-view-offenses" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal" disabled>View Student Offenses</button>
-                
-                <button class="btn btn-light border btn-sm fw-bold">View in Datasheet Format</button>
-                <button class="btn btn-success btn-sm px-3 fw-bold ms-4" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
-                <button class="btn btn-xu-primary btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">➕ Add Student</button>
+                <!-- Main Table -->
+                <div class="table-container bg-white">
+                    <table class="table table-hover table-xu-dashboard mb-0" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th class="ps-3" style="width: 100px;">Student No.</th>
+                                <th style="min-width: 220px;">Name</th>
+                                <th style="width: 90px;">Status</th>
+                                <th style="width: 150px;">Section</th>
+                                <th style="width: 70px;" class="text-center">Active</th>
+                                <th>Address</th>
+                                <th class="text-center pe-3" style="width: 130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-table-body">
+                            {% for student in students %}
+                            <tr class="student-row align-middle" style="cursor: pointer;" 
+                                data-id="{{ student.student_number }}"
+                                data-name="{{ student.last_name|upper }}, {{ student.first_name|upper }}"
+                                data-sex="{{ student.sex }}"
+                                data-section="{{ student.section.name|default:'' }}"
+                                data-address="{{ student.address|default:'' }}">
+                                
+                                <td class="ps-3 fw-bold">{{ student.student_number }}</td>
+                                <td class="fw-bold" style="color: var(--xu-blue-1);">
+                                    {{ student.last_name|upper }}, {{ student.first_name|upper }}
+                                    {% if student.is_beadle %}
+                                        <span class="badge bg-xu-gold text-white ms-2 px-2 py-1 shadow-sm" style="font-size: 0.6rem;">⭐ BEADLE</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.status|default:"OLD" }}</td>
+                                <td>{{ student.section.name|default:"<span class='text-muted small fst-italic'>Unassigned</span>"|safe }}</td>
+                                <td class="text-center">
+                                    {% if not student.is_deleted %}
+                                        <span class="text-success fw-bold">Yes</span>
+                                    {% else %}
+                                        <span class="text-danger fw-bold">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-truncate text-muted" style="max-width: 200px;" title="{{ student.address|default:'' }}">
+                                    {{ student.address|default:"" }}
+                                </td>
+                                
+                                <td class="text-center pe-3">
+                                    <div class="action-btn-group shadow-sm mx-auto" style="width: max-content;">
+                                        <button type="button" class="btn btn-light fw-bold edit-btn text-muted action-stop"
+                                            data-bs-toggle="modal" data-bs-target="#editStudentModal"
+                                            data-id="{{ student.student_number }}" data-fname="{{ student.first_name }}"
+                                            data-lname="{{ student.last_name }}" data-mi="{{ student.middle_initial|default:'' }}"
+                                            data-sex="{{ student.sex }}" data-bday="{{ student.date_of_birth|date:'Y-m-d' }}"
+                                            data-address="{{ student.address|default:'' }}" data-section="{{ student.section.id|default:'' }}">
+                                            ✏️ Edit
+                                        </button>
+                                        
+                                        <form method="POST" class="m-0 d-inline action-stop">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="toggle_beadle" value="1">
+                                            <input type="hidden" name="student_number" value="{{ student.student_number }}">
+                                            {% if student.is_beadle %}
+                                                <button type="submit" class="btn btn-danger fw-bold">Revoke</button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-xu-primary fw-bold" {% if not student.section %}disabled title="Assign to a section first"{% endif %}>⭐ Beadle</button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center p-5 text-danger fw-bold">No student records found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 p-3 bg-light border-top align-items-center flex-shrink-0">
+                    <div class="small text-muted me-auto" id="record-count-display">Record 1 of {{ students|length }}</div>
+                    
+                    <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
+                    <button type="button" id="btn-preview-letter" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal" disabled>Preview Letter</button>
+                    <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
+                    <button type="button" id="btn-view-offenses" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal" disabled>View Student Offenses</button>
+                    
+                    <button class="btn btn-light border btn-sm fw-bold">View in Datasheet Format</button>
+                    <button class="btn btn-success btn-sm px-3 fw-bold ms-4" data-bs-toggle="modal" data-bs-target="#importExcelModal">📥 Import Excel</button>
+                    <button class="btn btn-xu-primary btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">➕ Add Student</button>
+                </div>
             </div>
         </div>
     </main>
@@ -218,18 +238,9 @@
     {% include 'core/modals/add_student_modal.html' %}
     {% include 'core/modals/import_excel_modal.html' %}
     {% include 'core/modals/offenses_by_type_modal.html' %}
-    {% include 'core/student_detail_modal.html' %}     <!-- YOU MISSED THIS LINE! -->
+    {% include 'core/student_detail_modal.html' %}
     {% include 'core/preview_letter_modal.html' %}
     {% include 'core/modals/report_time_period_modal.html' %}
-
-
-
-    
-    
-
-    <!-- ========================================== -->
-    <!-- INCLUDED: PREVIEW LETTER MODAL             -->
-    <!-- ========================================== -->
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
@@ -335,10 +346,6 @@ fetch('/api/offenses/list/')
         row.addEventListener('click', (e) => {
             if (e.target.closest('.action-stop')) return;
             selectStudent(row);
-            // Load Signatures if they exist
-                setSigUI(data.student_info.father_sig_url || '', 'father', false);
-                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
-                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
         });
     });
 
@@ -452,63 +459,6 @@ function createOffenseRow(data = {}) {
     }
 }
 
-// 1. Function to save checkbox state to backend
-function handleServedToggle(checkbox) {
-    const row = checkbox.closest('tr');
-    const recordId = row.dataset.recordId;
-    
-    // If it's a saved record, sync to DB
-    if (recordId) {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        fetch(`/api/record/${recordId}/toggle-served/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ is_served: checkbox.checked })
-        });
-    }
-    
-    // Always refresh the Unserved CS list UI immediately
-    updateUnservedCSTable();
-}
-
-// 2. Logic to follow the red arrows and populate the Unserved CS tab
-function updateUnservedCSTable() {
-    const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
-    const targetBody = document.getElementById('unserved-cs-body');
-    let html = '';
-    let count = 0;
-
-    sourceRows.forEach(row => {
-        const date = row.querySelector('input[type="date"]').value;
-        const offense = row.querySelector('.val-offense').value;
-        const demerits = row.querySelector('.val-dem').value;
-        const sanction = row.querySelector('.val-sanction').value;
-        const status = row.querySelector('.val-status').value;
-        const notes = row.querySelector('input[placeholder="Details..."]').value;
-        const isServed = row.querySelector('.val-served').checked;
-
-        // Filter: Only show if sanction contains "CS" and is NOT served
-        if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
-            count++;
-            html += `
-                <tr>
-                    <td class="text-center fw-bold">${date}</td>
-                    <td>${offense}</td>
-                    <td class="text-center text-danger fw-bold">${demerits}</td>
-                    <td class="text-center fw-bold text-primary">${sanction}</td>
-                    <td class="text-center"><span class="badge bg-warning text-dark">Pending</span></td>
-                    <td class="small fst-italic">${notes || '-'}</td>
-                </tr>
-            `;
-        }
-    });
-
-    if (count === 0) {
-        targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-muted fw-bold">No unserved community service pending.</td></tr>';
-    } else {
-        targetBody.innerHTML = html;
-    }
-}
 function addNewOffenseRow() {
     const tbody = document.getElementById('detailed-offenses-body');
     if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
@@ -548,14 +498,10 @@ function calculateRow(input) {
     const selectElem = row.querySelector('.val-offense');
     const selectedOption = selectElem.options[selectElem.selectedIndex];
 
-    // LOGIC: 
-    // 1. If Status is Excused -> Count is always 0
-    // 2. If Status is Unexcused -> Use the official count from the dataset (0.5, 1.0, etc.)
     if (status === "Unexcused") {
         if (selectedOption && selectedOption.dataset.cnt !== undefined) {
             countField.value = selectedOption.dataset.cnt;
         } else {
-            // Default if it's a legacy record not yet mapped to the new list
             countField.value = "1"; 
         }
     } else {
@@ -610,13 +556,12 @@ function calculateRow(input) {
     let videoStream = null;
     let isCameraActive = false;
 
-    // 1. ADD NEW FUNCTION TO INSTANTLY SAVE
     function savePhotoInstantly(base64Str) {
         const studentId = document.getElementById('modal-id-display').innerText;
         if (!studentId || studentId === '---') return;
 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const payload = { photo_base64: base64Str }; // Only send the photo data
+        const payload = { photo_base64: base64Str }; 
 
         fetch(`/api/student/${studentId}/offenses/`, {
             method: 'POST',
@@ -632,7 +577,6 @@ function calculateRow(input) {
         .catch(err => console.error("Error saving photo:", err));
     }
 
-    // 2. UPDATE setPhotoUI TO TRIGGER THE INSTANT SAVE
     function setPhotoUI(base64Str, autoSave = false) {
         const img = document.getElementById('student-photo-img');
         const text = document.getElementById('student-photo-text');
@@ -699,7 +643,6 @@ function calculateRow(input) {
             
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
             cancelCamera(); 
-            // PASS TRUE TO TRIGGER AUTOSAVE
             setPhotoUI(dataURL, true); 
         }
     }
@@ -739,7 +682,6 @@ function calculateRow(input) {
                 return;
             }
             const reader = new FileReader();
-            // PASS TRUE TO TRIGGER AUTOSAVE
             reader.onload = function(e) { setPhotoUI(e.target.result, true); };
             reader.readAsDataURL(file);
         }
@@ -747,12 +689,11 @@ function calculateRow(input) {
 
     function clearPhoto() {
         if (confirm("Would you like to delete the current photo?")) {
-            // PASS TRUE TO TRIGGER AUTOSAVE
             setPhotoUI('', true);
             document.getElementById('upload-photo-input').value = '';
         }
     }
-    // Fallback: If an image fails to load, hide the broken icon and show the "PHOTO" text
+
     document.getElementById('student-photo-img').addEventListener('error', function() {
         this.style.display = 'none';
         document.getElementById('student-photo-text').style.display = 'flex';
@@ -766,7 +707,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const display = document.getElementById('today-date-display');
     if(display) display.innerText = today;
 
-    // Handle disabling/enabling inputs based on radio selection
     document.querySelectorAll('.filter-radio').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const type = e.target.value;
@@ -786,7 +726,6 @@ function generateFilteredReport() {
     let start = "";
     let end = "";
 
-    // Date Logic
     if (periodType === 'CUSTOM') {
         start = document.getElementById('range-start').value;
         end = document.getElementById('range-end').value;
@@ -796,10 +735,7 @@ function generateFilteredReport() {
         start = end = new Date().toISOString().split('T')[0];
     }
 
-    // Redirect to the report view (we will create this in views.py)
     const url = `/staff/report/student/${studentId}/?type=${periodType}&start=${start}&end=${end}&month=${document.getElementById('filter-month').value}`;
-    
-    // Open in new tab (standard for reports)
     window.open(url, '_blank');
 }
 
@@ -807,12 +743,10 @@ function generateFilteredReport() {
 // UNSERVED CS SYNC LOGIC
 // ==========================================
 
-// 1. Function to save checkbox state to backend instantly
 function handleServedToggle(checkbox) {
     const row = checkbox.closest('tr');
     const recordId = row.dataset.recordId;
     
-    // If it's a saved record, sync to DB
     if (recordId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         fetch(`/api/record/${recordId}/toggle-served/`, {
@@ -823,14 +757,9 @@ function handleServedToggle(checkbox) {
         .catch(err => console.error("Error saving served status:", err));
     }
     
-    // Always refresh the Unserved CS list UI immediately
     updateUnservedCSTable();
 }
 
-
-// Guarantees that ANY typing in the table instantly updates the Unserved CS tab
-document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
-// 2. Logic to follow the red arrows and populate the Unserved CS tab
 function updateUnservedCSTable() {
     const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
     const targetBody = document.getElementById('unserved-cs-body');
@@ -841,21 +770,19 @@ function updateUnservedCSTable() {
     let count = 0;
 
     sourceRows.forEach(row => {
-        // Skip placeholder/loading rows
         if(row.cells.length < 9) return;
 
         const dateInput = row.querySelector('input[type="date"]');
-        if(!dateInput) return; // Failsafe
+        if(!dateInput) return;
 
         const date = dateInput.value;
         const offense = row.querySelector('.val-offense').value;
         const demerits = row.querySelector('.val-dem').value;
         const sanction = row.querySelector('.val-sanction').value;
-        const status = row.querySelector('.val-status').value; // Excused or Unexcused
+        const status = row.querySelector('.val-status').value; 
         const notes = row.querySelector('input[placeholder="Details..."]').value;
         const isServed = row.querySelector('.val-served').checked;
 
-        // Filter: Only show if sanction contains "CS", is NOT served, and has an offense selected
         if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
             count++;
 
@@ -866,7 +793,6 @@ function updateUnservedCSTable() {
                     <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
                     <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
                     
-                    <!-- Explicitly marks it as Pending per the checklist -->
                     <td class="text-center align-middle">
                         <span class="badge bg-warning text-dark shadow-sm">Pending</span><br>
                         <span class="small text-muted" style="font-size: 0.65rem;">(${status})</span>
@@ -885,11 +811,11 @@ function updateUnservedCSTable() {
     }
 }
 
-// ==========================================
+    // ==========================================
     // SIGNATURE CAMERA & UPLOAD LOGIC
     // ==========================================
     let sigVideoStream = null;
-    let activeSigCamera = null; // 'father', 'mother', or 'guardian'
+    let activeSigCamera = null; 
 
     function saveSignatureInstantly(base64Str, type) {
         const studentId = document.getElementById('modal-id-display').innerText;
@@ -931,7 +857,6 @@ function updateUnservedCSTable() {
         const text = document.getElementById(`sig-text-${type}`);
 
         if (activeSigCamera !== type) {
-            // Turn off any currently running camera first
             if (sigVideoStream) cancelSigCamera(activeSigCamera);
 
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -955,7 +880,6 @@ function updateUnservedCSTable() {
                     }).catch(err => alert("Camera access denied."));
             }
         } else {
-            // SNAP THE PICTURE
             const canvas = document.getElementById(`sig-canvas-${type}`);
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -966,7 +890,7 @@ function updateUnservedCSTable() {
             
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
             cancelSigCamera(type);
-            setSigUI(dataURL, type, true); // True = auto-save
+            setSigUI(dataURL, type, true); 
         }
     }
 

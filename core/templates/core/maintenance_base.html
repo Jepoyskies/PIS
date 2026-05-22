@@ -9,52 +9,58 @@
     <style>
         :root {
             --xu-blue-dark: #22356d; 
+            --xu-blue-2: #3a53a4;
             --xu-gold: #b99430;
+            --xu-border-color: #ced4da;
         }
-        body { background-color: #f4f6f9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        body { 
+            background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif; 
+        }
         
-        /* Partner Header */
-        .navbar-xu { background: var(--xu-blue-dark); padding: 10px 25px; border-bottom: 4px solid var(--xu-gold); }
+        /* Glassy Header matching other pages */
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
         
-        /* RESTORED: Original Top Navigation */
-        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; z-index: 10; }
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; }
         .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; text-decoration: none; font-size: 0.85rem; transition: 0.2s; }
-        .nav-link:hover { color: var(--xu-blue-dark); background: rgba(0,0,0,0.02); }
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
         .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background: #f8f9fa; }
 
-        /* Partner Sidebar */
-        .sidebar-wrapper { background-color: var(--xu-blue-dark); color: white; min-width: 240px; }
-        .list-group-item { background: transparent; color: rgba(255,255,255,0.7); border: none; padding: 15px 20px; transition: 0.2s; }
-        .list-group-item:hover { color: var(--xu-gold); background: rgba(255,255,255,0.05); }
-        .list-group-item.active { background: var(--xu-gold) !important; color: var(--xu-blue-dark) !important; font-weight: bold; border-radius: 0 30px 30px 0; margin-right: 15px; }
+        /* Translucent Partner Sidebar */
+        .sidebar-wrapper { background-color: rgba(0,0,0,0.15); backdrop-filter: blur(5px); color: white; min-width: 240px; border-right: 1px solid rgba(255,255,255,0.1); z-index: 4; }
+        .list-group-item { background: transparent; color: rgba(255,255,255,0.7); border: none; padding: 15px 20px; transition: 0.2s; font-weight: 500; }
+        .list-group-item:hover { color: white; background: rgba(255,255,255,0.1); }
+        .list-group-item.active { background: var(--xu-gold) !important; color: white !important; font-weight: bold; border-radius: 0 30px 30px 0; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="d-flex flex-column">
-    <header class="navbar-xu d-flex justify-content-between align-items-center text-white">
+<body class="d-flex flex-column vh-100">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 40px;" class="bg-white rounded p-1">
-            <div class="fw-bold">XU PIS | <span class="small opacity-75">Maintenance</span></div>
+            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div>
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Prefect Information System</div>
+            </div>
         </div>
         
-        <!-- RESTORED: School Year Selector -->
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent;">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background: transparent; width: 120px;">
                     {% for sy in all_school_years %}
                     <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm rounded-pill px-4">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 shadow-sm" style="background-color: var(--xu-gold); border: none;">Log Off</a>
         </div>
     </header>
 
-    <!-- RESTORED: Original Navigation Links -->
-    <nav class="main-nav">
+    <nav class="main-nav d-flex shadow-sm z-1">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
-        <a href="{% url 'staff_dashboard' %}" class="nav-link">STUDENTS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
         <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link active">MAINTENANCE</a>
@@ -62,21 +68,18 @@
 
     <div class="container-fluid flex-grow-1 p-0 overflow-hidden d-flex">
         <!-- Partner Sidebar Layout -->
-        <div class="sidebar-wrapper shadow">
-            <div class="p-3 small opacity-50 text-uppercase fw-bold">Menu</div>
+        <div class="sidebar-wrapper">
+            <div class="p-4 pb-2 small opacity-50 text-uppercase fw-bold" style="letter-spacing: 1px;">Menu</div>
             <div class="list-group">
-                <a href="{% url 'maintenance_dashboard' %}" class="list-group-item {% if 'dashboard' in request.path %}active{% endif %}">Overview</a>
-                <a href="{% url 'manage_staff' %}" class="list-group-item {% if 'staff' in request.path %}active{% endif %}">Manage Staff</a>
-                <a href="{% url 'manage_sections' %}" class="list-group-item {% if 'section' in request.path %}active{% endif %}">Sections</a>
+                <a href="{% url 'maintenance_dashboard' %}" class="list-group-item {% if 'dashboard' in request.path %}active{% endif %}"><i class="fa-solid fa-chart-line me-2"></i> Overview</a>
+                <a href="{% url 'manage_staff' %}" class="list-group-item {% if 'staff' in request.path %}active{% endif %}"><i class="fa-solid fa-users-gear me-2"></i> Manage Staff</a>
+                <a href="{% url 'manage_sections' %}" class="list-group-item {% if 'section' in request.path %}active{% endif %}"><i class="fa-solid fa-layer-group me-2"></i> Sections</a>
             </div>
         </div>
 
-        <div class="flex-grow-1 p-4 overflow-auto">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    {% block maintenance_content %}{% endblock %}
-                </div>
-            </div>
+        <!-- REMOVED THE EXTRA CARD WRAPPER HERE SO CHILDREN CAN RENDER THEIR OWN CARDS -->
+        <div class="flex-grow-1 p-3 overflow-auto d-flex flex-column">
+            {% block maintenance_content %}{% endblock %}
         </div>
     </div>
 </body>
