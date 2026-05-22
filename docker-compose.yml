@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:8.0
@@ -10,6 +12,8 @@ services:
 
   web:
     build: .
+    # THE MAGIC FIX: Using runserver guarantees Admin CSS loads and Auto-Refresh works!
+    command: python manage.py runserver 0.0.0.0:8000
     restart: on-failure
     volumes:
       - .:/app
@@ -17,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - SECRET_KEY=django-insecure-highly-random-key-must-change-this
+      - SECRET_KEY=my-local-secret-key
       - DEBUG=True
       - DB_HOST=db
       - DB_NAME=xjhs_pis_db

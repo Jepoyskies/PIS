@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Offenses by Section</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button>
+        </div>
+        <h4 class="text-center fw-bold">Student Offenses by Section</h4>
+        <table class="table table-bordered table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Student</th>
+                    <th>Date</th>
+                    <th>Offense</th>
+                    <th>Demerits</th>
+                    <th>Sanction</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.student.section|default:"Unassigned" }}</td>
+                    <td>{{ r.student.last_name }}, {{ r.student.first_name }}</td>
+                    <td>{{ r.date_of_incident|date:"Y-m-d" }}</td>
+                    <td>{{ r.offense_name|default:r.category }}</td>
+                    <td>{{ r.demerits }}</td>
+                    <td>{{ r.sanction|default:"-" }}</td>
+                    <td>{{ r.is_excused|yesno:"Excused,Unexcused" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

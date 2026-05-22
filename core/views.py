@@ -910,3 +910,45 @@ def api_toggle_served(request, record_id):
         return JsonResponse({'status': 'success'})
         
     return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def report_offenses_by_section(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['records'] = DisciplinaryRecord.objects.all().order_by('student__section__grade_level', 'student__section__name')
+    return render(request, 'core/reports/offenses_by_section.html', context)
+
+@login_required
+def report_age_profile(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['students'] = Student.objects.filter(is_deleted=False, date_of_birth__isnull=False).order_by('-date_of_birth')
+    return render(request, 'core/reports/age_profile.html', context)
+
+@login_required
+def report_offenses_by_name(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['records'] = DisciplinaryRecord.objects.all().order_by('student__last_name', 'student__first_name')
+    return render(request, 'core/reports/offenses_by_name.html', context)
+
+@login_required
+def report_detailed_deportment(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['students'] = Student.objects.filter(is_deleted=False).order_by('last_name')
+    return render(request, 'core/reports/detailed_deportment.html', context)
+
+@login_required
+def report_deportment(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['students'] = Student.objects.filter(is_deleted=False).order_by('last_name')
+    return render(request, 'core/reports/deportment.html', context)
+
+@login_required
+def report_daily_attendance_summary(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    context['attendance_logs'] = DailyAttendance.objects.all().order_by('-date')
+    return render(request, 'core/reports/daily_attendance_summary.html', context)

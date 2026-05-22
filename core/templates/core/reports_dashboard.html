@@ -8,51 +8,18 @@
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <style>
         body { background-color: var(--xu-light-gray); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         .main-nav { background-color: white; border-bottom: 1px solid var(--xu-border-color); padding: 0 15px; }
-        .nav-link { 
-            color: #555; 
-            font-weight: 600; 
-            padding: 15px 20px; 
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-        .nav-link:hover { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
-        .nav-link.active { color: var(--xu-blue-1); border-bottom-color: var(--xu-gold); background-color: rgba(40, 57, 113, 0.05); }
-
-        /* Report Button Styles */
-        .reports-container {
-            overflow-y: auto;
-            height: calc(100vh - 140px);
-            padding: 2rem;
-        }
+        .nav-link { color: #555; font-weight: 600; padding: 15px 20px; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
+        .nav-link:hover, .nav-link.active { color: var(--xu-blue-1); background-color: rgba(40, 57, 113, 0.05); }
+        .nav-link.active { border-bottom-color: var(--xu-gold); }
+        .reports-container { overflow-y: auto; height: calc(100vh - 140px); padding: 2rem; }
         .report-card {
-            background-color: white;
-            border: 1px solid var(--xu-border-color);
-            color: #444;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s ease-in-out;
-            text-align: center;
-            height: 100%;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            cursor: pointer;
+            background-color: white; border: 1px solid var(--xu-border-color); color: #444; font-weight: 600;
+            font-size: 0.9rem; transition: all 0.2s ease-in-out; text-align: center; height: 100%; min-height: 80px;
+            display: flex; align-items: center; justify-content: center; padding: 1rem; border-radius: 8px;
+            text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .report-card:hover {
-            background-color: var(--xu-blue-1);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-            border-color: var(--xu-blue-1);
-        }
+        .report-card:hover { background-color: var(--xu-blue-1); color: white; transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); border-color: var(--xu-blue-1); }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -64,7 +31,6 @@
                 <div class="small opacity-75">Prefect Information System</div>
             </div>
         </div>
-        
         <div class="d-flex align-items-center gap-3">
             <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
@@ -91,25 +57,31 @@
     <main class="flex-grow-1 reports-container">
         <div class="container-fluid max-w-6xl mx-auto">
             <h4 class="fw-bold mb-4 text-secondary">Reports Dashboard</h4>
-            
             <div class="row g-3">
                 <!-- ROW 1 -->
-                <div class="col-md-3"><a href="{% url 'report_enrolment_summary' %}" class="report-card">Overall Enrolment Summary</a></div>
-                <div class="col-md-3"><a href="{% url 'report_class_list' %}" class="report-card">Class List</a></div>
-                <div class="col-md-3"><a href="{% url 'report_birthdays' %}" class="report-card">List of Birthdays</a></div>
-                <div class="col-md-3"><a href="{% url 'report_student_demerits' %}" class="report-card">List of Students' Demerits</a></div>
-                
+                <div class="col-md-4"><a href="{% url 'report_enrolment_summary' %}" class="report-card">Overall Enrolment Summary</a></div>
+                <div class="col-md-4"><a href="{% url 'report_class_list' %}" class="report-card">Class List</a></div>
+                <div class="col-md-4"><a href="{% url 'report_birthdays' %}" class="report-card">List of Birthdays</a></div>
                 <!-- ROW 2 -->
-                <div class="col-md-3"><a href="{% url 'report_student_status' %}" class="report-card">Student Status</a></div>
-                <div class="col-md-3"><a href="{% url 'report_conduct_marks' %}" class="report-card">All Conduct Marks</a></div>
-                <div class="col-md-3"><a href="{% url 'report_student_record' %}" class="report-card">Attendance/Deportment Record</a></div>
-                <div class="col-md-3"><a href="{% url 'report_attendance_registrar' %}" class="report-card">Attendance Summary (Registrar)</a></div>
-
+                <div class="col-md-4"><a href="{% url 'report_offenses_by_section' %}" class="report-card">List of Student Offenses by Section (Current)</a></div>
+                <div class="col-md-4"><a href="{% url 'report_student_demerits' %}" class="report-card">List of Students' Demerits</a></div>
+                <div class="col-md-4"><a href="{% url 'report_age_profile' %}" class="report-card">Age Profile</a></div>
                 <!-- ROW 3 -->
-                <div class="col-md-3"><a href="{% url 'report_unserved_cs' %}" class="report-card">List of Unserved CS</a></div>
-                <div class="col-md-3"><a href="{% url 'report_student_directory' %}" class="report-card">Student Directory</a></div>
-                <div class="col-md-3"><a href="{% url 'report_conduct_graph' %}" class="report-card">Students' Conduct Graph</a></div>
-                <div class="col-md-3"><a href="{% url 'report_citizenship_nationality' %}" class="report-card">Citizenship / Nationality</a></div>
+                <div class="col-md-4"><a href="{% url 'report_offenses_by_name' %}" class="report-card">List of Student Offenses by Name (Throughout HS)</a></div>
+                <div class="col-md-4"><a href="{% url 'report_conduct_graph' %}" class="report-card">Students' Conduct Graph</a></div>
+                <div class="col-md-4"><a href="{% url 'report_student_status' %}" class="report-card">Student Status</a></div>
+                <!-- ROW 4 -->
+                <div class="col-md-4"><a href="{% url 'report_detailed_deportment' %}" class="report-card">Detailed Deportment Report</a></div>
+                <div class="col-md-4"><a href="{% url 'report_deportment' %}" class="report-card">Deportment Report</a></div>
+                <div class="col-md-4"><a href="{% url 'report_citizenship_nationality' %}" class="report-card">Citizenship / Nationality Report</a></div>
+                <!-- ROW 5 -->
+                <div class="col-md-4"><a href="{% url 'report_daily_attendance_summary' %}" class="report-card">Daily Attendance Summary</a></div>
+                <div class="col-md-4"><a href="{% url 'report_unserved_cs' %}" class="report-card">List of Unserved CS</a></div>
+                <div class="col-md-4"><a href="{% url 'report_student_directory' %}" class="report-card">Student Directory</a></div>
+                <!-- ROW 6 -->
+                <div class="col-md-4"><a href="{% url 'report_attendance_registrar' %}" class="report-card">Attendance Summary for Registrar</a></div>
+                <div class="col-md-4"><a href="{% url 'report_conduct_marks' %}" class="report-card">All Conduct Marks</a></div>
+                <div class="col-md-4"><a href="{% url 'report_student_record' %}" class="report-card">Student's Attendance/Deportment Record</a></div>
             </div>
         </div>
     </main>

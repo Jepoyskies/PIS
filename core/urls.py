@@ -51,4 +51,10 @@ urlpatterns = [
     path('reports/student-directory/', views.report_student_directory, name='report_student_directory'),
     path('reports/conduct-graph/', views.report_conduct_graph, name='report_conduct_graph'),
     path('reports/citizenship-nationality/', views.report_citizenship_nationality, name='report_citizenship_nationality'),
+    path('reports/offenses-by-section/', views.report_offenses_by_section, name='report_offenses_by_section'),
+    path('reports/age-profile/', views.report_age_profile, name='report_age_profile'),
+    path('reports/offenses-by-name/', views.report_offenses_by_name, name='report_offenses_by_name'),
+    path('reports/detailed-deportment/', views.report_detailed_deportment, name='report_detailed_deportment'),
+    path('reports/deportment/', views.report_deportment, name='report_deportment'),
+    path('reports/daily-attendance-summary/', views.report_daily_attendance_summary, name='report_daily_attendance_summary'),
 ]

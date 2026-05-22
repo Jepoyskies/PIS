@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deportment Report</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button>
+        </div>
+        <h4 class="text-center fw-bold">General Deportment Summary</h4>
+        <table class="table table-bordered table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Student Number</th>
+                    <th>Section</th>
+                    <th class="text-center">Unserved CS Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="fw-bold">{{ s.last_name }}, {{ s.first_name }}</td>
+                    <td>{{ s.student_number }}</td>
+                    <td>{{ s.section|default:"Unassigned" }}</td>
+                    <td class="text-center fw-bold {% if s.unserved_cs_hours > 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ s.unserved_cs_hours }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No students found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

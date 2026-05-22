@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detailed Deportment Report</title>
+    <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
+    <style> body { background: #f8f9fa; padding: 20px; } @media print { .no-print { display: none; } } </style>
+</head>
+<body>
+    <div class="container bg-white p-4 shadow-sm">
+        <div class="no-print mb-3">
+            <a href="{% url 'reports_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">Print</button>
+        </div>
+        <h4 class="text-center fw-bold">Detailed Deportment Report</h4>
+        
+        {% for student in students %}
+        <div class="card mt-4 mb-4 border">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary">{{ student.last_name }}, {{ student.first_name }} ({{ student.student_number }})</span>
+                <span class="badge bg-secondary">Section: {{ student.section|default:"Unassigned" }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Unserved CS Hours:</strong> 
+                        <span class="text-danger fw-bold">{{ student.unserved_cs_hours }}</span>
+                    </div>
+                </div>
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr class="table-secondary">
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Offense</th>
+                            <th>Demerits</th>
+                            <th>Sanction</th>
+                            <th>Served</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in student.disciplinary_records.all %}
+                        <tr>
+                            <td>{{ record.date_of_incident|date:"Y-m-d" }}</td>
+                            <td>{{ record.category }}</td>
+                            <td>{{ record.offense_name|default:"-" }}</td>
+                            <td>{{ record.demerits }}</td>
+                            <td>{{ record.sanction|default:"-" }}</td>
+                            <td>{{ record.is_served|yesno:"Yes,No" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted">No infractions logged.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted mt-4">No students enrolled.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
