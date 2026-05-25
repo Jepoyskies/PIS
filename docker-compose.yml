@@ -28,8 +28,8 @@ services:
       - DB_USER=root
       - DB_PASSWORD=rootpassword
       - DB_PORT=3306
-      - EMAIL_HOST_USER=20220025820@my.xu.edu.ph
-      - EMAIL_HOST_PASSWORD=ldhbcjwxpthtcagh
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
     depends_on:
       db:
         condition: service_started
