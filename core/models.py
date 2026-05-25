@@ -211,3 +211,15 @@ def create_student_login(sender, instance, created, **kwargs):
         u.save()
         instance.user = u
         instance.save()
+
+class ExcuseLetterRequest(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='excuse_requests')
+    date_requested_for = models.DateField()
+    
+    # NEW FIELDS:
+    violation_name = models.CharField(max_length=255, null=True, blank=True)
+    is_resolved = models.BooleanField(default=False)
+    excuse_letter = models.ForeignKey(ExcuseLetter, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests')
+
+    def __str__(self):
+        return f"Request for {self.student.last_name} on {self.date_requested_for}"

@@ -103,6 +103,7 @@
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
         <a href="{% url 'staff_attendance_list' %}" class="nav-link active">ATTENDANCE</a>
+        <a href="{% url 'staff_excuse_letters' %}" class="nav-link">EXCUSE LETTERS</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
@@ -225,36 +226,28 @@
             setActivePeriod(activePeriod);
         });
 
-        // --- START NEW/FIXED LOGIC ---
-        // Determines if it shows normal badge or "Old ➔ New" badge
         function getBadgeHTML(studentId, p, rec, currentOverride) {
-            // Determine the base state (what the beadle submitted)
             const wasEditedByBeadle = rec.original_code && rec.original_code !== rec.code;
             const baseOriginalCode = wasEditedByBeadle ? rec.original_code : rec.code;
             const baseFinalCode = rec.code;
 
-            // Determine the final state (factoring in any live staff override)
             const isOverriddenByStaff = currentOverride && currentOverride !== baseFinalCode;
             const finalOriginalCode = isOverriddenByStaff ? baseFinalCode : baseOriginalCode;
             const finalCode = isOverriddenByStaff ? currentOverride : baseFinalCode;
 
-            // Now, compare and render
             const finalBadgeCls = finalCode === 'P' ? 'bg-success' : (finalCode === 'A' ? 'bg-danger' : 'bg-dark');
 
             if (finalOriginalCode !== finalCode) {
-                // Show the "Old -> New" format
                 return `<div class="d-flex align-items-center gap-1 bg-white px-2 py-1 rounded border shadow-sm" style="font-size: 0.75rem;">
                             <span class="text-muted text-decoration-line-through fw-bold">${finalOriginalCode}</span>
                             <i class="fa-solid fa-arrow-right text-muted" style="font-size: 0.65rem;"></i>
                             <span class="badge ${finalBadgeCls} px-1 py-0">${finalCode}</span>
                         </div>`;
             } else {
-                // Show the single status badge
                 return `<span class="badge ${finalBadgeCls} px-2 py-1 border shadow-sm" style="font-size: 0.75rem;">${finalCode}</span>`;
             }
         }
 
-        // Updated function dynamically re-renders just the specific badge immediately
         function updateForm(studentId, val, overridePeriod = null) {
             const p = overridePeriod || activePeriod;
             if (!formData[studentId]) formData[studentId] = {};
@@ -266,7 +259,6 @@
                 container.innerHTML = getBadgeHTML(studentId, p, rec, val);
             }
         }
-        // --- END NEW/FIXED LOGIC ---
 
         function renderNavButtons() {
             const container = document.getElementById('period-nav-buttons');
@@ -385,6 +377,7 @@
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter('${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
                             </div>
                         </div>
                     </td>
@@ -506,6 +499,7 @@
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter('${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
                             </div>
                         </div>
                     </td>
@@ -567,6 +561,49 @@
                 tbody.appendChild(tr);
             });
         }
+
+        // ==========================================
+        // NEW EXCUSE LETTER LOGIC
+        // ==========================================
+const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
+
+        function requestExcuseLetter(studentId, studentName) {
+            const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
+            if (!violationStr) return; // Cancel if no violation is provided
+
+            if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const btn = event.currentTarget;
+                const originalHtml = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                
+                fetch(`/api/student/${studentId}/request-excuse/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ date: batchDate, violation_name: violationStr })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`);
+                        btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Network error.");
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
+            }
+        }
+
     </script>
 
     <!-- INCLUDE YOUR STUDENT DETAIL MODAL HTML HERE -->
@@ -577,13 +614,23 @@
          MODAL FUNCTIONALITY (IMPORTED FROM DASHBOARD)
          ========================================= -->
     <script>
-    let globalOffenses =[];
-
-    // Fetch official offense list
-    fetch('/api/offenses/list/')
-        .then(res => res.json())
-        .then(data => { globalOffenses = data.offenses; })
-        .catch(err => console.error("Could not load offenses:", err));
+        // 1. FETCH OFFENSES & POPULATE THE DATALIST
+        let globalOffenses = [];
+        fetch('/api/offenses/list/')
+            .then(res => res.json())
+            .then(data => { 
+                globalOffenses = data.offenses; 
+                const datalist = document.getElementById('global-offenses-list');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    globalOffenses.forEach(off => {
+                        const option = document.createElement('option');
+                        option.value = off.name;
+                        datalist.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => console.error("Could not load offenses:", err));
 
     function openStudentModal(studentId, studentName, studentSex) {
         document.getElementById('modal-id-display').innerText = studentId;
@@ -619,72 +666,63 @@
                 const tbody = document.getElementById('detailed-offenses-body');
                 tbody.innerHTML = ''; 
                 if (!data.records || data.records.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
                 } else {
                     data.records.forEach(rec => createOffenseRow(rec));
                 }
             }).catch(e => { 
-                document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="9" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; 
+                document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="10" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; 
             });
     }
 
-    function createOffenseRow(data = {}) {
-        const tbody = document.getElementById('detailed-offenses-body');
-        const row = document.createElement('tr');
-        row.dataset.recordId = data.id || ''; 
-        
-        let optionsHTML = '<option value="">-- Select Offense --</option>';
-        let matchFound = false;
+        // 2. CREATE ROW (Now includes the Trash Button)
+        function createOffenseRow(data = {}) {
+            const tbody = document.getElementById('detailed-offenses-body');
+            const row = document.createElement('tr');
+            row.dataset.recordId = data.id || ''; 
+            
+            let sanctionVal = data.sanction || '';
+            let demVal = parseInt(data.demerits) || 0;
+            
+            if (!sanctionVal && demVal > 0) {
+                if (demVal >= 50) sanctionVal = "2 Hrs CS";
+                else if (demVal >= 8) sanctionVal = "1 Hr CS";
+                else sanctionVal = "Warning";
+            }
 
-        if (typeof globalOffenses !== 'undefined') {
-            globalOffenses.forEach(off => {
-                let isSelected = '';
-                if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
-                    isSelected = 'selected';
-                    matchFound = true;
-                }
-                optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
-            });
+            let categoryVal = data.category || '';
+            let countVal = data.count || 1;
+            row.dataset.cnt = countVal;
+
+            row.innerHTML = `
+                <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
+                <td>
+                    <input type="text" list="global-offenses-list" class="form-control form-control-sm border-0 val-offense fw-bold" 
+                           onchange="applyOffenseDefaults(this)" placeholder="-- Search/Type Offense --" value="${categoryVal}" style="min-width: 200px;">
+                </td>
+                <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
+                <td>
+                    <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
+                        <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
+                        <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${countVal}"></td>
+                <td class="text-center align-middle">
+                    <button type="button" class="btn btn-sm text-danger p-0 m-0 border-0 bg-transparent" onclick="deleteOffenseRow(this)" title="Delete Row">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            if (typeof updateUnservedCSTable === "function") updateUnservedCSTable();
         }
-
-        if (!matchFound && data.category) {
-            optionsHTML = `<option value="${data.category}" selected>${data.category}</option>` + optionsHTML;
-        }
-
-        let sanctionVal = data.sanction || '';
-        let demVal = parseInt(data.demerits) || 0;
-        
-        if (!sanctionVal && demVal > 0) {
-            if (demVal >= 50) sanctionVal = "2 Hrs CS";
-            else if (demVal >= 8) sanctionVal = "1 Hr CS";
-            else sanctionVal = "Warning";
-        }
-
-        row.innerHTML = `
-            <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-            <td>
-                <select class="form-select form-select-sm border-0 val-offense fw-bold" onchange="applyOffenseDefaults(this)" style="min-width: 200px;">
-                    ${optionsHTML}
-                </select>
-            </td>
-            <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
-            <td>
-                <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
-                    <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
-                    <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
-                </select>
-            </td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
-            <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
-            <td class="text-center">
-                <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
-            </td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${data.count || 0}"></td>
-        `;
-        tbody.appendChild(row);
-        if (typeof updateUnservedCSTable === "function") updateUnservedCSTable();
-    }
 
     function addNewOffenseRow() {
         const tbody = document.getElementById('detailed-offenses-body');
@@ -693,38 +731,88 @@
         createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
     }
 
-    function applyOffenseDefaults(selectElem) {
-        const row = selectElem.closest('tr');
-        const selectedOption = selectElem.options[selectElem.selectedIndex];
-        const demField = row.querySelector('.val-dem');
-        const sancField = row.querySelector('.val-sanction');
+        // 3. APPLY DEFAULTS (Now with STRICT Validation)
+        function applyOffenseDefaults(inputElem) {
+            const row = inputElem.closest('tr');
+            const demField = row.querySelector('.val-dem');
+            const sancField = row.querySelector('.val-sanction');
+            const offenseVal = inputElem.value;
 
-        if (selectedOption.value && selectedOption.dataset.dem !== undefined) {
-            demField.value = selectedOption.dataset.dem;
-            sancField.value = selectedOption.dataset.sanc || 'N/A';
-        } else {
-            demField.value = 0;
-            sancField.value = '';
+            // If they just cleared the input, reset fields and stop
+            if (offenseVal.trim() === '') {
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
+                return;
+            }
+
+            // Search for exact match in our loaded list
+            const match = globalOffenses.find(o => o.name === offenseVal);
+
+            // STRICT VALIDATION: If they typed random letters that don't match exactly
+            if (!match) {
+                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                inputElem.value = ''; // Wipe the invalid text
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
+                return; // Stop here so it doesn't add a new row
+            }
+
+            // If Valid, Apply defaults
+            demField.value = match.default_demerits;
+            sancField.value = match.default_sanction || 'N/A';
+            row.dataset.cnt = match.default_count;
+            
+            calculateRow(inputElem);
+            updateUnservedCSTable();
+
+            // Auto-add new row if it's the last row
+            const tbody = document.getElementById('detailed-offenses-body');
+            if (row === tbody.lastElementChild) {
+                addNewOffenseRow();
+            }
         }
-        calculateRow(selectElem);
-        updateUnservedCSTable();
-    }
 
-    function calculateRow(input) {
-        const row = input.closest('tr');
-        const status = row.querySelector('.val-status').value;
-        const countField = row.querySelector('.val-count');
-        const selectElem = row.querySelector('.val-offense');
-        const selectedOption = selectElem.options[selectElem.selectedIndex];
+        // 4. DELETE ROW FUNCTION
+        function deleteOffenseRow(button) {
+            const row = button.closest('tr');
+            const recordId = row.dataset.recordId;
 
-        if (status === "Unexcused") {
-            if (selectedOption && selectedOption.dataset.cnt !== undefined) countField.value = selectedOption.dataset.cnt;
-            else countField.value = "1"; 
-        } else {
-            countField.value = "0";
+            if (confirm("Are you sure you want to delete this row?")) {
+                // If this is an existing database record, we will need to delete it from MySQL
+                if (recordId) {
+                    console.log("Trigger backend delete for ID:", recordId);
+                    // TODO: We will add the API call here in the next step!
+                }
+                
+                // Remove from UI
+                row.remove();
+                updateUnservedCSTable();
+                
+                // Ensure there is always at least one row
+                const tbody = document.getElementById('detailed-offenses-body');
+                if (tbody.children.length === 0) {
+                    addNewOffenseRow();
+                }
+            }
         }
-        updateUnservedCSTable();
-    }
+
+        // 5. CALCULATE ROW LOGIC
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const status = row.querySelector('.val-status').value;
+            const countField = row.querySelector('.val-count');
+
+            if (status === "Unexcused") {
+                countField.value = row.dataset.cnt !== undefined ? row.dataset.cnt : "1";
+            } else {
+                countField.value = "0";
+            }
+            updateUnservedCSTable();
+        }
 
     function updateUnservedCSTable() {
         const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
@@ -734,7 +822,7 @@
         let count = 0;
 
         sourceRows.forEach(row => {
-            if(row.cells.length < 9) return;
+            if(row.cells.length < 10) return;
             const dateInput = row.querySelector('input[type="date"]');
             if(!dateInput) return; 
 
@@ -990,7 +1078,7 @@
         const btnUp = document.getElementById(`btn-up-${type}`);
         btnCam.innerHTML = 'Take Picture';
         btnCam.classList.replace('btn-primary', 'btn-light');
-        btnCam.classList.remove('text-white');
+        btnCam.classList.replace('text-white', 'text-muted');
         btnUp.innerHTML = 'Load Picture';
         btnUp.classList.remove('text-danger');
         btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();

@@ -27,6 +27,15 @@
         .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
         .table-xu-dashboard th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; padding: 12px 20px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
         .table-xu-dashboard td { padding: 12px 20px !important; vertical-align: middle; }
+
+        /* Read-Only Profile Photo */
+        .profile-photo-container {
+            position: relative; width: 140px; height: 140px; border-radius: 50%;
+            border: 4px solid var(--xu-gold); background-color: white; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 0 auto 15px auto;
+        }
+        .profile-photo-container img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -35,7 +44,7 @@
             <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
             <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75">Student & Beadle Portal</div>
+                <div class="small opacity-75">Student Portal</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
@@ -53,6 +62,30 @@
 
     <main class="flex-grow-1 overflow-hidden p-4 d-flex flex-column">
         <div class="dashboard-container pb-4">
+            
+            <!-- SYSTEM MESSAGES (Upload success/error) -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'success' }} alert-dismissible fade show fw-bold border-0 shadow-sm mb-3 flex-shrink-0" role="alert" style="z-index: 10;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- EXCUSE LETTER NOTIFICATIONS -->
+            {% if pending_requests %}
+                {% for req in pending_requests %}
+                <div class="alert alert-warning border-warning shadow-sm d-flex justify-content-between align-items-center mb-3 flex-shrink-0" role="alert" style="border-left: 5px solid #b99430 !important;">
+                    <div>
+                        <i class="fa-solid fa-envelope-open-text me-2 fs-5 text-dark"></i>
+                        <span class="text-dark"><strong>Action Required:</strong> The Prefect Office has requested an excuse letter for your <strong>{{ req.violation_name|default:"absence"|title }}</strong> on <strong>{{ req.date_requested_for|date:'F j, Y' }}</strong>.</span>
+                    </div>
+                    <button class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="switchToExcuseTab()">Submit Letter</button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
             <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0">
                 <div><h3 class="fw-bold mb-0 text-white" style="letter-spacing: -0.5px;">Personal Dashboard</h3></div>
             </div>
@@ -64,30 +97,24 @@
                 
                 <div class="row g-0 flex-grow-1" style="min-height: 0;">
                     <div class="col-md-4 col-lg-3 bg-light border-end d-flex flex-column align-items-center justify-content-center text-center p-4 overflow-auto">
-                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3 fw-bold" style="width: 120px; height: 120px; font-size: 4rem; border: 4px solid var(--xu-gold); color: var(--xu-blue-dark);">
-                            {% if student.sex == 'M' %}👦{% else %}👧{% endif %}
+                        
+                        <!-- STATIC PHOTO COMPONENT -->
+                        <div class="profile-photo-container">
+                            {% if student.photo %}
+                                <img src="{{ student.photo.url }}" alt="Profile Photo">
+                            {% else %}
+                                <span style="font-size: 3.5rem; color: var(--xu-blue-dark);">
+                                    {% if student.sex == 'M' %}👦{% else %}👧{% endif %}
+                                </span>
+                            {% endif %}
                         </div>
+
                         <h4 class="fw-bold mb-0" style="color: var(--xu-blue-dark);">{{ student.last_name|upper }},</h4>
                         <h5 class="fw-bold mb-2 text-dark">{{ student.first_name|upper }}</h5>
                         
                         <div class="bg-white px-4 py-1 rounded-pill border fw-bold text-muted small mb-3 shadow-sm">ID: {{ student.student_number }}</div>
                         <div class="text-muted fw-bold small mb-4">Section: <span class="text-dark">{{ student.section.name|default:"Unassigned" }}</span></div>
 
-                        <hr class="w-100 my-3 opacity-25">
-
-                        <div class="w-100 mt-auto pt-3">
-                            {% if student.is_beadle %}
-                                <div class="w-100 py-3 mb-3 shadow-sm d-flex flex-column align-items-center" style="background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px;">
-                                    <span class="text-uppercase fw-bold mb-1" style="color: #856404; font-size: 0.85rem; letter-spacing: 1px;">⭐ Classroom Beadle</span>
-                                    <span class="small opacity-75" style="color: #856404;">Assigned to: <strong>{{ student.section.name }}</strong></span>
-                                </div>
-                                <a href="{% url 'beadle_dashboard' %}" class="btn w-100 fw-bold py-3 shadow-sm text-white" style="background-color: var(--xu-blue-dark); border-radius: 8px; transition: all 0.2s;">
-                                    <i class="fa-solid fa-clipboard-list me-2"></i> CLASS ATTENDANCE
-                                </a>
-                            {% else %}
-                                <div class="badge bg-secondary text-white w-100 py-3 mb-3 shadow-sm text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px; border-radius: 8px;">Regular Student</div>
-                            {% endif %}
-                        </div>
                     </div>
 
                     <div class="col-md-8 col-lg-9 d-flex flex-column bg-white h-100">
@@ -98,6 +125,10 @@
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button" role="tab">📅 Recent Attendance</button>
+                                </li>
+                                <!-- NEW 3RD TAB -->
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="excuse-tab" data-bs-toggle="pill" data-bs-target="#excuse" type="button" role="tab">📩 Excuse Letters</button>
                                 </li>
                             </ul>
                         </div>
@@ -159,12 +190,69 @@
                                     </table>
                                 </div>
                             </div>
+
+                            <!-- TAB 3: Excuse Letters -->
+                            <div class="tab-pane fade h-100" id="excuse" role="tabpanel">
+                                <div class="table-container p-0 h-100">
+                                    <table class="table table-hover table-xu-dashboard mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4">Date Requested For</th>
+                                                <th>Violation Reason</th>
+                                                <th>Status</th>
+                                                <th class="pe-4 text-center">Action / Proof</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for req in all_requests %}
+                                            <tr>
+                                                <td class="ps-4 fw-bold text-dark">{{ req.date_requested_for|date:'M j, Y' }}</td>
+                                                <td><span class="fw-bold text-muted">{{ req.violation_name|default:"Absence"|title }}</span></td>
+                                                <td>
+                                                    {% if req.is_resolved and req.excuse_letter %}
+                                                        <span class="badge {% if req.excuse_letter.status == 'APPROVED' %}bg-success{% elif req.excuse_letter.status == 'REJECTED' %}bg-danger{% else %}bg-warning text-dark{% endif %} shadow-sm">
+                                                            {{ req.excuse_letter.status }}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger shadow-sm">PENDING UPLOAD</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="pe-4 text-center">
+                                                    {% if req.is_resolved and req.excuse_letter %}
+                                                        <a href="{{ req.excuse_letter.letter_image.url }}" target="_blank" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm">View Letter</a>
+                                                    {% else %}
+                                                        <form method="POST" action="{% url 'submit_excuse_letter' req.id %}" enctype="multipart/form-data" class="d-flex align-items-center justify-content-center gap-2 m-0">
+                                                            {% csrf_token %}
+                                                            <input type="file" name="letter_image" class="form-control form-control-sm" accept="image/*" required style="max-width: 150px;">
+                                                            <button type="submit" class="btn btn-sm btn-dark fw-bold shadow-sm">Upload</button>
+                                                        </form>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr><td colspan="4" class="text-center py-5 text-muted"><div class="display-6 mb-2 mt-4"><i class="fa-solid fa-file-circle-check text-success"></i></div><div class="fw-bold fs-6">You have no excuse letter requests.</div></td></tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+    
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    
+    <!-- Script to switch directly to the excuse letter tab when clicking the banner button -->
+    <script>
+        function switchToExcuseTab() {
+            var tabEl = document.querySelector('#excuse-tab');
+            var tab = new bootstrap.Tab(tabEl);
+            tab.show();
+        }
+    </script>
 </body>
 </html>

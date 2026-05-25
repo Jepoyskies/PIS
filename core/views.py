@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db import models
 
 import uuid
 import base64
@@ -41,11 +42,16 @@ def get_staff_context(request):
         active_sy = SchoolYear.objects.filter(is_active=True).first()
         
     pending_batches = PeriodAttendance.objects.filter(is_locked=True, is_approved=False).select_related('daily_attendance__section', 'submitted_by')
+    
+    # NEW: Fetch pending excuse letters for the dashboard widget
+    from .models import ExcuseLetter
+    pending_letters = ExcuseLetter.objects.filter(status='PENDING').select_related('student').order_by('-created_at')
         
     context = {
         'all_school_years': all_school_years, 
         'active_sy': active_sy, 
         'pending_batches': pending_batches,
+        'pending_letters': pending_letters, # ADDED
         'is_admin': request.user.is_superuser 
     }
     
@@ -588,8 +594,12 @@ def student_dashboard(request):
     disc = DisciplinaryRecord.objects.filter(student=student).order_by('-date_of_incident')
     att_history = StudentPeriodRecord.objects.filter(student=student).order_by('-period__daily_attendance__date')[:20]
     
+    pending_requests = ExcuseLetterRequest.objects.filter(student=student, is_resolved=False).order_by('-date_requested_for')
+    all_requests = ExcuseLetterRequest.objects.filter(student=student).order_by('-date_requested_for') # NEW
+    
     return render(request, 'core/student_dashboard.html', {
-        'student': student, 'discipline_history': disc, 'attendance_history': att_history
+        'student': student, 'discipline_history': disc, 'attendance_history': att_history,
+        'pending_requests': pending_requests, 'all_requests': all_requests # UPDATED
     })
 
 @login_required
@@ -952,3 +962,116 @@ def report_daily_attendance_summary(request):
     context = get_staff_context(request)
     context['attendance_logs'] = DailyAttendance.objects.all().order_by('-date')
     return render(request, 'core/reports/daily_attendance_summary.html', context)
+
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import ExcuseLetterRequest, ExcuseLetter
+
+@login_required
+def api_request_excuse(request, student_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            date_str = data.get('date')
+            violation_name = data.get('violation_name', 'absence')
+            student = get_object_or_404(Student, student_number=student_id)
+            
+            # 1. Create Dashboard Notification in Database
+            req, created = ExcuseLetterRequest.objects.get_or_create(
+                student=student, 
+                date_requested_for=date_str,
+                defaults={'is_resolved': False, 'violation_name': violation_name}
+            )
+            # If request exists but pending, update the violation name just in case
+            if not created and not req.is_resolved:
+                req.violation_name = violation_name
+                req.save()
+
+            # 2. Send the Email via Gmail
+            student_email = f"{student.student_number}@my.xu.edu.ph"
+            
+            subject = f"ACTION REQUIRED: Excuse Letter Needed for {violation_name.title()}"
+            message = f"Dear {student.first_name},\n\nThe Prefect Office is requesting an excuse letter for your {violation_name} on {date_str}.\n\nPlease log in to the PIS Student Portal to submit your letter.\n\nThank you,\nXavier High School Prefect Office"
+            
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                [student_email],
+                fail_silently=False, 
+            )
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+def submit_excuse_letter(request, req_id):
+    """ Allows student to upload proof safely closing the loop on a request """
+    if request.method == 'POST':
+        if not hasattr(request.user, 'student_profile'):
+            return redirect('login')
+        
+        student = request.user.student_profile
+        # Enforce security: Student can only access their own requests
+        req = get_object_or_404(ExcuseLetterRequest, id=req_id, student=student)
+        
+        if 'letter_image' in request.FILES:
+            daily_att = DailyAttendance.objects.filter(date=req.date_requested_for, section=student.section).first()
+            
+            # Create the actual letter mapped to existing records
+            letter = ExcuseLetter.objects.create(
+                student=student,
+                daily_attendance=daily_att,
+                letter_image=request.FILES['letter_image'],
+                status='PENDING'
+            )
+            
+            req.excuse_letter = letter
+            req.is_resolved = True
+            req.save()
+            
+            messages.success(request, f"Excuse letter for {req.date_requested_for} submitted successfully. Pending Admin approval.")
+        else:
+            messages.error(request, "No file was uploaded.")
+            
+    return redirect('student_dashboard')
+
+    from .models import ExcuseLetter
+
+@login_required
+def staff_excuse_letters_list(request):
+    if not request.user.is_staff: return redirect('home')
+    context = get_staff_context(request)
+    
+    # Fetch all letters, ordered by pending first, then newest
+    letters = ExcuseLetter.objects.select_related('student', 'daily_attendance').prefetch_related('requests').order_by(
+        models.Case(models.When(status='PENDING', then=0), default=1), 
+        '-created_at'
+    )
+    context['letters'] = letters
+    
+    return render(request, 'core/staff_excuse_letters.html', context)
+
+@login_required
+def review_excuse_letter(request, letter_id, action):
+    if not request.user.is_staff: return redirect('home')
+    
+    letter = get_object_or_404(ExcuseLetter, id=letter_id)
+    if action.upper() in ['APPROVED', 'REJECTED']:
+        letter.status = action.upper()
+        letter.save()
+        
+        # SMART FEATURE: If approved, automatically excuse the absence!
+        if letter.status == 'APPROVED' and letter.daily_attendance:
+            DisciplinaryRecord.objects.filter(
+                student=letter.student, 
+                date_of_incident=letter.daily_attendance.date,
+                category="ATTENDANCE"
+            ).update(is_excused=True, sanction="Excused by Letter", demerits=0)
+            messages.success(request, f"Excuse letter APPROVED. Demerits for {letter.student.first_name} have been zeroed out.")
+        else:
+            messages.warning(request, f"Excuse letter REJECTED.")
+            
+    return redirect('staff_excuse_letters')

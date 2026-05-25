@@ -23,7 +23,6 @@
         .table-container { flex-grow: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background-color: white; }
         .violation-row { background-color: #fffdf5 !important; border-left: 4px solid var(--xu-gold); }
         
-        /* Optimized Grid Styles */
         .hover-bg:hover { background-color: rgba(40, 57, 113, 0.08); }
         .cursor-pointer { cursor: pointer; }
         .col-name { min-width: 180px; max-width: 220px; }
@@ -33,6 +32,15 @@
         .col-locked { width: 280px; min-width: 280px; border-left: 2px solid var(--xu-blue-dark); border-right: 2px solid var(--xu-blue-dark); background-color: #f8f9fa; }
         .grid-header { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 2; padding: 10px 8px !important; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
         .btn-attendance { padding: 4px 6px !important; font-size: 0.75rem !important; }
+
+        /* Read-Only Profile Photo */
+        .profile-photo-container {
+            position: relative; width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid white; background-color: white; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-left: 15px; flex-shrink: 0;
+        }
+        .profile-photo-container img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -57,12 +65,31 @@
 
     <main class="flex-grow-1 overflow-hidden p-3 d-flex flex-column">
         <div class="dashboard-container pb-2">
+            
+            <!-- HEADER WITH PHOTO -->
             <div class="d-flex justify-content-between align-items-end mb-3 flex-shrink-0 text-white">
                 <div>
                     <h4 class="fw-bold mb-0" style="letter-spacing: -0.5px;">Daily Attendance Grid</h4>
                     <div class="opacity-75 fw-bold small mt-1">
                         Section: <span class="text-white me-3">{{ student.section.name }}</span> 
                         Date: <span class="text-white">{{ today|date:'l, F j, Y' }}</span>
+                    </div>
+                </div>
+                
+                <!-- BEADLE PHOTO WIDGET -->
+                <div class="d-flex align-items-center">
+                    <div class="text-end me-2">
+                        <div class="small fw-bold text-white mb-0">Beadle in Charge</div>
+                        <div class="text-white opacity-75 small" style="font-size: 0.75rem;">{{ student.student_number }}</div>
+                    </div>
+                    <div class="profile-photo-container">
+                        {% if student.photo %}
+                            <img src="{{ student.photo.url }}" alt="Profile Photo">
+                        {% else %}
+                            <span style="font-size: 2.5rem; color: var(--xu-blue-dark);">
+                                {% if student.sex == 'M' %}👦{% else %}👧{% endif %}
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
             </div>

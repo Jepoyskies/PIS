@@ -26,15 +26,14 @@
         .main-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; flex-grow: 1; }
         .menu-header { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); }
 
-        /* BUTTON FIXES: Darker border and drop shadow so they pop off the white background */
         .pis-btn { 
-            display: flex; align-items: center; width: 100%; padding: 15px 20px; 
-            margin-bottom: 12px; font-weight: 700; background: #fff; 
-            border: 1px solid #ced4da; /* Much clearer border */
+            display: flex; align-items: center; width: 100%; padding: 12px 20px; 
+            margin-bottom: 10px; font-weight: 700; background: #fff; 
+            border: 1px solid #ced4da;
             border-radius: 12px; text-decoration: none !important; 
             color: var(--xu-blue-dark); transition: 0.3s;
-            border-left: 6px solid #e9ecef; /* Visible resting left bar */
-            box-shadow: 0 3px 8px rgba(0,0,0,0.03); /* Subtle depth */
+            border-left: 6px solid #e9ecef;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.03); 
         }
         .pis-btn:hover { 
             transform: translateX(8px); border-left: 6px solid var(--xu-gold);
@@ -49,10 +48,12 @@
 
         .notification-panel { background: #fffdf5; border: 1px solid #f9ebbe; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
         .notif-card { border-left: 4px solid #dc3545; }
+        
+        .letters-panel { background: #f4f6f9; border: 1px solid #ced4da; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+        .letter-card { border-left: 4px solid #0d6efd; }
 
         .btn-xu-gold { background-color: var(--xu-gold); color: white; font-weight: bold; border: none; }
         .btn-xu-gold:hover { background-color: #a3822a; color: white; }
-
         .badge-gold { background-color: var(--xu-gold); color: white; }
     </style>
 </head>
@@ -81,6 +82,7 @@
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
         <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
+        <a href="{% url 'staff_excuse_letters' %}" class="nav-link">EXCUSE LETTERS</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
@@ -99,27 +101,30 @@
                     <h3 class="fw-bold" style="color: var(--xu-blue-dark); letter-spacing: -0.5px;">XAVIER<br>ATENEO</h3>
                 </div>
 
-                <!-- Buttons Column (ADDED: d-flex flex-column justify-content-center) -->
+                <!-- Buttons Column -->
                 <div class="col-md-4 p-4 border-end d-flex flex-column justify-content-center">
                     <a href="{% url 'staff_dashboard' %}" class="pis-btn"><span class="btn-num">1</span> Masterlist</a>
                     <a href="{% url 'disciplinary_module' 'Absences' %}" class="pis-btn"><span class="btn-num">2</span> Absences</a>
                     <a href="{% url 'disciplinary_module' 'Tardiness' %}" class="pis-btn"><span class="btn-num">3</span> Tardiness</a>
                     <a href="{% url 'disciplinary_module' 'Conduct' %}" class="pis-btn"><span class="btn-num">4</span> Conduct</a>
-                    <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn mb-0"><span class="btn-num">5</span> Suspension Tracking</a>
+                    <a href="{% url 'disciplinary_module' 'Suspension' %}" class="pis-btn"><span class="btn-num">5</span> Suspension Tracking</a>
+                    <a href="{% url 'staff_excuse_letters' %}" class="pis-btn mb-0"><span class="btn-num"><i class="fa-solid fa-envelope"></i></span> Excuse Letters</a>
                 </div>
                 
                 <!-- Notifications Column -->
-                <div class="col-md-4 p-4 bg-light d-flex flex-column">
-                    <div class="notification-panel flex-grow-1">
-                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center rounded-top bg-white">
-                            <h6 class="fw-bold mb-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ACTION REQUIRED</h6>
+                <div class="col-md-4 p-3 bg-light d-flex flex-column gap-3">
+                    
+                    <!-- Pending Attendance Panel -->
+                    <div class="notification-panel flex-grow-1" style="flex-basis: 50%;">
+                        <div class="p-2 px-3 border-bottom d-flex justify-content-between align-items-center rounded-top bg-white">
+                            <h6 class="fw-bold mb-0 text-danger" style="font-size: 0.8rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> PENDING ATTENDANCE</h6>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="{% url 'staff_attendance_list' %}" class="btn btn-sm btn-outline-secondary py-0 small" style="font-size: 0.75rem;">View All</a>
+                                <a href="{% url 'staff_attendance_list' %}" class="btn btn-sm btn-outline-secondary py-0 small" style="font-size: 0.7rem;">View All</a>
                                 <span class="badge bg-danger rounded-pill">{{ pending_batches|length }}</span>
                             </div>
                         </div>
                         
-                        <div class="p-3 flex-grow-1 overflow-auto" style="height: 0; min-height: 200px;">
+                        <div class="p-2 flex-grow-1 overflow-auto" style="height: 0; min-height: 120px;">
                             {% for batch in pending_batches %}
                             <div class="card notif-card p-2 mb-2 shadow-sm small border-0">
                                 <div class="d-flex justify-content-between">
@@ -128,17 +133,53 @@
                                 </div>
                                 <div class="text-muted mt-1" style="font-size: 0.7rem;">
                                     📅 {{ batch.daily_attendance.date|date:'M j, Y' }}
+                                    <a href="{% url 'staff_attendance_review' batch.id %}" class="fw-bold text-decoration-none float-end" style="color: var(--xu-gold);">Review →</a>
                                 </div>
-                                <a href="{% url 'staff_attendance_review' batch.id %}" class="fw-bold text-decoration-none mt-2 d-inline-block" style="color: var(--xu-gold);">Review Now →</a>
                             </div>
                             {% empty %}
-                            <div class="text-center mt-4">
-                                <div class="display-6 text-muted opacity-25 mb-2"><i class="fa-solid fa-check-circle"></i></div>
-                                <p class="text-muted small">All attendance reports<br>are up to date.</p>
+                            <div class="text-center mt-3">
+                                <div class="fs-3 text-muted opacity-25 mb-1"><i class="fa-solid fa-check-circle"></i></div>
+                                <p class="text-muted small">Reports up to date.</p>
                             </div>
                             {% endfor %}
                         </div>
                     </div>
+
+                    <!-- Pending Excuse Letters Panel -->
+                    <div class="letters-panel flex-grow-1" style="flex-basis: 50%;">
+                        <div class="p-2 px-3 border-bottom d-flex justify-content-between align-items-center rounded-top bg-white">
+                            <h6 class="fw-bold mb-0 text-primary" style="font-size: 0.8rem;"><i class="fa-solid fa-envelope-open-text me-1"></i> EXCUSE LETTERS</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{% url 'staff_excuse_letters' %}" class="btn btn-sm btn-outline-secondary py-0 small" style="font-size: 0.7rem;">View All</a>
+                                <span class="badge bg-primary rounded-pill">{{ pending_letters|length }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-2 flex-grow-1 overflow-auto" style="height: 0; min-height: 120px;">
+                            {% for letter in pending_letters %}
+                            <div class="card letter-card p-2 mb-2 shadow-sm small border-0">
+                                <div class="d-flex justify-content-between">
+                                    <div class="fw-bold text-truncate" style="max-width: 70%;">{{ letter.student.last_name }}, {{ letter.student.first_name }}</div>
+                                    <span class="text-muted fw-bold" style="font-size: 0.7rem;">{{ letter.created_at|date:'M j' }}</span>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                                    {% if letter.requests.first %}
+                                        Re: {{ letter.requests.first.violation_name|title|truncatechars:20 }}
+                                    {% else %}
+                                        New Submission
+                                    {% endif %}
+                                    <a href="{% url 'staff_excuse_letters' %}" class="fw-bold text-decoration-none float-end" style="color: #0d6efd;">Review →</a>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center mt-3">
+                                <div class="fs-3 text-muted opacity-25 mb-1"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                                <p class="text-muted small">No pending letters.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -8,7 +8,6 @@
     <link href="{% static 'core/css/xu_styles.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-        /* Forcefully define the variables so we don't rely on cached external CSS */
         :root {
             --xu-blue-dark: #22356d; 
             --xu-blue-2: #3a53a4;
@@ -34,40 +33,27 @@
         
         .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; background-color: white; }
         .table-xu-dashboard th { position: sticky; top: 0; background-color: #f1f3f7; color: var(--xu-blue-dark); z-index: 1; padding: 12px 10px !important; font-size: 0.85rem; border-bottom: 2px solid var(--xu-border-color) !important; white-space: nowrap; }
-        .selected-row { background-color: rgba(58, 83, 164, 0.1) !important; }
+        .selected-row { background-color: rgba(58, 83, 164, 0.1) !important; border-left: 4px solid var(--xu-gold); }
         .modal-legacy-header { background: linear-gradient(90deg, rgba(58, 83, 164, 0.1) 0%, #283971 100%); color: rgb(0, 0, 0); border-bottom: 3px solid #283971; }
         
-        /* Action Button Styles */
         .action-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--xu-border-color); }
         .action-btn-group .btn { border: none; border-radius: 0; padding: 2px 8px; font-size: 0.75rem; }
         .action-btn-group .btn:not(:last-child) { border-right: 1px solid var(--xu-border-color); }
 
-        /* Detail Modal Tab Styles */
         .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
         .info-group-box { border: 1px solid var(--xu-border-color); padding: 10px; border-radius: 4px; background-color: #f8f9fa; margin-bottom: 15px; }
         .info-group-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--xu-blue-dark); margin-top: -20px; background: #fff; display: inline-block; padding: 0 5px; border: 1px solid var(--xu-border-color); border-radius: 3px;}
         .bg-legacy-blue { background-color: #bacbe6; border: 1px solid #9aaecb; }
         .bg-legacy-yellow { background-color: #fcf4a3 !important; }
 
-        /* General Button Fallbacks just in case */
         .btn-xu-primary { background-color: var(--xu-blue-dark) !important; color: white !important; border: none; }
         .btn-xu-gold { background-color: var(--xu-gold) !important; color: white !important; border: none; }
 
-        /* Fix for notifications so they don't push the table layout */
         .messages-container {
-            position: absolute;
-            top: 130px; 
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2000;
-            width: 90%;
-            max-width: 600px;
-            pointer-events: none; 
+            position: absolute; top: 130px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; width: 90%; max-width: 600px; pointer-events: none; 
         }
-        .messages-container .alert {
-            pointer-events: auto; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
+        .messages-container .alert { pointer-events: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body class="d-flex flex-column vh-100">
@@ -98,18 +84,17 @@
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link active">CURRENTLY ENROLLED STUDENTS</a>
         <a href="{% url 'staff_attendance_list' %}" class="nav-link">ATTENDANCE</a>
+        <a href="{% url 'staff_excuse_letters' %}" class="nav-link">EXCUSE LETTERS</a>
         <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
         <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
     </nav>
 
     <main class="flex-grow-1 p-3 d-flex flex-column container-fluid" style="max-width: 1600px; margin: 0 auto; min-height: 0;">
         <div class="main-card my-2">
-            <!-- Card Header -->
             <div class="card-header-custom">
                 <span><i class="fa-solid fa-users me-2"></i> STUDENT MASTERLIST</span>
             </div>
 
-            <!-- Search Bar -->
             <div class="search-bar-container flex-shrink-0">
                 <form method="GET" class="container-fluid d-flex align-items-center gap-4 m-0">
                     <div class="d-flex align-items-center gap-2">
@@ -127,10 +112,8 @@
                 </form>
             </div>
 
-            <!-- Working Area -->
             <div class="flex-grow-1 p-3 d-flex flex-column" style="min-height: 0;">
                 
-                <!-- Floating Messages -->
                 <div class="messages-container">
                     {% if messages %}
                         {% for message in messages %}
@@ -142,7 +125,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Main Table -->
                 <div class="table-container bg-white">
                     <table class="table table-hover table-xu-dashboard mb-0" style="font-size: 0.85rem;">
                         <thead>
@@ -222,7 +204,11 @@
                     
                     <button class="btn btn-light border btn-sm fw-bold">Unserved CS</button>
                     <button type="button" id="btn-preview-letter" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#previewLetterModal" disabled>Preview Letter</button>
-                    <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
+                    
+                    <!-- NEW REQUEST EXCUSE LETTER BUTTON -->
+                    <button type="button" id="btn-request-excuse" class="btn btn-warning text-dark border-warning shadow-sm btn-sm fw-bold" disabled onclick="requestExcuseFromDashboard()">📧 Request Excuse Letter</button>
+                    
+                    <button type="button" id="btn-offenses-by-type" class="btn btn-light border btn-sm fw-bold ms-2" data-bs-toggle="modal" data-bs-target="#offensesByTypeModal" disabled>Student Offenses by Type</button>
                     <button type="button" id="btn-view-offenses" class="btn btn-light border btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#offenseModal" disabled>View Student Offenses</button>
                     
                     <button class="btn btn-light border btn-sm fw-bold">View in Datasheet Format</button>
@@ -233,7 +219,7 @@
         </div>
     </main>
 
- <!-- MODALS -->
+    <!-- MODALS -->
     {% include 'core/modals/edit_student_modal.html' %}
     {% include 'core/modals/add_student_modal.html' %}
     {% include 'core/modals/import_excel_modal.html' %}
@@ -244,701 +230,647 @@
 
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
     <script>
+        // 1. FETCH OFFENSES & POPULATE THE DATALIST
         let globalOffenses = [];
+        fetch('/api/offenses/list/')
+            .then(res => res.json())
+            .then(data => { 
+                globalOffenses = data.offenses; 
+                const datalist = document.getElementById('global-offenses-list');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    globalOffenses.forEach(off => {
+                        const option = document.createElement('option');
+                        option.value = off.name;
+                        datalist.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => console.error("Could not load offenses:", err));
 
-// Fetch the official list immediately when the page loads
-fetch('/api/offenses/list/')
-    .then(res => res.json())
-    .then(data => { 
-        globalOffenses = data.offenses; 
-        console.log("Offenses Loaded:", globalOffenses.length); 
-    })
-    .catch(err => console.error("Could not load offenses:", err));
-    // 1. Logic for Row Selection and Data Fetching
-    const selectStudent = (row) => {
-        const studentId = row.dataset.id;
-        const studentName = row.dataset.name;
-        const studentSection = row.dataset.section;
-        const studentAddress = row.dataset.address;
-        const studentBday = row.dataset.bday;
+        const selectStudent = (row) => {
+            const studentId = row.dataset.id;
+            const studentName = row.dataset.name;
+            const studentSection = row.dataset.section;
+            const studentAddress = row.dataset.address;
 
-        document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
-        row.classList.add('selected-row');
-        
-        // Enable buttons
-        const btnView = document.getElementById('btn-view-offenses');
-        const btnType = document.getElementById('btn-offenses-by-type');
-        const btnPreviewLetter = document.getElementById('btn-preview-letter');
-        
-        if(btnView) btnView.disabled = false;
-        if(btnType) btnType.disabled = false;
-        if(btnPreviewLetter) btnPreviewLetter.disabled = false;
+            document.querySelectorAll('.student-row').forEach(r => r.classList.remove('selected-row'));
+            row.classList.add('selected-row');
+            
+            // Enable buttons
+            const btnView = document.getElementById('btn-view-offenses');
+            const btnType = document.getElementById('btn-offenses-by-type');
+            const btnPreviewLetter = document.getElementById('btn-preview-letter');
+            const btnReqExcuse = document.getElementById('btn-request-excuse'); // Enable new button
+            
+            if(btnView) btnView.disabled = false;
+            if(btnType) btnType.disabled = false;
+            if(btnPreviewLetter) btnPreviewLetter.disabled = false;
+            if(btnReqExcuse) btnReqExcuse.disabled = false;
 
-        // Populate Detailed Modal Identifiers
-        document.getElementById('modal-id-display').innerText = studentId;
-        document.getElementById('modal-name-display').innerText = studentName;
-        document.getElementById('modal-sex-display').innerText = row.dataset.sex;
-        document.getElementById('type-modal-name').innerText = studentName;
+            document.getElementById('modal-id-display').innerText = studentId;
+            document.getElementById('modal-name-display').innerText = studentName;
+            document.getElementById('modal-sex-display').innerText = row.dataset.sex;
+            document.getElementById('type-modal-name').innerText = studentName;
 
-        // Populate Preview Letter fields
-        const plId = document.getElementById('pl-student-id');
-        const plName = document.getElementById('pl-name');
-        const plSec = document.getElementById('pl-section');
-        const plAdd = document.getElementById('pl-address');
-        
-        if(plId) plId.value = studentId;
-        if(plName) plName.value = studentName;
-        if(plSec) plSec.value = studentSection;
-        if(plAdd) plAdd.value = studentAddress;
+            const plId = document.getElementById('pl-student-id');
+            const plName = document.getElementById('pl-name');
+            const plSec = document.getElementById('pl-section');
+            const plAdd = document.getElementById('pl-address');
+            
+            if(plId) plId.value = studentId;
+            if(plName) plName.value = studentName;
+            if(plSec) plSec.value = studentSection;
+            if(plAdd) plAdd.value = studentAddress;
 
-        // Format Today's Date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const todayStr = new Date().toLocaleDateString('en-US', options);
-        const plDate = document.getElementById('pl-current-date');
-        if(plDate) plDate.innerText = todayStr;
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const plDate = document.getElementById('pl-current-date');
+            if(plDate) plDate.innerText = new Date().toLocaleDateString('en-US', options);
 
-        // Fetch Data from API
-        fetch(`/api/student/${studentId}/offenses/`)
-            .then(response => response.json())
-            .then(data => {
-                document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
+            fetch(`/api/student/${studentId}/offenses/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
+                    if (data.student_info) {
+                        Object.keys(data.student_info).forEach(key => {
+                            const input = document.querySelector(`.personal-info-input[name="${key}"]`);
+                            if(input) input.value = data.student_info[key] || '';
+                        });
+                    }
+
+                    if (data.student_info && data.student_info.photo_url) {
+                        document.getElementById('student-photo-img').src = data.student_info.photo_url;
+                        document.getElementById('student-photo-img').style.display = 'block';
+                        document.getElementById('student-photo-text').style.display = 'none';
+                    } else {
+                        setPhotoUI('');
+                    }
+                    document.getElementById('student-photo-base64').value = ''; 
+                    setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                    setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                    setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
+
+                    const summaryBody = document.getElementById('offenses-by-type-body');
+                    summaryBody.innerHTML = ''; 
+                    if (data.summary) {
+                        data.summary.forEach(item => {
+                            summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
+                        });
+                    }
+
+                    const detailedBody = document.getElementById('detailed-offenses-body');
+                    detailedBody.innerHTML = ''; 
+                    if (!data.records || data.records.length === 0) {
+                        detailedBody.innerHTML = '<tr><td colspan="10" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                    } else {
+                        data.records.forEach(rec => createOffenseRow(rec));
+                    }
+                });
+        };
+
+        // --- NEW EXCUSE LETTER DASHBOARD LOGIC ---
+        function requestExcuseFromDashboard() {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            const studentName = document.getElementById('modal-name-display').innerText;
+
+            const dateStr = prompt(`For which date do you need an excuse letter from ${studentName}? (Format: YYYY-MM-DD)`, new Date().toISOString().split('T')[0]);
+            
+            if (dateStr) {
+                const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${dateStr} (e.g., 'unprescribed uniform', 'absence'):`, 'absence');
+                if (!violationStr) return; // Cancel if no violation is provided
+
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const btn = document.getElementById('btn-request-excuse');
+                const originalHtml = btn.innerHTML;
                 
-                if (data.student_info) {
-                    Object.keys(data.student_info).forEach(key => {
-                        const input = document.querySelector(`.personal-info-input[name="${key}"]`);
-                        if(input) input.value = data.student_info[key] || '';
-                    });
-                }
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+                btn.disabled = true;
 
-                // Load Photo if it exists
-                if (data.student_info && data.student_info.photo_url) {
-                    document.getElementById('student-photo-img').src = data.student_info.photo_url;
-                    document.getElementById('student-photo-img').style.display = 'block';
-                    document.getElementById('student-photo-text').style.display = 'none';
-                } else {
-                    setPhotoUI('');
-                }
-                document.getElementById('student-photo-base64').value = ''; 
-                setSigUI(data.student_info.father_sig_url || '', 'father', false);
-                setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
-                setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
-
-                const summaryBody = document.getElementById('offenses-by-type-body');
-                summaryBody.innerHTML = ''; 
-                if (data.summary) {
-                    data.summary.forEach(item => {
-                        summaryBody.innerHTML += `<tr><td class="ps-3 fw-bold">${item.category}</td><td class="text-center pe-3 fw-bold text-danger">${item.count}</td></tr>`;
-                    });
-                }
-
-                const detailedBody = document.getElementById('detailed-offenses-body');
-                detailedBody.innerHTML = ''; 
-                if (!data.records || data.records.length === 0) {
-                    detailedBody.innerHTML = '<tr><td colspan="9" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
-                } else {
-                    data.records.forEach(rec => createOffenseRow(rec));
-                }
-            });
-    };
-
-    // Attach click listener to all rows
-    document.querySelectorAll('.student-row').forEach(row => {
-        row.addEventListener('click', (e) => {
-            if (e.target.closest('.action-stop')) return;
-            selectStudent(row);
-        });
-    });
-
-    // Auto-Select Logic
-    const attemptAutoSelect = (attempts) => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const searchId = urlParams.get('searchId');
-
-        if (searchId) {
-            const cleanId = searchId.trim();
-            const targetRow = document.querySelector(`.student-row[data-id="${cleanId}"]`);
-
-            if (targetRow) {
-                selectStudent(targetRow);
-            } else if (attempts > 0) {
-                setTimeout(() => attemptAutoSelect(attempts - 1), 100);
+                fetch(`/api/student/${studentId}/request-excuse/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ date: dateStr, violation_name: violationStr })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(`Dashboard notification and Email successfully sent to ${studentId}@my.xu.edu.ph!`);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Network error.");
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
             }
         }
-    };
 
-    // Filter by Section
-    const urlParams = new URLSearchParams(window.location.search);
-    const filterSection = urlParams.get('sectionName');
-    if (filterSection) {
-        let visibleCount = 0;
         document.querySelectorAll('.student-row').forEach(row => {
-            if (row.dataset.section !== filterSection) {
-                row.style.display = 'none';
-            } else {
-                visibleCount++;
-            }
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('.action-stop')) return;
+                selectStudent(row);
+            });
         });
-        const countElement = document.querySelector('.small.text-muted.me-auto');
-        if (countElement) {
-            countElement.innerHTML = `Showing <b>${visibleCount}</b> students in <b>${filterSection}</b>`;
+
+        const attemptAutoSelect = (attempts) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchId = urlParams.get('searchId');
+            if (searchId) {
+                const cleanId = searchId.trim();
+                const targetRow = document.querySelector(`.student-row[data-id="${cleanId}"]`);
+                if (targetRow) selectStudent(targetRow);
+                else if (attempts > 0) setTimeout(() => attemptAutoSelect(attempts - 1), 100);
+            }
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterSection = urlParams.get('sectionName');
+        if (filterSection) {
+            let visibleCount = 0;
+            document.querySelectorAll('.student-row').forEach(row => {
+                if (row.dataset.section !== filterSection) row.style.display = 'none';
+                else visibleCount++;
+            });
+            const countElement = document.querySelector('.small.text-muted.me-auto');
+            if (countElement) countElement.innerHTML = `Showing <b>${visibleCount}</b> students in <b>${filterSection}</b>`;
         }
-    }
 
-    // Run on load
-    window.addEventListener('load', () => attemptAutoSelect(5));
+        window.addEventListener('load', () => attemptAutoSelect(5));
+        document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
 
-// This guarantees that ANY typing or changing in the table instantly updates the Unserved CS tab
-document.getElementById('detailed-offenses-body').addEventListener('input', updateUnservedCSTable);
-function createOffenseRow(data = {}) {
-    const tbody = document.getElementById('detailed-offenses-body');
-    const row = document.createElement('tr');
-    row.dataset.recordId = data.id || ''; // Save database ID for automatic syncing
-    
-    let optionsHTML = '<option value="">-- Select Offense --</option>';
-    let matchFound = false;
-
-    // Build the dropdown options from the official list
-    if (typeof globalOffenses !== 'undefined') {
-        globalOffenses.forEach(off => {
-            let isSelected = '';
-            if (data.category && off.name.toLowerCase().includes(data.category.toLowerCase())) {
-                isSelected = 'selected';
-                matchFound = true;
-            }
-            optionsHTML += `<option value="${off.name}" data-dem="${off.default_demerits}" data-sanc="${off.default_sanction}" data-cnt="${off.default_count}" ${isSelected}>${off.name}</option>`;
-        });
-    }
-
-    // Keep existing data if it doesn't match the new official list
-    if (!matchFound && data.category) {
-        optionsHTML = `<option value="${data.category}" selected>${data.category}</option>` + optionsHTML;
-    }
-
-    // ==========================================
-    // NEW FIX: Sanction Fallback Logic
-    // If the database has a blank sanction, calculate it based on Demerits!
-    // ==========================================
-    let sanctionVal = data.sanction || '';
-    let demVal = parseInt(data.demerits) || 0;
-    
-    if (!sanctionVal && demVal > 0) {
-        if (demVal >= 50) sanctionVal = "2 Hrs CS";
-        else if (demVal >= 8) sanctionVal = "1 Hr CS";
-        else sanctionVal = "Warning";
-    }
-
-    // FULL ROW HTML
-    row.innerHTML = `
-        <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
-        <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
-        <td>
-            <select class="form-select form-select-sm border-0 val-offense fw-bold" onchange="applyOffenseDefaults(this)" style="min-width: 200px;">
-                ${optionsHTML}
-            </select>
-        </td>
-        <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
-        <td>
-            <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
-                <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
-                <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
-            </select>
-        </td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
-        <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
-        <td class="text-center">
-            <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
-        </td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${data.count || 0}"></td>
-    `;
-    
-    tbody.appendChild(row);
-    
-    // Auto-update the "Unserved CS" tab immediately after rendering
-    if (typeof updateUnservedCSTable === "function") {
-        updateUnservedCSTable();
-    }
-}
-
-function addNewOffenseRow() {
-    const tbody = document.getElementById('detailed-offenses-body');
-    if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
-        tbody.innerHTML = '';
-    }
-    const today = new Date().toISOString().split('T')[0];
-    createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
-}
-
-function applyOffenseDefaults(selectElem) {
-    const row = selectElem.closest('tr');
-    const selectedOption = selectElem.options[selectElem.selectedIndex];
-
-    const demField = row.querySelector('.val-dem');
-    const sancField = row.querySelector('.val-sanction');
-
-    if (selectedOption.value && selectedOption.dataset.dem !== undefined) {
-        // Auto-populate based on the official list
-        demField.value = selectedOption.dataset.dem;
-        sancField.value = selectedOption.dataset.sanc || 'N/A';
-    } else {
-        // If unmapped or cleared
-        demField.value = 0;
-        sancField.value = '';
-    }
-    
-    // Recalculate Count and Sanction logic
-    calculateRow(selectElem);
-    updateUnservedCSTable();
-}
-
-function calculateRow(input) {
-    const row = input.closest('tr');
-    const status = row.querySelector('.val-status').value;
-    const countField = row.querySelector('.val-count');
-    
-    const selectElem = row.querySelector('.val-offense');
-    const selectedOption = selectElem.options[selectElem.selectedIndex];
-
-    if (status === "Unexcused") {
-        if (selectedOption && selectedOption.dataset.cnt !== undefined) {
-            countField.value = selectedOption.dataset.cnt;
-        } else {
-            countField.value = "1"; 
-        }
-    } else {
-        countField.value = "0";
-    }
-    updateUnservedCSTable();
-}
-
-    // Edit Student Details Logic
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.getElementById('edit-id').value = this.dataset.id;
-            document.getElementById('edit-fname').value = this.dataset.fname;
-            document.getElementById('edit-lname').value = this.dataset.lname;
-            document.getElementById('edit-mi').value = this.dataset.mi;
-            document.getElementById('edit-sex').value = this.dataset.sex;
-            document.getElementById('edit-bday').value = this.dataset.bday;
-            document.getElementById('edit-address').value = this.dataset.address;
-            document.getElementById('edit-section').value = this.dataset.section;
-        });
-    });
-
-    // SAVE PERSONAL INFO TO DATABASE
-    function savePersonalInfo() {
-        const studentId = document.getElementById('modal-id-display').innerText;
-        const payload = {};
-        
-        document.querySelectorAll('.personal-info-input').forEach(input => {
-            payload[input.name] = input.value;
-        });
-
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        fetch(`/api/student/${studentId}/offenses/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                alert('Personal Information Saved Successfully!');
-                window.location.reload(); 
-            } else {
-                alert('Error saving data: ' + data.message);
-            }
-        });
-    }
-
-    // ==========================================
-    // INLINE PHOTO & CAMERA LOGIC
-    // ==========================================
-    let videoStream = null;
-    let isCameraActive = false;
-
-    function savePhotoInstantly(base64Str) {
-        const studentId = document.getElementById('modal-id-display').innerText;
-        if (!studentId || studentId === '---') return;
-
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const payload = { photo_base64: base64Str }; 
-
-        fetch(`/api/student/${studentId}/offenses/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status !== 'success') {
-                alert('Error saving photo: ' + data.message);
-            }
-        })
-        .catch(err => console.error("Error saving photo:", err));
-    }
-
-    function setPhotoUI(base64Str, autoSave = false) {
-        const img = document.getElementById('student-photo-img');
-        const text = document.getElementById('student-photo-text');
-        
-        if (base64Str) {
-            img.src = base64Str;
-            img.style.display = 'block';
-            text.style.display = 'none';
-            if (autoSave && base64Str.startsWith('data:image')) {
-                savePhotoInstantly(base64Str);
-            }
-        } else {
-            img.src = '';
-            img.style.display = 'none';
-            text.style.display = 'flex';
-            if (autoSave) {
-                savePhotoInstantly('DELETE');
-            }
-        }
-    }
-
-    function toggleCamera() {
-        const video = document.getElementById('webcam-video');
-        const btnCamera = document.getElementById('btn-camera');
-        const btnUpload = document.getElementById('btn-upload');
-        const img = document.getElementById('student-photo-img');
-        const text = document.getElementById('student-photo-text');
-
-        if (!isCameraActive) {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(stream) {
-                        videoStream = stream;
-                        video.srcObject = stream;
-                        video.style.display = 'block';
-                        img.style.display = 'none';
-                        text.style.display = 'none';
-                        
-                        btnCamera.innerHTML = '📸 Snap Picture';
-                        btnCamera.classList.replace('btn-light', 'btn-primary');
-                        btnCamera.classList.add('text-white');
-                        
-                        btnUpload.innerHTML = 'Cancel';
-                        btnUpload.classList.add('text-danger');
-                        btnUpload.onclick = cancelCamera; 
-                        isCameraActive = true;
-                    })
-                    .catch(function(err) {
-                        alert("Camera access denied or unavailable.");
-                    });
-            } else {
-                alert("Your browser does not support camera access.");
-            }
-        } else {
-            const canvas = document.getElementById('webcam-canvas');
-            const context = canvas.getContext('2d');
+        // 2. CREATE ROW (Now includes the Trash Button)
+        function createOffenseRow(data = {}) {
+            const tbody = document.getElementById('detailed-offenses-body');
+            const row = document.createElement('tr');
+            row.dataset.recordId = data.id || ''; 
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            let sanctionVal = data.sanction || '';
+            let demVal = parseInt(data.demerits) || 0;
             
-            context.translate(canvas.width, 0);
-            context.scale(-1, 1);
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-            cancelCamera(); 
-            setPhotoUI(dataURL, true); 
-        }
-    }
+            if (!sanctionVal && demVal > 0) {
+                if (demVal >= 50) sanctionVal = "2 Hrs CS";
+                else if (demVal >= 8) sanctionVal = "1 Hr CS";
+                else sanctionVal = "Warning";
+            }
 
-    function cancelCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        document.getElementById('webcam-video').style.display = 'none';
-        
-        const btnCamera = document.getElementById('btn-camera');
-        const btnUpload = document.getElementById('btn-upload');
-        
-        btnCamera.innerHTML = 'Take a Picture';
-        btnCamera.classList.replace('btn-primary', 'btn-light');
-        btnCamera.classList.remove('text-white');
-        
-        btnUpload.innerHTML = 'Load a Picture';
-        btnUpload.classList.remove('text-danger');
-        btnUpload.onclick = () => document.getElementById('upload-photo-input').click(); 
-        isCameraActive = false;
+            let categoryVal = data.category || '';
+            let countVal = data.count || 1;
+            row.dataset.cnt = countVal;
 
-        const img = document.getElementById('student-photo-img');
-        if (img.src && img.src !== window.location.href) {
-             img.style.display = 'block';
-        } else {
-             document.getElementById('student-photo-text').style.display = 'block';
+            row.innerHTML = `
+                <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
+                <td>
+                    <input type="text" list="global-offenses-list" class="form-control form-control-sm border-0 val-offense fw-bold" 
+                           onchange="applyOffenseDefaults(this)" placeholder="-- Search/Type Offense --" value="${categoryVal}" style="min-width: 200px;">
+                </td>
+                <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
+                <td>
+                    <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
+                        <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
+                        <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${countVal}"></td>
+                <td class="text-center align-middle">
+                    <button type="button" class="btn btn-sm text-danger p-0 m-0 border-0 bg-transparent" onclick="deleteOffenseRow(this)" title="Delete Row">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            if (typeof updateUnservedCSTable === "function") updateUnservedCSTable();
         }
-    }
 
-    function handlePhotoUpload(event) {
-        const file = event.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert("File is too large. Please select an image under 5MB.");
+        function addNewOffenseRow() {
+            const tbody = document.getElementById('detailed-offenses-body');
+            if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
+        }
+
+        // 3. APPLY DEFAULTS (Now with STRICT Validation)
+        function applyOffenseDefaults(inputElem) {
+            const row = inputElem.closest('tr');
+            const demField = row.querySelector('.val-dem');
+            const sancField = row.querySelector('.val-sanction');
+            const offenseVal = inputElem.value;
+
+            // If they just cleared the input, reset fields and stop
+            if (offenseVal.trim() === '') {
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
                 return;
             }
-            const reader = new FileReader();
-            reader.onload = function(e) { setPhotoUI(e.target.result, true); };
-            reader.readAsDataURL(file);
+
+            // Search for exact match in our loaded list
+            const match = globalOffenses.find(o => o.name === offenseVal);
+
+            // STRICT VALIDATION: If they typed random letters that don't match exactly
+            if (!match) {
+                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                inputElem.value = ''; // Wipe the invalid text
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
+                return; // Stop here so it doesn't add a new row
+            }
+
+            // If Valid, Apply defaults
+            demField.value = match.default_demerits;
+            sancField.value = match.default_sanction || 'N/A';
+            row.dataset.cnt = match.default_count;
+            
+            calculateRow(inputElem);
+            updateUnservedCSTable();
+
+            // Auto-add new row if it's the last row
+            const tbody = document.getElementById('detailed-offenses-body');
+            if (row === tbody.lastElementChild) {
+                addNewOffenseRow();
+            }
         }
-    }
 
-    function clearPhoto() {
-        if (confirm("Would you like to delete the current photo?")) {
-            setPhotoUI('', true);
-            document.getElementById('upload-photo-input').value = '';
+        // 4. DELETE ROW FUNCTION
+        function deleteOffenseRow(button) {
+            const row = button.closest('tr');
+            const recordId = row.dataset.recordId;
+
+            if (confirm("Are you sure you want to delete this row?")) {
+                // If this is an existing database record, we will need to delete it from MySQL
+                if (recordId) {
+                    console.log("Trigger backend delete for ID:", recordId);
+                    // TODO: We will add the API call here in the next step!
+                }
+                
+                // Remove from UI
+                row.remove();
+                updateUnservedCSTable();
+                
+                // Ensure there is always at least one row
+                const tbody = document.getElementById('detailed-offenses-body');
+                if (tbody.children.length === 0) {
+                    addNewOffenseRow();
+                }
+            }
         }
-    }
 
-    document.getElementById('student-photo-img').addEventListener('error', function() {
-        this.style.display = 'none';
-        document.getElementById('student-photo-text').style.display = 'flex';
-        console.warn("Could not load student photo from:", this.src);
-    });
+        // 5. CALCULATE ROW LOGIC
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const status = row.querySelector('.val-status').value;
+            const countField = row.querySelector('.val-count');
 
-    // --- REPORT MODAL LOGIC ---
+            if (status === "Unexcused") {
+                countField.value = row.dataset.cnt !== undefined ? row.dataset.cnt : "1";
+            } else {
+                countField.value = "0";
+            }
+            updateUnservedCSTable();
+        }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const today = new Date().toISOString().split('T')[0];
-    const display = document.getElementById('today-date-display');
-    if(display) display.innerText = today;
-
-    document.querySelectorAll('.filter-radio').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const type = e.target.value;
-            document.getElementById('filter-month').disabled = (type !== 'MONTH');
-            document.getElementById('range-start').disabled = (type !== 'CUSTOM');
-            document.getElementById('range-end').disabled = (type !== 'CUSTOM');
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('edit-id').value = this.dataset.id;
+                document.getElementById('edit-fname').value = this.dataset.fname;
+                document.getElementById('edit-lname').value = this.dataset.lname;
+                document.getElementById('edit-mi').value = this.dataset.mi;
+                document.getElementById('edit-sex').value = this.dataset.sex;
+                document.getElementById('edit-bday').value = this.dataset.bday;
+                document.getElementById('edit-address').value = this.dataset.address;
+                document.getElementById('edit-section').value = this.dataset.section;
+            });
         });
-    });
-});
 
-function generateFilteredReport() {
-    const studentId = document.getElementById('modal-id-display').innerText;
-    const form = document.getElementById('report-filter-form');
-    const formData = new FormData(form);
-    
-    const periodType = formData.get('periodType');
-    let start = "";
-    let end = "";
+        function savePersonalInfo() {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            const payload = {};
+            document.querySelectorAll('.personal-info-input').forEach(input => { payload[input.name] = input.value; });
 
-    if (periodType === 'CUSTOM') {
-        start = document.getElementById('range-start').value;
-        end = document.getElementById('range-end').value;
-        if (!start || !end) return alert("Please select both start and end dates.");
-        if (new Date(end) < new Date(start)) return alert("End date cannot be before start date.");
-    } else if (periodType === 'TODAY') {
-        start = end = new Date().toISOString().split('T')[0];
-    }
-
-    const url = `/staff/report/student/${studentId}/?type=${periodType}&start=${start}&end=${end}&month=${document.getElementById('filter-month').value}`;
-    window.open(url, '_blank');
-}
-
-// ==========================================
-// UNSERVED CS SYNC LOGIC
-// ==========================================
-
-function handleServedToggle(checkbox) {
-    const row = checkbox.closest('tr');
-    const recordId = row.dataset.recordId;
-    
-    if (recordId) {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        fetch(`/api/record/${recordId}/toggle-served/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ is_served: checkbox.checked })
-        })
-        .catch(err => console.error("Error saving served status:", err));
-    }
-    
-    updateUnservedCSTable();
-}
-
-function updateUnservedCSTable() {
-    const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
-    const targetBody = document.getElementById('unserved-cs-body');
-    
-    if (!targetBody) return;
-
-    let html = '';
-    let count = 0;
-
-    sourceRows.forEach(row => {
-        if(row.cells.length < 9) return;
-
-        const dateInput = row.querySelector('input[type="date"]');
-        if(!dateInput) return;
-
-        const date = dateInput.value;
-        const offense = row.querySelector('.val-offense').value;
-        const demerits = row.querySelector('.val-dem').value;
-        const sanction = row.querySelector('.val-sanction').value;
-        const status = row.querySelector('.val-status').value; 
-        const notes = row.querySelector('input[placeholder="Details..."]').value;
-        const isServed = row.querySelector('.val-served').checked;
-
-        if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
-            count++;
-
-            html += `
-                <tr style="border-left: 3px solid #dc3545;">
-                    <td class="text-center fw-bold align-middle">${date}</td>
-                    <td class="align-middle fw-bold text-dark">${offense}</td>
-                    <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
-                    <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
-                    
-                    <td class="text-center align-middle">
-                        <span class="badge bg-warning text-dark shadow-sm">Pending</span><br>
-                        <span class="small text-muted" style="font-size: 0.65rem;">(${status})</span>
-                    </td>
-                    
-                    <td class="small fst-italic text-muted align-middle">${notes || 'No action notes added'}</td>
-                </tr>
-            `;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { alert('Personal Information Saved Successfully!'); window.location.reload(); } 
+                else { alert('Error saving data: ' + data.message); }
+            });
         }
-    });
 
-    if (count === 0) {
-        targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-success fw-bold">🎉 All community service hours have been served!</td></tr>';
-    } else {
-        targetBody.innerHTML = html;
-    }
-}
+        // PHOTO AND SIGNATURE LOGIC
+        let videoStream = null;
+        let isCameraActive = false;
 
-    // ==========================================
-    // SIGNATURE CAMERA & UPLOAD LOGIC
-    // ==========================================
-    let sigVideoStream = null;
-    let activeSigCamera = null; 
-
-    function saveSignatureInstantly(base64Str, type) {
-        const studentId = document.getElementById('modal-id-display').innerText;
-        if (!studentId || studentId === '---') return;
-
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const payload = {};
-        payload[`${type}_signature_base64`] = base64Str; 
-
-        fetch(`/api/student/${studentId}/offenses/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify(payload)
-        }).catch(err => console.error("Error saving signature:", err));
-    }
-
-    function setSigUI(base64Str, type, autoSave = false) {
-        const img = document.getElementById(`sig-img-${type}`);
-        const text = document.getElementById(`sig-text-${type}`);
-        
-        if (base64Str) {
-            img.src = base64Str;
-            img.style.display = 'block';
-            text.style.display = 'none';
-            if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
-        } else {
-            img.src = '';
-            img.style.display = 'none';
-            text.style.display = 'block';
-            if (autoSave) saveSignatureInstantly('DELETE', type);
+        function savePhotoInstantly(base64Str) {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            if (!studentId || studentId === '---') return;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ photo_base64: base64Str })
+            });
         }
-    }
 
-    function toggleSigCamera(type) {
-        const video = document.getElementById(`sig-video-${type}`);
-        const btnCam = document.getElementById(`btn-cam-${type}`);
-        const btnUp = document.getElementById(`btn-up-${type}`);
-        const img = document.getElementById(`sig-img-${type}`);
-        const text = document.getElementById(`sig-text-${type}`);
+        function setPhotoUI(base64Str, autoSave = false) {
+            const img = document.getElementById('student-photo-img');
+            const text = document.getElementById('student-photo-text');
+            if (base64Str) {
+                img.src = base64Str;
+                img.style.display = 'block';
+                text.style.display = 'none';
+                if (autoSave && base64Str.startsWith('data:image')) savePhotoInstantly(base64Str);
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                text.style.display = 'flex';
+                if (autoSave) savePhotoInstantly('DELETE');
+            }
+        }
 
-        if (activeSigCamera !== type) {
-            if (sigVideoStream) cancelSigCamera(activeSigCamera);
+        function toggleCamera() {
+            const video = document.getElementById('webcam-video');
+            const btnCamera = document.getElementById('btn-camera');
+            const btnUpload = document.getElementById('btn-upload');
+            const img = document.getElementById('student-photo-img');
+            const text = document.getElementById('student-photo-text');
 
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
+            if (!isCameraActive) {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(stream) {
+                            videoStream = stream;
+                            video.srcObject = stream;
+                            video.style.display = 'block';
+                            img.style.display = 'none';
+                            text.style.display = 'none';
+                            btnCamera.innerHTML = '📸 Snap Picture';
+                            btnCamera.classList.replace('btn-light', 'btn-primary');
+                            btnCamera.classList.add('text-white');
+                            btnUpload.innerHTML = 'Cancel';
+                            btnUpload.classList.add('text-danger');
+                            btnUpload.onclick = cancelCamera; 
+                            isCameraActive = true;
+                        });
+                }
+            } else {
+                const canvas = document.getElementById('webcam-canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                cancelCamera(); 
+                setPhotoUI(dataURL, true); 
+            }
+        }
+
+        function cancelCamera() {
+            if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; }
+            document.getElementById('webcam-video').style.display = 'none';
+            const btnCamera = document.getElementById('btn-camera');
+            const btnUpload = document.getElementById('btn-upload');
+            btnCamera.innerHTML = 'Take a Picture';
+            btnCamera.classList.replace('btn-primary', 'btn-light');
+            btnCamera.classList.remove('text-white');
+            btnUpload.innerHTML = 'Load a Picture';
+            btnUpload.classList.remove('text-danger');
+            btnUpload.onclick = () => document.getElementById('upload-photo-input').click(); 
+            isCameraActive = false;
+            const img = document.getElementById('student-photo-img');
+            if (img.src && img.src !== window.location.href) img.style.display = 'block';
+            else document.getElementById('student-photo-text').style.display = 'block';
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { setPhotoUI(e.target.result, true); };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearPhoto() {
+            if (confirm("Would you like to delete the current photo?")) {
+                setPhotoUI('', true);
+                document.getElementById('upload-photo-input').value = '';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            const display = document.getElementById('today-date-display');
+            if(display) display.innerText = today;
+
+            document.querySelectorAll('.filter-radio').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const type = e.target.value;
+                    document.getElementById('filter-month').disabled = (type !== 'MONTH');
+                    document.getElementById('range-start').disabled = (type !== 'CUSTOM');
+                    document.getElementById('range-end').disabled = (type !== 'CUSTOM');
+                });
+            });
+        });
+
+        function generateFilteredReport() {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            const form = document.getElementById('report-filter-form');
+            const formData = new FormData(form);
+            const periodType = formData.get('periodType');
+            let start = "";
+            let end = "";
+
+            if (periodType === 'CUSTOM') {
+                start = document.getElementById('range-start').value;
+                end = document.getElementById('range-end').value;
+                if (!start || !end) return alert("Please select both start and end dates.");
+                if (new Date(end) < new Date(start)) return alert("End date cannot be before start date.");
+            } else if (periodType === 'TODAY') {
+                start = end = new Date().toISOString().split('T')[0];
+            }
+
+            const url = `/staff/report/student/${studentId}/?type=${periodType}&start=${start}&end=${end}&month=${document.getElementById('filter-month').value}`;
+            window.open(url, '_blank');
+        }
+
+        function handleServedToggle(checkbox) {
+            const row = checkbox.closest('tr');
+            const recordId = row.dataset.recordId;
+            if (recordId) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                fetch(`/api/record/${recordId}/toggle-served/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ is_served: checkbox.checked })
+                });
+            }
+            updateUnservedCSTable();
+        }
+
+        function updateUnservedCSTable() {
+            const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
+            const targetBody = document.getElementById('unserved-cs-body');
+            if (!targetBody) return;
+            let html = '';
+            let count = 0;
+
+            sourceRows.forEach(row => {
+                if(row.cells.length < 9) return;
+                const dateInput = row.querySelector('input[type="date"]');
+                if(!dateInput) return;
+
+                const date = dateInput.value;
+                const offense = row.querySelector('.val-offense').value;
+                const demerits = row.querySelector('.val-dem').value;
+                const sanction = row.querySelector('.val-sanction').value;
+                const status = row.querySelector('.val-status').value; 
+                const notes = row.querySelector('input[placeholder="Details..."]').value;
+                const isServed = row.querySelector('.val-served').checked;
+
+                if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
+                    count++;
+                    html += `
+                        <tr style="border-left: 3px solid #dc3545;">
+                            <td class="text-center fw-bold align-middle">${date}</td>
+                            <td class="align-middle fw-bold text-dark">${offense}</td>
+                            <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
+                            <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
+                            <td class="text-center align-middle">
+                                <span class="badge bg-warning text-dark shadow-sm">Pending</span><br>
+                                <span class="small text-muted" style="font-size: 0.65rem;">(${status})</span>
+                            </td>
+                            <td class="small fst-italic text-muted align-middle">${notes || 'No action notes added'}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (count === 0) targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-success fw-bold">🎉 All community service hours have been served!</td></tr>';
+            else targetBody.innerHTML = html;
+        }
+
+        let sigVideoStream = null;
+        let activeSigCamera = null; 
+
+        function saveSignatureInstantly(base64Str, type) {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            if (!studentId || studentId === '---') return;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const payload = {};
+            payload[`${type}_signature_base64`] = base64Str; 
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        function setSigUI(base64Str, type, autoSave = false) {
+            const img = document.getElementById(`sig-img-${type}`);
+            const text = document.getElementById(`sig-text-${type}`);
+            if (base64Str) {
+                img.src = base64Str;
+                img.style.display = 'block';
+                text.style.display = 'none';
+                if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                text.style.display = 'block';
+                if (autoSave) saveSignatureInstantly('DELETE', type);
+            }
+        }
+
+        function toggleSigCamera(type) {
+            const video = document.getElementById(`sig-video-${type}`);
+            const btnCam = document.getElementById(`btn-cam-${type}`);
+            const btnUp = document.getElementById(`btn-up-${type}`);
+            const img = document.getElementById(`sig-img-${type}`);
+            const text = document.getElementById(`sig-text-${type}`);
+
+            if (activeSigCamera !== type) {
+                if (sigVideoStream) cancelSigCamera(activeSigCamera);
+                navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
                         sigVideoStream = stream;
                         video.srcObject = stream;
                         video.style.display = 'block';
                         img.style.display = 'none';
                         text.style.display = 'none';
-
                         btnCam.innerHTML = '📸 Snap';
                         btnCam.classList.replace('btn-light', 'btn-primary');
                         btnCam.classList.remove('text-muted');
                         btnCam.classList.add('text-white');
-                        
                         btnUp.innerHTML = 'Cancel';
                         btnUp.classList.add('text-danger');
                         btnUp.onclick = () => cancelSigCamera(type);
                         activeSigCamera = type;
                     }).catch(err => alert("Camera access denied."));
+            } else {
+                const canvas = document.getElementById(`sig-canvas-${type}`);
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                cancelSigCamera(type);
+                setSigUI(dataURL, type, true); 
             }
-        } else {
-            const canvas = document.getElementById(`sig-canvas-${type}`);
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.translate(canvas.width, 0);
-            context.scale(-1, 1);
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-            cancelSigCamera(type);
-            setSigUI(dataURL, type, true); 
         }
-    }
 
-    function cancelSigCamera(type) {
-        if (!type) return;
-        if (sigVideoStream) {
-            sigVideoStream.getTracks().forEach(track => track.stop());
-            sigVideoStream = null;
+        function cancelSigCamera(type) {
+            if (!type) return;
+            if (sigVideoStream) { sigVideoStream.getTracks().forEach(track => track.stop()); sigVideoStream = null; }
+            document.getElementById(`sig-video-${type}`).style.display = 'none';
+            const btnCam = document.getElementById(`btn-cam-${type}`);
+            const btnUp = document.getElementById(`btn-up-${type}`);
+            btnCam.innerHTML = 'Take Picture';
+            btnCam.classList.replace('btn-primary', 'btn-light');
+            btnCam.classList.replace('text-white', 'text-muted');
+            btnUp.innerHTML = 'Load Picture';
+            btnUp.classList.remove('text-danger');
+            btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
+            activeSigCamera = null;
+            const img = document.getElementById(`sig-img-${type}`);
+            if (img.src && img.src !== window.location.href) img.style.display = 'block';
+            else document.getElementById(`sig-text-${type}`).style.display = 'block';
         }
-        document.getElementById(`sig-video-${type}`).style.display = 'none';
-        
-        const btnCam = document.getElementById(`btn-cam-${type}`);
-        const btnUp = document.getElementById(`btn-up-${type}`);
-        
-        btnCam.innerHTML = 'Take Picture';
-        btnCam.classList.replace('btn-primary', 'btn-light');
-        btnCam.classList.replace('text-white', 'text-muted');
-        
-        btnUp.innerHTML = 'Load Picture';
-        btnUp.classList.remove('text-danger');
-        btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
-        
-        activeSigCamera = null;
 
-        const img = document.getElementById(`sig-img-${type}`);
-        if (img.src && img.src !== window.location.href) {
-             img.style.display = 'block';
-        } else {
-             document.getElementById(`sig-text-${type}`).style.display = 'block';
+        function handleSigUpload(event, type) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { setSigUI(e.target.result, type, true); };
+                reader.readAsDataURL(file);
+            }
         }
-    }
 
-    function handleSigUpload(event, type) {
-        const file = event.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) return alert("File is too large.");
-            const reader = new FileReader();
-            reader.onload = function(e) { setSigUI(e.target.result, type, true); };
-            reader.readAsDataURL(file);
+        function clearSignature(type) {
+            if (confirm(`Would you like to delete the ${type}'s signature?`)) {
+                setSigUI('', type, true);
+                document.getElementById(`upload-sig-${type}`).value = '';
+            }
         }
-    }
-
-    function clearSignature(type) {
-        if (confirm(`Would you like to delete the ${type}'s signature?`)) {
-            setSigUI('', type, true);
-            document.getElementById(`upload-sig-${type}`).value = '';
-        }
-    }
     </script>
 </body>
 </html>

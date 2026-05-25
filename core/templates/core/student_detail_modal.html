@@ -79,7 +79,7 @@
                                     <div class="info-group-box pt-3 bg-legacy-blue">
                                         <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthday:</label><div class="col-sm-8"><input type="date" name="date_of_birth" class="form-control form-control-sm personal-info-input"></div></div>
                                         <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Birthplace:</label><div class="col-sm-8"><input type="text" name="birthplace" class="form-control form-control-sm personal-info-input"></div></div>
-                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label><div class="col-sm-8"><input type="text" name="citizenship" class="form-control form-control-sm personal-info-input"></div></div>
+                                        <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Citizenship:</label><div class="col-sm-8"><input type="text" name="nationality" class="form-control form-control-sm personal-info-input"></div></div>
                                         <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Nationality:</label><div class="col-sm-8"><input type="text" name="nationality" class="form-control form-control-sm personal-info-input"></div></div>
                                         <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Religion:</label><div class="col-sm-8"><input type="text" name="religion" class="form-control form-control-sm personal-info-input"></div></div>
                                         <div class="row mb-1 align-items-center"><label class="col-sm-4 col-form-label col-form-label-sm fw-bold">Brothers:</label><div class="col-sm-8"><input type="number" name="brothers" class="form-control form-control-sm personal-info-input"></div></div>
@@ -136,10 +136,11 @@
                                         <th>Notes</th>
                                         <th style="width: 50px;">Served</th>
                                         <th style="width: 50px;">Count</th>
+                                        <th style="width: 30px;"></th> <!-- NEW: Delete Column -->
                                     </tr>
                                 </thead>
                                 <tbody id="detailed-offenses-body">
-                                    <tr><td colspan="9" class="text-center p-5 text-muted fw-bold">Loading...</td></tr>
+                                    <tr><td colspan="10" class="text-center p-5 text-muted fw-bold">Loading...</td></tr>
                                 </tbody>
                             </table>
                             <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-2" onclick="addNewOffenseRow()">
@@ -309,4 +310,6 @@
                 </div>
             </div>
         </div>
+        <!-- ADD THIS DATALIST FOR THE SEARCHABLE DROPDOWN -->
+        <datalist id="global-offenses-list"></datalist>
     </div>

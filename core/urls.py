@@ -57,4 +57,10 @@ urlpatterns = [
     path('reports/detailed-deportment/', views.report_detailed_deportment, name='report_detailed_deportment'),
     path('reports/deportment/', views.report_deportment, name='report_deportment'),
     path('reports/daily-attendance-summary/', views.report_daily_attendance_summary, name='report_daily_attendance_summary'),
+    path('api/student/<str:student_id>/request-excuse/', views.api_request_excuse, name='api_request_excuse'),
+    path('api/student/<str:student_id>/request-excuse/', views.api_request_excuse, name='api_request_excuse'),
+    path('student/request/<int:req_id>/submit/', views.submit_excuse_letter, name='submit_excuse_letter'), # NEW ENDPOINT
+    # Excuse Letters Staff Portal
+    path('staff/excuse-letters/', views.staff_excuse_letters_list, name='staff_excuse_letters'),
+    path('staff/excuse-letters/<int:letter_id>/<str:action>/', views.review_excuse_letter, name='review_excuse_letter'),
 ]
