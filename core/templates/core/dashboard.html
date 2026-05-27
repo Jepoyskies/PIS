@@ -330,46 +330,53 @@
         };
 
         // --- NEW EXCUSE LETTER DASHBOARD LOGIC ---
-        function requestExcuseFromDashboard() {
-            const studentId = document.getElementById('modal-id-display').innerText;
-            const studentName = document.getElementById('modal-name-display').innerText;
+function requestExcuseFromDashboard() {
+    const studentId = document.getElementById('modal-id-display').innerText;
+    const studentName = document.getElementById('modal-name-display').innerText;
 
-            const dateStr = prompt(`For which date do you need an excuse letter from ${studentName}? (Format: YYYY-MM-DD)`, new Date().toISOString().split('T')[0]);
-            
-            if (dateStr) {
-                const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${dateStr} (e.g., 'unprescribed uniform', 'absence'):`, 'absence');
-                if (!violationStr) return; // Cancel if no violation is provided
+    const dateStr = prompt(`For which date do you need an excuse letter from ${studentName}? (Format: YYYY-MM-DD)`, new Date().toISOString().split('T')[0]);
+    
+    if (dateStr) {
+        const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${dateStr} (e.g., 'unprescribed uniform', 'absence'):`, 'absence');
+        if (!violationStr) return; 
 
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const btn = document.getElementById('btn-request-excuse');
-                const originalHtml = btn.innerHTML;
-                
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-                btn.disabled = true;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const btn = document.getElementById('btn-request-excuse');
+        const originalHtml = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
 
-                fetch(`/api/student/${studentId}/request-excuse/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ date: dateStr, violation_name: violationStr })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert(`Dashboard notification and Email successfully sent to ${studentId}@my.xu.edu.ph!`);
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Network error.");
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                });
+        fetch(`/api/student/${studentId}/request-excuse/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ date: dateStr, violation_name: violationStr })
+        })
+        .then(async res => {
+            // Check if Django returned an HTML error page instead of JSON
+            const isJson = res.headers.get('content-type')?.includes('application/json');
+            if (!res.ok && !isJson) {
+                throw new Error(`Server crashed with HTTP ${res.status}. Check Docker Logs!`);
             }
-        }
+            return res.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                alert(`Notification successfully sent to ${studentId}@my.xu.edu.ph!`);
+            } else {
+                alert('Email Error: ' + data.message);
+            }
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Fetch Failed: " + err.message);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+    }
+}
 
         document.querySelectorAll('.student-row').forEach(row => {
             row.addEventListener('click', (e) => {
