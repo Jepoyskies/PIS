@@ -1,0 +1,43 @@
+# Query: <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="width: 50px;">
+
+8 results - 8 files
+
+core\templates\core\conduct.html:
+  38:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\dashboard.html:
+  62:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\maintenance_base.html:
+  42:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\manage_sections.html:
+  46:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\reports_dashboard.html:
+  49:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\staff_attendance_list.html:
+  47:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\staff_attendance_review.html:
+  81:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
+
+core\templates\core\staff_excuse_letters.html:
+  38:             <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+    <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+</div>
