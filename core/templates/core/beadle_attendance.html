@@ -7,10 +7,21 @@
     <link href="{% static 'core/css/bootstrap.min.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
-        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; display: flex; flex-direction: column; min-height: 100vh; font-family: 'Segoe UI', sans-serif;}
+        :root { 
+            --xu-blue-dark: #22356d; 
+            --xu-gold: #b99430; /* EXACT GOLD */
+            --xu-border-color: #ced4da; 
+        }
+        body { 
+            background: linear-gradient(135deg, var(--xu-blue-dark) 0%, #3a53a4 100%) !important; 
+            display: flex; flex-direction: column; min-height: 100vh; font-family: 'Segoe UI', sans-serif;
+        }
         
         .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 12px 25px !important; }
+        
+        .btn-xu-gold { background-color: var(--xu-gold); color: white; font-weight: bold; border: none; }
+        .btn-xu-gold:hover { background-color: #a3822a; color: white; }
+
         .dashboard-container { max-width: 900px; margin: 40px auto; width: 100%; display: flex; flex-direction: column; }
         
         .main-card { background-color: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: none; display: flex; flex-direction: column; }
@@ -23,15 +34,17 @@
 <body>
     <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu-logo-stacked.png' %}" alt="Logo" style="width: 50px;" class="bg-white rounded p-1">
+            <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+                <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+            </div>
             <div>
                 <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
                 <div class="small opacity-75">Student & Beadle Portal</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <span class="text-white small fw-bold opacity-75 me-2">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background-color: var(--xu-gold); color: white; border: none;">Log Off</a>
+            <span class="text-white small fw-bold opacity-75 me-2 d-none d-md-inline">Logged in as: {{ student.first_name }} {{ student.last_name }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4 shadow-sm">Log Off</a>
         </div>
     </header>
 
