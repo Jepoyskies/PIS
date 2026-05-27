@@ -1011,7 +1011,7 @@ def api_request_excuse(request, student_id):
             
             return JsonResponse({'status': 'success'})
         except Exception as e:
-                     print(f"--- EXCUSE EMAIL ERROR ---: {str(e)}")
+            print(f"--- EXCUSE EMAIL ERROR ---: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
