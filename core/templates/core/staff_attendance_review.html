@@ -380,7 +380,8 @@
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
-                                <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter('${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
+                                // NEW (Pass 'this' as the first parameter)
+<button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter(this, '${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
                             </div>
                         </div>
                     </td>
@@ -502,7 +503,8 @@
                             <div class="d-flex align-items-center mt-1 gap-2">
                                 <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
-                                <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter('${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
+                                // NEW (Pass 'this' as the first parameter)
+<button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter(this, '${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
                             </div>
                         </div>
                     </td>
@@ -570,18 +572,16 @@
         // ==========================================
 const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
 
-        function requestExcuseLetter(studentId, studentName) {
-            const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
-            if (!violationStr) return; // Cancel if no violation is provided
+       function requestExcuseLetter(btn, studentId, studentName) {
+    const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
+    if (!violationStr) return; 
 
-            if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const btn = event.currentTarget;
-                const originalHtml = btn.innerHTML;
-                
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                btn.disabled = true;
-                
+    if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const originalHtml = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
                 fetch(`/api/student/${studentId}/request-excuse/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },

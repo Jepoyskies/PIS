@@ -601,12 +601,13 @@ def student_dashboard(request):
     disc = DisciplinaryRecord.objects.filter(student=student).order_by('-date_of_incident')
     att_history = StudentPeriodRecord.objects.filter(student=student).order_by('-period__daily_attendance__date')[:20]
     
+    # These two power the Banner and the Upload Table
     pending_requests = ExcuseLetterRequest.objects.filter(student=student, is_resolved=False).order_by('-date_requested_for')
-    all_requests = ExcuseLetterRequest.objects.filter(student=student).order_by('-date_requested_for') # NEW
+    all_requests = ExcuseLetterRequest.objects.filter(student=student).order_by('-date_requested_for')
     
     return render(request, 'core/student_dashboard.html', {
         'student': student, 'discipline_history': disc, 'attendance_history': att_history,
-        'pending_requests': pending_requests, 'all_requests': all_requests # UPDATED
+        'pending_requests': pending_requests, 'all_requests': all_requests 
     })
 
 @login_required
@@ -1010,6 +1011,7 @@ def api_request_excuse(request, student_id):
             
             return JsonResponse({'status': 'success'})
         except Exception as e:
+                     print(f"--- EXCUSE EMAIL ERROR ---: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
