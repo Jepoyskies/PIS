@@ -128,9 +128,13 @@ def set_school_year(request):
 @login_required
 def maintenance_dashboard(request):
     if not request.user.is_staff: return redirect('home')
-    context = get_maintenance_stats()
+    
+    # FIX: Use get_staff_context so the School Year dropdown loads!
+    context = get_staff_context(request) 
     context['is_admin'] = request.user.is_superuser
+    
     return render(request, 'core/maintenance_dashboard.html', context)
+
 
 @login_required
 def manage_staff(request):
@@ -155,7 +159,8 @@ def manage_staff(request):
     else:
         form = StaffAccountForm()
 
-    context = get_maintenance_stats()
+    # FIX: Use get_staff_context so the School Year dropdown loads!
+    context = get_staff_context(request) 
     context.update({'form': form, 'staff_list': staff_list, 'is_admin': request.user.is_superuser})
     return render(request, 'core/manage_staff_ui.html', context)
 
@@ -221,7 +226,9 @@ def manage_students(request):
     
     students = Student.objects.filter(is_deleted=False).order_by('-created_at')
     sections = Section.objects.all() 
-    context = get_maintenance_stats()
+    
+    # FIX: Use get_staff_context so the School Year dropdown loads!
+    context = get_staff_context(request) 
     context.update({'students': students, 'sections': sections, 'is_admin': request.user.is_superuser})
     return render(request, 'core/manage_students.html', context)
 
