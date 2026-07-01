@@ -24,8 +24,17 @@
 
         .search-bar-container { background-color: transparent; padding: 20px 20px 0 20px; color: white; }
 
-        .review-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--xu-border-color); display: flex; flex-direction: column; flex-grow: 1; }
-        .review-header { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; }
+        /* Card Structure matching PIS Home */
+        .review-card {
+            background: white; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--xu-border-color);
+            display: flex; flex-direction: column; flex-grow: 1;
+        }
+        .review-header {
+            background: var(--xu-blue-dark); color: white; padding: 15px 25px;
+            font-weight: bold; border-bottom: 4px solid var(--xu-gold);
+            display: flex; justify-content: space-between; align-items: center;
+        }
 
         .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: white; }
         .grid-header { position: sticky; top: 0; z-index: 1; padding: 12px !important; white-space: nowrap; border-bottom: 1px solid var(--xu-border-color); }
@@ -48,27 +57,29 @@
 <body class="d-flex flex-column vh-100">
     <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
         <div class="d-flex align-items-center gap-3">
-            <img src="{% static 'images/xu_logo-stacked.png' %}" alt="XU Logo" style="width: 45px; height: auto;">
-            <div class="d-flex flex-column justify-content-center">
-                <div class="fw-bold mb-0 fs-5" style="letter-spacing: 0.5px; line-height: 1.1;">XAVIER HIGH SCHOOL</div>
-                <div class="small opacity-75" style="line-height: 1.1;">Prefect Information System</div>
+            <div style="background-color: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.2); height: 48px;">
+                <img src="{% static 'images/xu_logo-stacked.png' %}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+            </div>
+            <div>
+                <div class="fw-bold mb-0">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75">Prefect Information System</div>
             </div>
         </div>
+        
         <div class="d-flex align-items-center gap-3">
-            <form method="POST" action="{% url 'set_school_year' %}" class="sy-select-container m-0 shadow-sm">
+            <form method="POST" action="{% url 'set_school_year' %}" class="d-flex align-items-center gap-2 m-0 bg-white p-1 rounded-pill px-3">
                 {% csrf_token %}
-                <label class="small fw-bold text-muted mb-0 me-1 d-none d-md-block">SY:</label>
-                <select name="school_year_id" class="form-select form-select-sm sy-select" onchange="this.form.submit()">
+                <select name="school_year_id" class="form-select form-select-sm border-0 fw-bold" onchange="this.form.submit()" style="color: var(--xu-blue-dark); background-color: transparent; width: 140px;">
                     {% for sy in all_school_years %}
-                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>SY: {{ sy.code }}</option>
                     {% endfor %}
                 </select>
             </form>
-            <a href="{% url 'logout' %}" class="btn-logoff shadow-sm">Log Off</a>
+            <a href="{% url 'logout' %}" class="btn btn-xu-gold btn-sm rounded-pill px-4" style="background-color: var(--xu-gold) !important; color: white !important; font-weight: bold; border: none;">Log Off</a>
         </div>
     </header>
 
-    <nav class="main-nav d-flex sticky-top">
+    <nav class="main-nav d-flex shadow-sm z-1">
         <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
         <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
         <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
@@ -117,7 +128,6 @@
                             <div class="d-flex gap-1" id="period-nav-buttons"></div>
                         </div>
                         <div>
-                            <span class="badge bg-success fw-bold px-3 py-1 me-2 shadow-sm"><i class="fa-solid fa-info-circle me-1"></i> All students default to PRESENT.</span>
                             <span id="period-status-indicator" class="badge bg-secondary py-1 px-3 fw-bold shadow-sm" style="font-size: 0.75rem;">...</span>
                         </div>
                     </div>
@@ -142,10 +152,15 @@
                     </div>
 
                     <div class="bg-light p-3 border-top d-flex justify-content-between align-items-center gap-2" id="action-bar">
-                        <span class="small fw-bold text-muted ms-2"><i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Submitting will instantly lock and officially approve this period in the database.</span>
-                        <button type="button" class="btn btn-success fw-bold px-5 shadow-sm btn-lg" style="border-radius: 8px;" onclick="submitFinalForm()">
-                            <i class="fa-solid fa-check-double me-1"></i> Encode & Approve
-                        </button>
+                        <span class="small fw-bold text-muted ms-2" id="action-hint"><i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Submitting will instantly lock and officially approve this period in the database.</span>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success fw-bold px-5 shadow-sm" style="border-radius: 8px;" id="encode-btn" onclick="submitFinalForm()">
+                                <i class="fa-solid fa-check-double me-1"></i> Encode &amp; Approve
+                            </button>
+                            <button type="button" class="btn btn-danger fw-bold px-4 shadow-sm d-none" style="border-radius: 8px;" id="unapprove-btn" onclick="unapproveActivePeriod()">
+                                <i class="fa-solid fa-unlock me-1"></i> UNAPPROVE &amp; EDIT
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -170,6 +185,7 @@
         const fullNames = { 'P': 'Present', 'A': 'Absent', 'L': 'Late', 'UU': 'Unprescribed Uniform', 'UH': 'Unprescribed Haircut', 'ID': 'No ID', 'CL': 'Campus Leave' };
 
         const submittedPeriods = {{ submitted_period_numbers|safe|default:"[]" }};
+        const batchIds = {{ period_batch_ids|safe|default:"{}" }};
         
         const historyData = {
             {% for period in today_periods %}
@@ -237,33 +253,48 @@
 
             const indicator = document.getElementById('period-status-indicator');
             const bar = document.getElementById('action-bar');
+            const encodeBtn = document.getElementById('encode-btn');
+            const unapproveBtn = document.getElementById('unapprove-btn');
+            const actionHint = document.getElementById('action-hint');
+            
+            bar.classList.remove('d-none');
             if (submittedPeriods.includes(activePeriod)) {
                 indicator.className = 'badge bg-success py-1 px-3 fw-bold shadow-sm';
                 indicator.innerHTML = `<i class="fa-solid fa-check me-1"></i> Encoded at ${historyData[activePeriod]?.submittedAt || ''}`;
-                bar.classList.add('d-none');
+                encodeBtn.classList.add('d-none');
+                unapproveBtn.classList.remove('d-none');
+                actionHint.innerHTML = `<i class="fa-solid fa-lock me-1 text-success"></i> This period is locked. Click Unapprove to edit.`;
             } else {
                 indicator.className = 'badge bg-warning text-dark py-1 px-3 fw-bold shadow-sm';
                 indicator.innerHTML = `<i class="fa-solid fa-clock me-1"></i> Pending Encoding`;
-                bar.classList.remove('d-none');
+                encodeBtn.classList.remove('d-none');
+                unapproveBtn.classList.add('d-none');
+                actionHint.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Submitting will instantly lock and officially approve this period in the database.`;
             }
             renderGrid();
         }
 
         function getRowHTML(s) {
-            let isViol = formData[s.id][activePeriod]?.code && formData[s.id][activePeriod].code !== 'P' && !submittedPeriods.includes(activePeriod);
-            let trClass = isViol ? "violation-row border-bottom bg-white" : "border-bottom bg-white";
+            let isViol = false;
+            for (let p = 1; p <= 7; p++) {
+                const isSub = submittedPeriods.includes(p);
+                if (isSub && historyData[p] && historyData[p].records[s.id] && historyData[p].records[s.id].code !== 'P') isViol = true;
+            }
+            if (!submittedPeriods.includes(activePeriod) && formData[s.id][activePeriod]?.code && formData[s.id][activePeriod].code !== 'P') isViol = true;
+            let trClass = isViol ? "violation-row" : "";
             
             let html = `
-                <td class="ps-3 align-middle" style="position: sticky; left: 0; z-index: 2; background-color: inherit;">
+                <td class="ps-3 bg-white align-middle border-end" style="position: sticky; left: 0; z-index: 2; background-color: inherit !important;">
                     <div class="d-flex flex-column">
                         <span class="fw-bold text-truncate" style="font-size: 0.85rem; max-width: 220px; color: var(--xu-blue-dark);" title="${s.name}">${s.name}</span>
                         <div class="d-flex align-items-center mt-1 gap-2">
                             <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
                             <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name.replace(/'/g, "\\'")}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" onclick="requestExcuseLetter(this, '${s.no}', '${s.name}')" title="Request Excuse Letter"><i class="fa-solid fa-envelope"></i></button>
                         </div>
                     </div>
                 </td>
-                <td class="text-center fw-bold text-muted align-middle border-end" style="position: sticky; left: 250px; z-index: 2; background-color: inherit; font-size: 0.75rem;">${s.sex}</td>
+                <td class="text-center fw-bold text-muted bg-white align-middle border-end" style="position: sticky; left: 250px; z-index: 2; background-color: inherit !important; font-size: 0.75rem;">${s.sex}</td>
             `;
 
             for(let p = 1; p <= 7; p++) {
@@ -303,9 +334,9 @@
                     if (isSub) {
                         const rec = historyData[p].records[s.id];
                         let color = rec.code === 'P' ? 'text-success' : (rec.code === 'A' ? 'text-danger' : 'text-dark');
-                        html += `<td class="col-narrow text-center align-middle cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})"><span class="fw-bold ${color}" style="font-size: 0.8rem;">${rec.code}</span></td>`;
+                        html += `<td class="col-narrow text-center fw-bold align-middle bg-white cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;"><span class="${color}">${rec.code}</span></td>`;
                     } else {
-                        html += `<td class="col-narrow text-center align-middle cursor-pointer hover-bg text-muted opacity-25 border-end" onclick="setActivePeriod(${p})">-</td>`;
+                        html += `<td class="col-narrow text-center text-muted opacity-25 fw-bold align-middle bg-white cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})" style="font-size: 0.8rem;">-</td>`;
                     }
                 }
             }
@@ -346,7 +377,55 @@
                 form.submit();
             }
         }
+
+        function unapproveActivePeriod() {
+            if(confirm("Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.")) {
+                const batchId = batchIds[activePeriod];
+                if (!batchId) { alert('Cannot find this period batch. Please refresh.'); return; }
+                const form = document.getElementById('unapproveForm');
+                form.action = `/staff/attendance/reopen/${batchId}/`;
+                form.submit();
+            }
+        }
+
+        const batchDate = "{{ today|date:'Y-m-d' }}";
+
+        function requestExcuseLetter(btn, studentId, studentName) {
+            const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
+            if (!violationStr) return;
+            if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                fetch(`/api/student/${studentId}/request-excuse/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ date: batchDate, violation_name: violationStr })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`);
+                        btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Network error.");
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
+            }
+        }
     </script>
+    <form method="POST" id="unapproveForm" class="d-none">
+        {% csrf_token %}
+    </form>
     
     <!-- =========================================
          FULL MODAL LOGIC (MAGNIFYING GLASS FIX)

@@ -172,15 +172,22 @@
                     </div>
 
                     <div class="bg-light p-3 border-top d-flex justify-content-end align-items-center gap-2" id="action-bar">
-                        <span class="text-muted small fw-bold me-3">Verify all attendance overrides for <span id="action-period" class="text-dark"></span> before saving.</span>
+                        <span class="text-muted small fw-bold me-3" id="action-hint">Verify all attendance overrides for <span id="action-period" class="text-dark"></span> before saving.</span>
                         <button type="submit" class="btn btn-success px-4 py-2 fw-bold shadow-sm" id="submit-btn" style="border-radius: 8px;">
                             <i class="fa-solid fa-check-circle me-1"></i> APPROVE PERIOD
                         </button>
                         <button type="button" class="btn btn-xu-dark px-4 py-2 fw-bold shadow-sm" id="submit-all-btn" onclick="approveAllPeriods()" style="border-radius: 8px;">
                             <i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING
                         </button>
+                        <button type="button" class="btn btn-danger px-4 py-2 fw-bold shadow-sm d-none" id="unapprove-btn" onclick="unapproveActivePeriod()" style="border-radius: 8px;">
+                            <i class="fa-solid fa-unlock me-1"></i> UNAPPROVE & EDIT
+                        </button>
                     </div>
                 </div>
+            </form>
+            
+            <form method="POST" id="unapproveForm" class="d-none">
+                {% csrf_token %}
             </form>
         </div>
     </main>
@@ -349,6 +356,14 @@
             }
         }
 
+        function unapproveActivePeriod() {
+            if(confirm("Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.")) {
+                const form = document.getElementById('unapproveForm');
+                form.action = `/staff/attendance/reopen/${batchIds[activePeriod]}/`;
+                form.submit();
+            }
+        }
+
         function renderExpandedGrid() {
             for (let i = 1; i <= 7; i++) {
                 const th = document.getElementById(`th-${i}`);
@@ -471,18 +486,26 @@
             let hasAnyPending = false;
             for (let i = 1; i <= 7; i++) { if (batchIds[i] && !batchStatus[i]) hasAnyPending = true; }
 
+            // Action bar should always be visible now, either showing Submit or Unapprove
+            actionBar.classList.remove('d-none');
+
             if (batchStatus[activePeriod]) {
                 document.getElementById('submit-btn').classList.add('d-none');
+                document.getElementById('submit-all-btn').classList.toggle('d-none', !hasAnyPending);
+                document.getElementById('unapprove-btn').classList.remove('d-none');
+                
+                document.getElementById('action-hint').innerHTML = `This period is locked. Click Unapprove to edit.`;
                 document.getElementById('action-period').innerHTML = "Period " + activePeriod + " <span class='badge bg-secondary ms-1'>Locked</span>";
+                
                 document.getElementById('status-badge').className = 'badge bg-success py-1 px-3 fw-bold shadow-sm';
                 document.getElementById('status-badge').innerHTML = '<i class="fa-solid fa-check me-1"></i> Approved';
-                
-                if (hasAnyPending) actionBar.classList.remove('d-none');
-                else actionBar.classList.add('d-none');
             } else {
-                actionBar.classList.remove('d-none');
                 document.getElementById('submit-btn').classList.remove('d-none');
-                document.getElementById('action-period').innerText = "Period " + activePeriod;
+                document.getElementById('submit-all-btn').classList.remove('d-none');
+                document.getElementById('unapprove-btn').classList.add('d-none');
+                
+                document.getElementById('action-hint').innerHTML = `Verify all attendance overrides for <span id="action-period" class="text-dark">Period ${activePeriod}</span> before saving.`;
+                
                 document.getElementById('status-badge').className = 'badge bg-warning text-dark py-1 px-3 fw-bold shadow-sm';
                 document.getElementById('status-badge').innerHTML = '<i class="fa-solid fa-clock me-1"></i> Pending Admin Approval';
             }
