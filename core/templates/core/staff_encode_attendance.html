@@ -1,0 +1,803 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Encode Attendance - {{ section.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --xu-blue-dark: #22356d; --xu-blue-2: #3a53a4; --xu-gold: #b99430; --xu-border-color: #ced4da; }
+        body { background: linear-gradient(135deg, var(--xu-blue-dark) 0%, var(--xu-blue-2) 100%) !important; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        
+        .navbar-xu { background: rgba(0,0,0,0.2) !important; backdrop-filter: blur(10px); border-bottom: 4px solid var(--xu-gold) !important; z-index: 10; padding: 0 25px !important; height: 70px; }
+        .sy-select-container { background-color: white; border-radius: 50px; padding: 0 15px; display: flex; align-items: center; height: 35px; }
+        .sy-select { color: var(--xu-blue-dark); background-color: transparent !important; border: none; font-weight: bold; cursor: pointer; box-shadow: none !important; width: 140px; padding-right: 30px !important; }
+        .sy-select:focus { outline: none; box-shadow: none; }
+        .btn-logoff { background-color: var(--xu-gold) !important; color: white !important; font-weight: bold; border: none; border-radius: 50px; padding: 0 20px; transition: 0.2s; font-size: 0.875rem; text-decoration: none; height: 35px; display: flex; align-items: center; }
+        .btn-logoff:hover { background-color: #a3822a !important; color: white !important; }
+
+        .main-nav { background: white; padding: 0 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 5; flex-shrink: 0; height: 50px; display: flex; align-items: center; }
+        .nav-link { color: #555; font-weight: 600; padding: 0 20px; height: 50px; display: flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; text-decoration: none; font-size: 0.85rem;}
+        .nav-link:hover { color: var(--xu-blue-dark); background-color: rgba(34, 53, 109, 0.05); }
+        .nav-link.active { color: var(--xu-blue-dark); border-bottom-color: var(--xu-gold); background-color: #f8f9fa; }
+
+        .search-bar-container { background-color: transparent; padding: 20px 20px 0 20px; color: white; }
+
+        .review-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--xu-border-color); display: flex; flex-direction: column; flex-grow: 1; }
+        .review-header { background: var(--xu-blue-dark); color: white; padding: 15px 25px; font-weight: bold; border-bottom: 4px solid var(--xu-gold); display: flex; justify-content: space-between; align-items: center; }
+
+        .table-container { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: white; }
+        .grid-header { position: sticky; top: 0; z-index: 1; padding: 12px !important; white-space: nowrap; border-bottom: 1px solid var(--xu-border-color); }
+        .active-grid-header { background-color: white !important; color: var(--xu-blue-dark) !important; border-bottom: 3px solid var(--xu-gold) !important; }
+        .inactive-grid-header { background-color: #f1f3f7 !important; color: #6c757d !important; border-bottom: 1px solid var(--xu-border-color) !important; }
+
+        .table-bordered th, .table-bordered td { border-color: #e9ecef; }
+        .violation-row { background-color: #fffdf5 !important; border-left: 5px solid var(--xu-gold) !important; }
+        .hover-bg:hover { background-color: rgba(34, 53, 109, 0.05); }
+        .cursor-pointer { cursor: pointer; }
+        .col-name { min-width: 200px; max-width: 250px; }
+        .col-expanded { min-width: 320px; width: 320px; background-color: #fafbfc; border-left: 1px solid #e9ecef; border-right: 1px solid #e9ecef; }
+        .col-narrow { width: 45px; min-width: 45px; }
+
+        /* Modal Styles */
+        .modal-legacy-header { background: linear-gradient(90deg, rgba(34, 53, 109, 0.1) 0%, var(--xu-blue-dark) 100%); color: rgb(0, 0, 0); border-bottom: 3px solid var(--xu-blue-dark); }
+        .legacy-tab-content { border: 1px solid #dee2e6; border-top: none; min-height: 450px; background: #fff; padding: 15px; }
+    </style>
+</head>
+<body class="d-flex flex-column vh-100">
+    <header class="navbar-xu d-flex justify-content-between align-items-center text-white flex-shrink-0">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{% static 'images/xu_logo-stacked.png' %}" alt="XU Logo" style="width: 45px; height: auto;">
+            <div class="d-flex flex-column justify-content-center">
+                <div class="fw-bold mb-0 fs-5" style="letter-spacing: 0.5px; line-height: 1.1;">XAVIER HIGH SCHOOL</div>
+                <div class="small opacity-75" style="line-height: 1.1;">Prefect Information System</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <form method="POST" action="{% url 'set_school_year' %}" class="sy-select-container m-0 shadow-sm">
+                {% csrf_token %}
+                <label class="small fw-bold text-muted mb-0 me-1 d-none d-md-block">SY:</label>
+                <select name="school_year_id" class="form-select form-select-sm sy-select" onchange="this.form.submit()">
+                    {% for sy in all_school_years %}
+                    <option value="{{ sy.id }}" {% if sy.id == active_sy.id %}selected{% endif %}>{{ sy.code }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="{% url 'logout' %}" class="btn-logoff shadow-sm">Log Off</a>
+        </div>
+    </header>
+
+    <nav class="main-nav d-flex sticky-top">
+        <a href="{% url 'staff_home' %}" class="nav-link">HOME</a>
+        <a href="{% url 'manage_sections' %}" class="nav-link">SECTIONS</a>
+        <a href="{% url 'staff_dashboard' %}" class="nav-link">CURRENTLY ENROLLED STUDENTS</a>
+        <a href="{% url 'staff_attendance_list' %}" class="nav-link active">ATTENDANCE</a>
+        <a href="{% url 'staff_excuse_letters' %}" class="nav-link">EXCUSE LETTERS</a>
+        <a href="{% url 'reports_dashboard' %}" class="nav-link">REPORTS</a>
+        <a href="{% url 'maintenance_dashboard' %}" class="nav-link">MAINTENANCE</a>
+    </nav>
+
+    <main class="flex-grow-1 p-3 d-flex flex-column container-fluid" style="max-width: 1400px; margin: 0 auto;">
+        
+        <!-- UNIFIED TOP HEADER -->
+        <div class="search-bar-container d-flex justify-content-between align-items-center mb-3 text-white">
+            <div class="d-flex flex-column">
+                <div class="fw-bold fs-5 mb-0"><i class="fa-solid fa-file-signature me-2"></i> ENCODE ATTENDANCE: <span style="color: var(--xu-gold);">{{ section.name }}</span></div>
+                <div class="small opacity-75 fw-bold mt-1">
+                    <i class="fa-regular fa-calendar me-1"></i> {{ today|date:'F j, Y' }} &nbsp;|&nbsp;
+                    <i class="fa-solid fa-user-pen me-1"></i> Encoded by: {{ request.user.first_name }} {{ request.user.last_name }}
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'staff_attendance_list' %}" class="btn btn-light btn-sm fw-bold px-4 rounded-pill shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> BACK TO LIST</a>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show fw-bold border-0 shadow-sm mb-3" role="alert">
+                    <span class="me-2"><i class="fa-solid fa-circle-check"></i></span> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="d-flex flex-column flex-grow-1 w-100" style="min-height: 0;">
+            <form method="POST" id="attendanceForm" action="" class="d-flex flex-column h-100 mb-0 pb-3">
+                {% csrf_token %}
+                <input type="hidden" name="period_number" id="hidden_period_number" value="">
+                <input type="hidden" name="attendance_date" value="{{ today|date:'Y-m-d' }}">
+                <div id="dynamic-inputs"></div>
+
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold small mb-0 me-2" style="font-size: 0.8rem; letter-spacing: 0.5px;"><i class="fa-solid fa-layer-group me-1"></i> ACTIVE PERIOD:</span>
+                            <div class="d-flex gap-1" id="period-nav-buttons"></div>
+                        </div>
+                        <div>
+                            <span class="badge bg-success fw-bold px-3 py-1 me-2 shadow-sm"><i class="fa-solid fa-info-circle me-1"></i> All students default to PRESENT.</span>
+                            <span id="period-status-indicator" class="badge bg-secondary py-1 px-3 fw-bold shadow-sm" style="font-size: 0.75rem;">...</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="table table-bordered align-middle mb-0" style="font-size: 0.8rem;" id="attendance-grid">
+                            <thead>
+                                <tr>
+                                    <th class="grid-header ps-3 col-name inactive-grid-header">Student Name</th>
+                                    <th class="grid-header text-center col-narrow inactive-grid-header">Sex</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(1)" id="th-1">1</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(2)" id="th-2">2</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(3)" id="th-3">3</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(4)" id="th-4">4</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(5)" id="th-5">5</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(6)" id="th-6">6</th>
+                                    <th class="grid-header text-center col-narrow cursor-pointer hover-bg" onclick="setActivePeriod(7)" id="th-7">7</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grid-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-light p-3 border-top d-flex justify-content-between align-items-center gap-2" id="action-bar">
+                        <span class="small fw-bold text-muted ms-2"><i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Submitting will instantly lock and officially approve this period in the database.</span>
+                        <button type="button" class="btn btn-success fw-bold px-5 shadow-sm btn-lg" style="border-radius: 8px;" onclick="submitFinalForm()">
+                            <i class="fa-solid fa-check-double me-1"></i> Encode & Approve
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    {% include 'core/student_detail_modal.html' %}
+    {% include 'core/modals/report_time_period_modal.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const codesConfig = {
+            'P': { label: 'P', color: 'outline-success' },
+            'A': { label: 'A', color: 'outline-danger' },
+            'L': { label: 'L', color: 'outline-warning text-dark' },
+            'UU': { label: 'UU', color: 'outline-dark' },
+            'UH': { label: 'UH', color: 'outline-dark' },
+            'ID': { label: 'ID', color: 'outline-dark' },
+            'CL': { label: 'CL', color: 'outline-dark' }
+        };
+        const fullNames = { 'P': 'Present', 'A': 'Absent', 'L': 'Late', 'UU': 'Unprescribed Uniform', 'UH': 'Unprescribed Haircut', 'ID': 'No ID', 'CL': 'Campus Leave' };
+
+        const submittedPeriods = {{ submitted_period_numbers|safe|default:"[]" }};
+        
+        const historyData = {
+            {% for period in today_periods %}
+            "{{ period.period_number }}": {
+                submittedAt: "{{ period.submitted_at|time:'h:i A' }}",
+                records: {
+                    {% for rec in period.records.all %}
+                    "{{ rec.student.id }}": { code: "{{ rec.code }}", note: "{{ rec.note|escapejs }}" }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        const students =[
+            {% for s in section_students %}
+            {
+                id: "{{ s.id }}",
+                no: "{{ s.student_number }}",
+                name: "{{ s.last_name|upper|escapejs }}, {{ s.first_name|upper|escapejs }}",
+                sex: "{{ s.sex|default:'M'|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        let activePeriod = 1;
+        const formData = {}; 
+
+        window.onload = function() {
+            students.forEach(s => {
+                formData[s.id] = {};
+                for(let p=1; p<=7; p++) {
+                    formData[s.id][p] = { code: 'P', note: '' }; 
+                }
+            });
+            for(let i=1; i<=7; i++) {
+                if(!submittedPeriods.includes(i)) { activePeriod = i; break; }
+            }
+            setActivePeriod(activePeriod);
+        };
+
+        function setActivePeriod(p) {
+            activePeriod = p;
+            
+            for (let i = 1; i <= 7; i++) {
+                const th = document.getElementById(`th-${i}`);
+                if (i === activePeriod) {
+                    th.className = 'grid-header text-center active-grid-header shadow-sm cursor-pointer';
+                    th.innerHTML = `${i} <small class="d-block text-muted" style="font-size:0.65rem; margin-top:-2px;">Encoding</small>`;
+                } else {
+                    th.className = 'grid-header text-center col-narrow cursor-pointer inactive-grid-header hover-bg';
+                    th.innerHTML = `${i}`;
+                }
+            }
+
+            const container = document.getElementById('period-nav-buttons');
+            container.innerHTML = '';
+            for(let i = 1; i <= 7; i++) {
+                const isSub = submittedPeriods.includes(i);
+                const isAct = (i === activePeriod);
+                let btnClass = isAct ? 'btn-light text-dark shadow-sm' : 'btn-outline-light text-white opacity-75 shadow-none';
+                let icon = isSub ? '✔ ' : '';
+                container.innerHTML += `<button type="button" class="btn btn-sm px-3 py-1 ${btnClass} fw-bold" style="border-radius: 6px; font-size: 0.75rem;" onclick="setActivePeriod(${i})">${icon}${i}</button>`;
+            }
+
+            const indicator = document.getElementById('period-status-indicator');
+            const bar = document.getElementById('action-bar');
+            if (submittedPeriods.includes(activePeriod)) {
+                indicator.className = 'badge bg-success py-1 px-3 fw-bold shadow-sm';
+                indicator.innerHTML = `<i class="fa-solid fa-check me-1"></i> Encoded at ${historyData[activePeriod]?.submittedAt || ''}`;
+                bar.classList.add('d-none');
+            } else {
+                indicator.className = 'badge bg-warning text-dark py-1 px-3 fw-bold shadow-sm';
+                indicator.innerHTML = `<i class="fa-solid fa-clock me-1"></i> Pending Encoding`;
+                bar.classList.remove('d-none');
+            }
+            renderGrid();
+        }
+
+        function getRowHTML(s) {
+            let isViol = formData[s.id][activePeriod]?.code && formData[s.id][activePeriod].code !== 'P' && !submittedPeriods.includes(activePeriod);
+            let trClass = isViol ? "violation-row border-bottom bg-white" : "border-bottom bg-white";
+            
+            let html = `
+                <td class="ps-3 align-middle" style="position: sticky; left: 0; z-index: 2; background-color: inherit;">
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold text-truncate" style="font-size: 0.85rem; max-width: 220px; color: var(--xu-blue-dark);" title="${s.name}">${s.name}</span>
+                        <div class="d-flex align-items-center mt-1 gap-2">
+                            <span class="text-muted fw-normal" style="font-size: 0.7rem;">ID: ${s.no}</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 fw-bold shadow-sm" style="font-size: 0.65rem; border-radius: 4px;" data-bs-toggle="modal" data-bs-target="#offenseModal" onclick="openStudentModal('${s.no}', '${s.name.replace(/'/g, "\\'")}', '${s.sex}')" title="View Student Offenses"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center fw-bold text-muted align-middle border-end" style="position: sticky; left: 250px; z-index: 2; background-color: inherit; font-size: 0.75rem;">${s.sex}</td>
+            `;
+
+            for(let p = 1; p <= 7; p++) {
+                const isAct = (p === activePeriod);
+                const isSub = submittedPeriods.includes(p);
+                
+                if (isAct) {
+                    if (isSub) {
+                        const rec = historyData[p].records[s.id];
+                        const badgeCls = rec.code === 'P' ? 'bg-success' : (rec.code === 'A' ? 'bg-danger' : 'bg-dark');
+                        html += `
+                        <td class="col-expanded p-2 align-middle border-end">
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge ${badgeCls} shadow-sm px-2 py-1 align-self-start" style="font-size: 0.75rem;">${fullNames[rec.code] || rec.code}</span>
+                                ${rec.note ? `<div class="text-danger mt-1 fw-bold" style="font-size:0.7rem;">⚠️ Note: <span class="text-dark fst-italic fw-normal">${rec.note}</span></div>` : '<div class="text-muted mt-1 opacity-50" style="font-size: 0.7rem;">-</div>'}
+                            </div>
+                        </td>`;
+                    } else {
+                        const currentCode = formData[s.id][activePeriod].code;
+                        const currentNote = formData[s.id][activePeriod].note;
+                        let buttonsHtml = '<div class="btn-group w-100 shadow-sm" role="group">';
+                        for(let c in codesConfig) {
+                            const id = `code_${p}_${s.id}_${c}`;
+                            const isChecked = currentCode === c ? 'checked' : '';
+                            buttonsHtml += `<input type="radio" class="btn-check" name="ui_code_${s.id}" id="${id}" value="${c}" ${isChecked} onchange="updateForm(${s.id}, '${c}')"><label class="btn btn-${codesConfig[c].color} btn-attendance fw-bold" for="${id}" style="padding: 4px 6px !important; font-size: 0.75rem !important;">${codesConfig[c].label}</label>`;
+                        }
+                        buttonsHtml += '</div>';
+
+                        let showNote = (currentCode !== 'P');
+                        html += `
+                        <td class="col-expanded p-2 align-middle border-end">
+                            ${buttonsHtml}
+                            <input type="text" class="form-control form-control-sm border-warning shadow-sm mt-1 fw-bold text-dark ${showNote ? '' : 'd-none'}" style="font-size: 0.75rem;" id="note_input_${s.id}" placeholder="📝 Detail/Reason..." value="${currentNote}" onchange="updateNote(${s.id}, this.value)">
+                        </td>`;
+                    }
+                } else {
+                    if (isSub) {
+                        const rec = historyData[p].records[s.id];
+                        let color = rec.code === 'P' ? 'text-success' : (rec.code === 'A' ? 'text-danger' : 'text-dark');
+                        html += `<td class="col-narrow text-center align-middle cursor-pointer hover-bg border-end" onclick="setActivePeriod(${p})"><span class="fw-bold ${color}" style="font-size: 0.8rem;">${rec.code}</span></td>`;
+                    } else {
+                        html += `<td class="col-narrow text-center align-middle cursor-pointer hover-bg text-muted opacity-25 border-end" onclick="setActivePeriod(${p})">-</td>`;
+                    }
+                }
+            }
+            return { html: html, class: trClass };
+        }
+
+        function renderGrid() {
+            const tbody = document.getElementById('grid-body');
+            tbody.innerHTML = '';
+            students.forEach(s => {
+                let tr = document.createElement('tr');
+                let rowData = getRowHTML(s);
+                tr.className = rowData.class;
+                tr.innerHTML = rowData.html;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.updateForm = function(studentId, code) {
+            formData[studentId][activePeriod].code = code;
+            if (code === 'P') { formData[studentId][activePeriod].note = ''; }
+            renderGrid();
+        };
+
+        window.updateNote = function(studentId, val) { formData[studentId][activePeriod].note = val; };
+
+        function submitFinalForm() {
+            if(confirm("Confirm and permanently lock this period?")) {
+                const form = document.getElementById('attendanceForm');
+                document.getElementById('hidden_period_number').value = activePeriod;
+                const dynamicInputs = document.getElementById('dynamic-inputs');
+                dynamicInputs.innerHTML = '';
+                
+                students.forEach(s => {
+                    let cInput = document.createElement('input'); cInput.type = 'hidden'; cInput.name = `code_${s.id}`; cInput.value = formData[s.id][activePeriod].code; dynamicInputs.appendChild(cInput);
+                    if(formData[s.id][activePeriod].note) { let nInput = document.createElement('input'); nInput.type = 'hidden'; nInput.name = `note_${s.id}`; nInput.value = formData[s.id][activePeriod].note; dynamicInputs.appendChild(nInput); }
+                });
+                form.submit();
+            }
+        }
+    </script>
+    
+    <!-- =========================================
+         FULL MODAL LOGIC (MAGNIFYING GLASS FIX)
+         ========================================= -->
+    <script>
+        let globalOffenses = [];
+        fetch('/api/offenses/list/')
+            .then(res => res.json())
+            .then(data => { 
+                globalOffenses = data.offenses; 
+                const datalist = document.getElementById('global-offenses-list');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    globalOffenses.forEach(off => {
+                        const option = document.createElement('option');
+                        option.value = off.name;
+                        datalist.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => console.error("Could not load offenses:", err));
+
+        function openStudentModal(studentId, studentName, studentSex) {
+            document.getElementById('modal-id-display').innerText = studentId;
+            document.getElementById('modal-name-display').innerText = studentName;
+            document.getElementById('modal-sex-display').innerText = studentSex;
+            document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="10" class="text-center p-5 text-muted fw-bold">Loading records...</td></tr>';
+
+            fetch(`/api/student/${studentId}/offenses/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelectorAll('.personal-info-input').forEach(input => input.value = '');
+                    if (data.student_info) {
+                        Object.keys(data.student_info).forEach(key => {
+                            const input = document.querySelector(`.personal-info-input[name="${key}"]`);
+                            if(input) input.value = data.student_info[key] || '';
+                        });
+                    }
+
+                    if (data.student_info && data.student_info.photo_url) {
+                        document.getElementById('student-photo-img').src = data.student_info.photo_url;
+                        document.getElementById('student-photo-img').style.display = 'block';
+                        document.getElementById('student-photo-text').style.display = 'none';
+                    } else {
+                        setPhotoUI('');
+                    }
+                    setSigUI(data.student_info.father_sig_url || '', 'father', false);
+                    setSigUI(data.student_info.mother_sig_url || '', 'mother', false);
+                    setSigUI(data.student_info.guardian_sig_url || '', 'guardian', false);
+
+                    const tbody = document.getElementById('detailed-offenses-body');
+                    tbody.innerHTML = ''; 
+                    if (!data.records || data.records.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
+                    } else {
+                        data.records.forEach(rec => createOffenseRow(rec));
+                    }
+                }).catch(e => { 
+                    document.getElementById('detailed-offenses-body').innerHTML = '<tr><td colspan="10" class="text-center p-5 text-danger fw-bold">Could not load data.</td></tr>'; 
+                });
+        }
+
+        function createOffenseRow(data = {}) {
+            const tbody = document.getElementById('detailed-offenses-body');
+            const row = document.createElement('tr');
+            row.dataset.recordId = data.id || ''; 
+            
+            let sanctionVal = data.sanction || '';
+            let demVal = parseInt(data.demerits) || 0;
+            
+            if (!sanctionVal && demVal > 0) {
+                if (demVal >= 50) sanctionVal = "2 Hrs CS";
+                else if (demVal >= 8) sanctionVal = "1 Hr CS";
+                else sanctionVal = "Warning";
+            }
+
+            let categoryVal = data.category || '';
+            let countVal = data.count || 1;
+            row.dataset.cnt = countVal;
+
+            row.innerHTML = `
+                <td><input type="date" class="form-control form-control-sm border-0" value="${data.date_raw || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.time || '12:00 PM'}"></td>
+                <td>
+                    <input type="text" list="global-offenses-list" class="form-control form-control-sm border-0 val-offense fw-bold" 
+                           onchange="applyOffenseDefaults(this)" placeholder="-- Search/Type Offense --" value="${categoryVal}" style="min-width: 200px;">
+                </td>
+                <td><input type="number" class="form-control form-control-sm border-0 fw-bold text-danger val-dem" value="${demVal}" readonly></td>
+                <td>
+                    <select class="form-select form-select-sm border-0 val-status" onchange="calculateRow(this)">
+                        <option value="Unexcused" ${data.status === 'Unexcused' ? 'selected' : ''}>Unexcused</option>
+                        <option value="Excused" ${data.status === 'Excused' ? 'selected' : ''}>Excused</option>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-sanction" readonly value="${sanctionVal}"></td>
+                <td><input type="text" class="form-control form-control-sm border-0" value="${data.notes || ''}" placeholder="Details..."></td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input val-served" ${data.served ? 'checked' : ''} onchange="handleServedToggle(this)">
+                </td>
+                <td><input type="text" class="form-control form-control-sm border-0 bg-light val-count text-center" readonly value="${countVal}"></td>
+                <td class="text-center align-middle">
+                    <button type="button" class="btn btn-sm text-danger p-0 m-0 border-0 bg-transparent" onclick="deleteOffenseRow(this)" title="Delete Row">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            if (typeof updateUnservedCSTable === "function") updateUnservedCSTable();
+        }
+
+        function addNewOffenseRow() {
+            const tbody = document.getElementById('detailed-offenses-body');
+            if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            createOffenseRow({ date_raw: today, time: '12:00 PM', demerits: 0, status: 'Unexcused', category: '', served: false });
+        }
+
+        function applyOffenseDefaults(inputElem) {
+            const row = inputElem.closest('tr');
+            const demField = row.querySelector('.val-dem');
+            const sancField = row.querySelector('.val-sanction');
+            const offenseVal = inputElem.value;
+
+            if (offenseVal.trim() === '') {
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
+                return;
+            }
+
+            const match = globalOffenses.find(o => o.name === offenseVal);
+            if (!match) {
+                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                inputElem.value = ''; 
+                demField.value = 0;
+                sancField.value = '';
+                row.dataset.cnt = 1;
+                calculateRow(inputElem);
+                return; 
+            }
+
+            demField.value = match.default_demerits;
+            sancField.value = match.default_sanction || 'N/A';
+            row.dataset.cnt = match.default_count;
+            calculateRow(inputElem);
+            updateUnservedCSTable();
+
+            const tbody = document.getElementById('detailed-offenses-body');
+            if (row === tbody.lastElementChild) addNewOffenseRow();
+        }
+
+        function deleteOffenseRow(button) {
+            const row = button.closest('tr');
+            if (confirm("Are you sure you want to delete this row?")) {
+                row.remove();
+                updateUnservedCSTable();
+                const tbody = document.getElementById('detailed-offenses-body');
+                if (tbody.children.length === 0) addNewOffenseRow();
+            }
+        }
+
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const status = row.querySelector('.val-status').value;
+            const countField = row.querySelector('.val-count');
+            if (status === "Unexcused") countField.value = row.dataset.cnt !== undefined ? row.dataset.cnt : "1";
+            else countField.value = "0";
+            updateUnservedCSTable();
+        }
+
+        function updateUnservedCSTable() {
+            const sourceRows = document.querySelectorAll('#detailed-offenses-body tr');
+            const targetBody = document.getElementById('unserved-cs-body');
+            if (!targetBody) return;
+            let html = '';
+            let count = 0;
+
+            sourceRows.forEach(row => {
+                if(row.cells.length < 10) return;
+                const dateInput = row.querySelector('input[type="date"]');
+                if(!dateInput) return; 
+
+                const date = dateInput.value;
+                const offense = row.querySelector('.val-offense').value;
+                const demerits = row.querySelector('.val-dem').value;
+                const sanction = row.querySelector('.val-sanction').value;
+                const status = row.querySelector('.val-status').value; 
+                const notes = row.querySelector('input[placeholder="Details..."]').value;
+                const isServed = row.querySelector('.val-served').checked;
+
+                if (sanction.toUpperCase().includes('CS') && !isServed && offense !== "") {
+                    count++;
+                    html += `
+                        <tr style="border-left: 3px solid #dc3545;">
+                            <td class="text-center fw-bold align-middle">${date}</td>
+                            <td class="align-middle fw-bold text-dark">${offense}</td>
+                            <td class="text-center text-danger fw-bold align-middle">${demerits}</td>
+                            <td class="text-center fw-bold text-primary align-middle">${sanction}</td>
+                            <td class="text-center align-middle"><span class="badge bg-warning text-dark shadow-sm">Pending</span><br><span class="small text-muted" style="font-size: 0.65rem;">(${status})</span></td>
+                            <td class="small fst-italic text-muted align-middle">${notes || 'No action notes added'}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (count === 0) targetBody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-success fw-bold">🎉 All community service hours have been served!</td></tr>';
+            else targetBody.innerHTML = html;
+        }
+
+        function handleServedToggle(checkbox) {
+            const row = checkbox.closest('tr');
+            const recordId = row.dataset.recordId;
+            if (recordId) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                fetch(`/api/record/${recordId}/toggle-served/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ is_served: checkbox.checked })
+                }).catch(err => console.error("Error saving served status:", err));
+            }
+            updateUnservedCSTable();
+        }
+        
+        document.getElementById('detailed-offenses-body')?.addEventListener('input', updateUnservedCSTable);
+
+        function savePersonalInfo() {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            const payload = {};
+            document.querySelectorAll('.personal-info-input').forEach(input => { payload[input.name] = input.value; });
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { alert('Personal Information Saved Successfully!'); } 
+                else { alert('Error saving data: ' + data.message); }
+            });
+        }
+
+        let videoStream = null;
+        let isCameraActive = false;
+
+        function savePhotoInstantly(base64Str) {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            if (!studentId || studentId === '---') return;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ photo_base64: base64Str })
+            });
+        }
+
+        function setPhotoUI(base64Str, autoSave = false) {
+            const img = document.getElementById('student-photo-img');
+            const text = document.getElementById('student-photo-text');
+            if (base64Str) {
+                img.src = base64Str;
+                img.style.display = 'block';
+                text.style.display = 'none';
+                if (autoSave && base64Str.startsWith('data:image')) savePhotoInstantly(base64Str);
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                text.style.display = 'flex';
+                if (autoSave) savePhotoInstantly('DELETE');
+            }
+        }
+
+        function toggleCamera() {
+            const video = document.getElementById('webcam-video');
+            const btnCamera = document.getElementById('btn-camera');
+            const btnUpload = document.getElementById('btn-upload');
+            const img = document.getElementById('student-photo-img');
+            const text = document.getElementById('student-photo-text');
+
+            if (!isCameraActive) {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(stream) {
+                            videoStream = stream;
+                            video.srcObject = stream;
+                            video.style.display = 'block';
+                            img.style.display = 'none';
+                            text.style.display = 'none';
+                            
+                            btnCamera.innerHTML = '📸 Snap';
+                            btnCamera.classList.replace('btn-light', 'btn-primary');
+                            btnCamera.classList.add('text-white');
+                            
+                            btnUpload.innerHTML = 'Cancel';
+                            btnUpload.classList.add('text-danger');
+                            btnUpload.onclick = cancelCamera; 
+                            isCameraActive = true;
+                        }).catch(function(err) { alert("Camera access denied."); });
+                }
+            } else {
+                const canvas = document.getElementById('webcam-canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                cancelCamera(); 
+                setPhotoUI(dataURL, true); 
+            }
+        }
+
+        function cancelCamera() {
+            if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; }
+            document.getElementById('webcam-video').style.display = 'none';
+            const btnCamera = document.getElementById('btn-camera');
+            const btnUpload = document.getElementById('btn-upload');
+            btnCamera.innerHTML = 'Take a Picture';
+            btnCamera.classList.replace('btn-primary', 'btn-light');
+            btnCamera.classList.remove('text-white');
+            btnUpload.innerHTML = 'Load a Picture';
+            btnUpload.classList.remove('text-danger');
+            btnUpload.onclick = () => document.getElementById('upload-photo-input').click(); 
+            isCameraActive = false;
+            const img = document.getElementById('student-photo-img');
+            if (img.src && img.src !== window.location.href) img.style.display = 'block';
+            else document.getElementById('student-photo-text').style.display = 'block';
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { setPhotoUI(e.target.result, true); };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearPhoto() {
+            if (confirm("Delete the current photo?")) {
+                setPhotoUI('', true);
+                document.getElementById('upload-photo-input').value = '';
+            }
+        }
+
+        let sigVideoStream = null;
+        let activeSigCamera = null; 
+
+        function saveSignatureInstantly(base64Str, type) {
+            const studentId = document.getElementById('modal-id-display').innerText;
+            if (!studentId || studentId === '---') return;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const payload = {};
+            payload[`${type}_signature_base64`] = base64Str; 
+            fetch(`/api/student/${studentId}/offenses/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        function setSigUI(base64Str, type, autoSave = false) {
+            const img = document.getElementById(`sig-img-${type}`);
+            const text = document.getElementById(`sig-text-${type}`);
+            if (base64Str) {
+                img.src = base64Str;
+                img.style.display = 'block';
+                text.style.display = 'none';
+                if (autoSave && base64Str.startsWith('data:image')) saveSignatureInstantly(base64Str, type);
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                text.style.display = 'block';
+                if (autoSave) saveSignatureInstantly('DELETE', type);
+            }
+        }
+
+        function toggleSigCamera(type) {
+            const video = document.getElementById(`sig-video-${type}`);
+            const btnCam = document.getElementById(`btn-cam-${type}`);
+            const btnUp = document.getElementById(`btn-up-${type}`);
+            const img = document.getElementById(`sig-img-${type}`);
+            const text = document.getElementById(`sig-text-${type}`);
+
+            if (activeSigCamera !== type) {
+                if (sigVideoStream) cancelSigCamera(activeSigCamera);
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        sigVideoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        img.style.display = 'none';
+                        text.style.display = 'none';
+                        btnCam.innerHTML = '📸 Snap';
+                        btnCam.classList.replace('btn-light', 'btn-primary');
+                        btnCam.classList.add('text-white');
+                        btnUp.innerHTML = 'Cancel';
+                        btnUp.classList.add('text-danger');
+                        btnUp.onclick = () => cancelSigCamera(type);
+                        activeSigCamera = type;
+                    });
+            } else {
+                const canvas = document.getElementById(`sig-canvas-${type}`);
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                cancelSigCamera(type);
+                setSigUI(dataURL, type, true); 
+            }
+        }
+
+        function cancelSigCamera(type) {
+            if (!type) return;
+            if (sigVideoStream) { sigVideoStream.getTracks().forEach(track => track.stop()); sigVideoStream = null; }
+            document.getElementById(`sig-video-${type}`).style.display = 'none';
+            const btnCam = document.getElementById(`btn-cam-${type}`);
+            const btnUp = document.getElementById(`btn-up-${type}`);
+            btnCam.innerHTML = 'Take Picture';
+            btnCam.classList.replace('btn-primary', 'btn-light');
+            btnCam.classList.remove('text-white');
+            btnUp.innerHTML = 'Load Picture';
+            btnUp.classList.remove('text-danger');
+            btnUp.onclick = () => document.getElementById(`upload-sig-${type}`).click();
+            activeSigCamera = null;
+            const img = document.getElementById(`sig-img-${type}`);
+            if (img.src && img.src !== window.location.href) img.style.display = 'block';
+            else document.getElementById(`sig-text-${type}`).style.display = 'block';
+        }
+
+        function handleSigUpload(event, type) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { setSigUI(e.target.result, type, true); };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearSignature(type) {
+            if (confirm(`Delete the ${type}'s signature?`)) {
+                setSigUI('', type, true);
+                document.getElementById(`upload-sig-${type}`).value = '';
+            }
+        }
+    </script>
+</body>
+</html>

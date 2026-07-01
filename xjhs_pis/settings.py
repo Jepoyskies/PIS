@@ -69,6 +69,9 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='1234'),
         'HOST': config('DB_HOST', default='127.0.0.1'),
         'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'raise_on_warnings': False,
+        },
     }
 }
 

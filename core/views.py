@@ -17,8 +17,6 @@ from django.core.files.base import ContentFile
 
 from .models import Student, DisciplinaryRecord, SchoolYear, Section, Enrollment, StaffProfile, DailyAttendance, PeriodAttendance, StudentPeriodRecord, Offense
 from .forms import StudentForm, DisciplinaryRecordForm, StaffAccountForm, SectionForm, StudentMaintenanceForm, OffenseForm
-from .services import sync_student_attendance_logs
-
 # ==========================================
 # HELPER FUNCTIONS
 # ==========================================
@@ -371,6 +369,7 @@ def staff_attendance_list(request):
         'filter_range': filter_range,
         'status_filter': status_filter,
         'selected_date': selected_date_str,
+        'sections': Section.objects.all().order_by('grade_level', 'name')
     })
     return render(request, 'core/staff_attendance_list.html', context)
 
@@ -411,69 +410,109 @@ def approve_attendance_batch(request, batch_id):
 
 def sync_student_attendance_logs(student, daily_attendance, staff_user):
     """
-    Intelligently maps a student's period absences to the best official Offense.
+    Intelligently maps a student's period absences and violations to the best official Offense.
     """
-    # Use select_for_update to lock the row and prevent race conditions
+    from django.db import transaction
+    from .models import StudentPeriodRecord, DisciplinaryRecord, Offense, SchoolYear
+    
     with transaction.atomic():
-        from .models import StudentPeriodRecord, DisciplinaryRecord, Offense, SchoolYear
-        
-        # 1. Clear existing attendance-based disciplinary logs for this student on this day
+        # 1. Clear existing auto-generated logs for this student on this day to prevent duplicates
         DisciplinaryRecord.objects.filter(
             student=student, 
             date_of_incident=daily_attendance.date,
-            category="ATTENDANCE"
+            remarks__startswith="Auto-generated from Beadle Attendance"
         ).delete()
 
-        # 2. Get all approved period records for this student today
-        absent_periods = list(StudentPeriodRecord.objects.filter(
+        # 2. Get all approved period records for this student today where they were NOT present
+        records = list(StudentPeriodRecord.objects.filter(
             student=student,
             period__daily_attendance=daily_attendance,
-            period__is_approved=True,
-            code='A' # 'A' for Absent
-        ).values_list('period__period_number', flat=True))
+            period__is_approved=True
+        ).exclude(code='P').select_related('period'))
 
-        if not absent_periods:
+        if not records:
             return
 
-        # 3. Consolidation logic remains the same...
-        all_day = {1, 2, 3, 4, 5, 6, 7}
-        morning = {1, 2, 3, 4}
-        afternoon = {5, 6, 7}
-        
-        absent_set = set(absent_periods)
         offenses_to_log = []
 
-        if all_day.issubset(absent_set):
-            offenses_to_log.append("WD")
-        else:
-            if morning.issubset(absent_set):
+        # --- PROCESS ABSENCES ---
+        absent_periods = [r.period.period_number for r in records if r.code == 'A']
+        if absent_periods:
+            absent_set = set(absent_periods)
+            all_day = {1, 2, 3, 4, 5, 6, 7}
+            morning = {1, 2, 3, 4}
+            afternoon = {5, 6, 7}
+            
+            if all_day.issubset(absent_set):
+                offenses_to_log.append("WD")
+            elif morning.issubset(absent_set):
                 offenses_to_log.append("AWM")
+            elif afternoon.issubset(absent_set):
+                offenses_to_log.append("AWA")
             else:
                 for p in [1, 2, 3, 4]:
                     if p in absent_set: offenses_to_log.append(f"AM{p}")
-            
-            if afternoon.issubset(absent_set):
-                offenses_to_log.append("AWA")
-            else:
                 for p in [5, 6, 7]:
                     if p in absent_set: offenses_to_log.append(f"PM{p}")
 
-        # 4. Create disciplinary records
+        # --- PROCESS OTHER VIOLATIONS (L, UU, UH, ID, CL) ---
+        other_records = [r for r in records if r.code != 'A']
+        
+        # Use a dictionary to prevent duplicates (e.g. only one 'UU' or 'ID' penalty per day)
+        unique_other_codes = {}
+        for r in other_records:
+            code = r.code
+            if code == 'L':
+                final_code = 'L' if r.period.period_number == 1 else 'LC'
+                unique_other_codes[final_code] = True
+            else:
+                unique_other_codes[code] = True
+
+        for code in unique_other_codes.keys():
+            offenses_to_log.append(code)
+
+        # 3. Save to Database with FALLBACKS (Guarantees data is saved!)
         active_sy = SchoolYear.objects.filter(is_active=True).first()
-        for code in offenses_to_log:
-            official_offense = Offense.objects.filter(code=code).first()
+        
+        fallbacks = {
+            'WD': ('Absent - Whole Day', 15, '1 Hr CS', 'Absences'),
+            'AWM': ('Absent - Whole Morning', 8, 'Warning', 'Absences'),
+            'AWA': ('Absent - Whole Afternoon', 8, 'Warning', 'Absences'),
+            'AM1': ('Absent - 1st Period', 3, 'Warning', 'Absences'),
+            'PM5': ('Absent - 5th Period', 3, 'Warning', 'Absences'),
+            'L': ('Late for Flag Ceremony / Homeroom', 3, 'Warning', 'Tardiness'),
+            'LC': ('Late for Class', 2, 'Warning', 'Tardiness'),
+            'UU': ('Unprescribed Uniform', 5, 'Warning', 'Conduct'),
+            'UH': ('Unprescribed Haircut', 5, 'Warning', 'Conduct'),
+            'ID': ('No ID Card', 3, 'Warning', 'Conduct'),
+            'CL': ('Campus Leave without Permit', 15, '1 Hr CS', 'Conduct'),
+        }
+
+        for o_code in offenses_to_log:
+            official_offense = Offense.objects.filter(code=o_code).first()
+            
+            # Use official offense if found, else use our fallback, else use a generic name
             if official_offense:
-                DisciplinaryRecord.objects.create(
-                    student=student,
-                    category="ATTENDANCE",
-                    offense_name=official_offense.name,
-                    date_of_incident=daily_attendance.date,
-                    demerits=official_offense.default_demerits,
-                    sanction=official_offense.default_sanction,
-                    recorded_by=staff_user,
-                    school_year=active_sy,
-                    remarks="Auto-generated from Beadle Attendance"
-                )
+                category = official_offense.offense_type or "ATTENDANCE"
+                name = official_offense.name
+                demerits = official_offense.default_demerits
+                sanction = official_offense.default_sanction
+            else:
+                fallback = fallbacks.get(o_code, (f'Violation ({o_code})', 1, 'Warning', 'Conduct'))
+                name, demerits, sanction, category = fallback
+
+            DisciplinaryRecord.objects.create(
+                student=student,
+                category=category,
+                offense_name=name,
+                date_of_incident=daily_attendance.date,
+                demerits=demerits,
+                sanction=sanction,
+                recorded_by=staff_user,
+                school_year=active_sy,
+                remarks=f"Auto-generated from Beadle Attendance",
+                record_count=1
+            )
 
 @login_required
 def api_student_offenses(request, student_id):
@@ -612,61 +651,76 @@ def student_dashboard(request):
 
 @login_required
 def beadle_dashboard(request):
-    student = get_object_or_404(Student, user=request.user)
-    if not student.is_beadle or not student.section:
-        return redirect('student_dashboard')
+    # DEPRECATED: Beadles now use physical paper. Redirect them to their home.
+    return redirect('student_dashboard')
 
-    section = student.section
+@login_required
+def staff_encode_attendance(request, section_id, date_str):
+    """ The new Master Encoding view for Staff using Physical Sheets """
+    if not request.user.is_staff: return redirect('home')
+    
+    section = get_object_or_404(Section, id=section_id)
+    try:
+        attendance_date = timezone.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        attendance_date = timezone.now().date()
+        
     section_students = section.students.filter(is_deleted=False).order_by('last_name', 'first_name')
-    today = timezone.now().date()
-
+    
     if request.method == 'POST':
-        attendance_date = request.POST.get('attendance_date')
         period_number = int(request.POST.get('period_number'))
         
-        daily_att, created = DailyAttendance.objects.get_or_create(date=attendance_date, section=section)
-        
-        period_att, p_created = PeriodAttendance.objects.get_or_create(
-            daily_attendance=daily_att,
-            period_number=period_number,
-            defaults={'submitted_by': student, 'submitted_at': timezone.now()}
-        )
-        
-        if not period_att.is_locked:
-            period_att.records.all().delete() 
-            for s in section_students:
-                code = request.POST.get(f'code_{s.id}', 'P') 
-                original_code = request.POST.get(f'original_code_{s.id}')
-                note = request.POST.get(f'note_{s.id}')
-                
-                StudentPeriodRecord.objects.create(
-                    period=period_att, 
-                    student=s, 
-                    code=code,
-                    original_code=original_code,
-                    note=note
-                )
+        with transaction.atomic():
+            daily_att, _ = DailyAttendance.objects.get_or_create(date=attendance_date, section=section)
             
-            period_att.is_locked = True
-            period_att.save()
-            messages.success(request, f"Period {period_number} attendance confirmed and locked!")
-            return redirect('beadle_dashboard')
-        else:
-            messages.error(request, f"Period {period_number} is already locked. Go to the Prefect Office for changes.")
+            # Create the period. We leave submitted_by blank since staff encoded it directly.
+            period_att, p_created = PeriodAttendance.objects.get_or_create(
+                daily_attendance=daily_att,
+                period_number=period_number,
+                defaults={'submitted_by': None, 'submitted_at': timezone.now()}
+            )
+            
+            if not period_att.is_locked:
+                period_att.records.all().delete() 
+                for s in section_students:
+                    code = request.POST.get(f'code_{s.id}', 'P') # Defaults to P automatically!
+                    note = request.POST.get(f'note_{s.id}')
+                    
+                    StudentPeriodRecord.objects.create(
+                        period=period_att, 
+                        student=s, 
+                        code=code,
+                        original_code=code, # Same since there is no beadle baseline
+                        note=note
+                    )
+                
+                # Because STAFF is encoding this from official paper, it is instantly approved!
+                period_att.is_locked = True
+                period_att.is_approved = True
+                period_att.save()
+                
+                # Instantly trigger the offense consolidation engine
+                for rec in period_att.records.select_related('student').all():
+                    sync_student_attendance_logs(rec.student, daily_att, request.user)
+                    
+                messages.success(request, f"Period {period_number} encoded and officially approved!")
+                return redirect('staff_encode_attendance', section_id=section.id, date_str=date_str)
+            else:
+                messages.error(request, f"Period {period_number} is already locked in the system.")
 
-    daily_att = DailyAttendance.objects.filter(date=today, section=section).first()
-    
+    daily_att = DailyAttendance.objects.filter(date=attendance_date, section=section).first()
     today_periods = daily_att.periods.filter(is_locked=True).prefetch_related('records__student').order_by('period_number') if daily_att else []
-    submitted_period_numbers =[p.period_number for p in today_periods]
+    submitted_period_numbers = [p.period_number for p in today_periods]
 
-    context = {
-        'student': student,
+    context = get_staff_context(request)
+    context.update({
+        'section': section,
         'section_students': section_students,
-        'today': today,
+        'today': attendance_date,
         'today_periods': today_periods,
         'submitted_period_numbers': submitted_period_numbers, 
-    }
-    return render(request, 'core/beadle_dashboard.html', context)
+    })
+    return render(request, 'core/staff_encode_attendance.html', context)
 
 def api_get_offenses(request):
     """Returns the official list of offenses for the dropdowns"""

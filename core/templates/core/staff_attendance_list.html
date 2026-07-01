@@ -106,11 +106,19 @@
                     </div>
 
                     <!-- Specific Date Filter -->
-                    <form method="GET" class="d-flex align-items-center gap-2 m-0">
-                        <label class="small fw-bold mb-0 text-uppercase opacity-75">Specific Date:</label>
-                        <input type="date" name="filter_date" value="{{ selected_date }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;">
-                        <button type="submit" class="btn btn-xu-gold btn-sm px-3 fw-bold">GO</button>
-                    </form>
+                    <div class="d-flex align-items-center gap-3">
+                        <form method="GET" class="d-flex align-items-center gap-2 m-0">
+                            <label class="small fw-bold mb-0 text-uppercase opacity-75">Specific Date:</label>
+                            <input type="date" name="filter_date" value="{{ selected_date }}" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;">
+                            <button type="submit" class="btn btn-xu-gold btn-sm px-3 fw-bold">GO</button>
+                        </form>
+                        <!-- ADDED THIS GREEN ENCODE BUTTON -->
+                        <div class="border-start ps-3 ms-2">
+                            <button class="btn btn-success btn-sm px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#encodeAttendanceModal">
+                                <i class="fa-solid fa-plus me-1"></i> Encode Physical Attendance
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -171,6 +179,44 @@
             </div>
         </div>
     </main>
+
+    <!-- ENCODE ATTENDANCE MODAL -->
+    <div class="modal fade" id="encodeAttendanceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header text-white border-bottom border-4" style="background-color: var(--xu-blue-dark); border-color: var(--xu-gold) !important;">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-signature me-2"></i> Encode Physical Attendance</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <form id="encodeSetupForm">
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted small text-uppercase mb-1">Date on Physical Sheet</label>
+                            <input type="date" id="encode-date" class="form-control fw-bold shadow-sm" required value="{% now 'Y-m-d' %}">
+                        </div>
+                        <div class="mb-4">
+                            <label class="fw-bold text-muted small text-uppercase mb-1">Select Section</label>
+                            <select id="encode-section" class="form-select fw-bold shadow-sm" required>
+                                <option value="" disabled selected>-- Select a Section --</option>
+                                {% for sec in sections %}
+                                    <option value="{{ sec.id }}">Grade {{ sec.grade_level }} - {{ sec.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn text-white fw-bold w-100 shadow-sm py-2" style="background-color: var(--xu-gold);" onclick="startEncoding()">Start Encoding &rarr;</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function startEncoding() {
+            const dateVal = document.getElementById('encode-date').value;
+            const secVal = document.getElementById('encode-section').value;
+            if(!dateVal || !secVal) { alert("Please select a date and section."); return; }
+            window.location.href = `/staff/attendance/encode/${secVal}/${dateVal}/`;
+        }
+    </script>
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

@@ -68,9 +68,6 @@
 
     <nav class="main-nav d-flex z-1 shadow-sm">
         <a href="{% url 'student_dashboard' %}" class="nav-link active">HOME</a>
-        {% if student.is_beadle %}
-        <a href="{% url 'beadle_dashboard' %}" class="nav-link">TAKE ATTENDANCE</a>
-        {% endif %}
     </nav>
 
     <main class="flex-grow-1 overflow-hidden p-4 d-flex flex-column">
