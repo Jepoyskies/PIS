@@ -334,48 +334,46 @@ function requestExcuseFromDashboard() {
     const studentId = document.getElementById('modal-id-display').innerText;
     const studentName = document.getElementById('modal-name-display').innerText;
 
-    const dateStr = prompt(`For which date do you need an excuse letter from ${studentName}? (Format: YYYY-MM-DD)`, new Date().toISOString().split('T')[0]);
-    
-    if (dateStr) {
-        const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${dateStr} (e.g., 'unprescribed uniform', 'absence'):`, 'absence');
-        if (!violationStr) return; 
+    showPromptModal(`For which date do you need an excuse letter from ${studentName}? (Format: YYYY-MM-DD)`, new Date().toISOString().split('T')[0], (dateStr) => {
+        showPromptModal(`Please specify the violation reason for ${studentName} on ${dateStr} (e.g., 'unprescribed uniform', 'absence'):`, 'absence', (violationStr) => {
+            showConfirmModal(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${dateStr} regarding their ${violationStr}?`, () => {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const btn = document.getElementById('btn-request-excuse');
+                const originalHtml = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+                btn.disabled = true;
 
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const btn = document.getElementById('btn-request-excuse');
-        const originalHtml = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-        btn.disabled = true;
-
-        fetch(`/api/student/${studentId}/request-excuse/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ date: dateStr, violation_name: violationStr })
-        })
-        .then(async res => {
-            // Check if Django returned an HTML error page instead of JSON
-            const isJson = res.headers.get('content-type')?.includes('application/json');
-            if (!res.ok && !isJson) {
-                throw new Error(`Server crashed with HTTP ${res.status}. Check Docker Logs!`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                alert(`Notification successfully sent to ${studentId}@my.xu.edu.ph!`);
-            } else {
-                alert('Email Error: ' + data.message);
-            }
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Fetch Failed: " + err.message);
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
+                fetch(`/api/student/${studentId}/request-excuse/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ date: dateStr, violation_name: violationStr })
+                })
+                .then(async res => {
+                    const isJson = res.headers.get('content-type')?.includes('application/json');
+                    if (!res.ok && !isJson) {
+                        throw new Error(`Server crashed with HTTP ${res.status}. Check Docker Logs!`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(`Notification successfully sent to ${studentId}@my.xu.edu.ph!`, 'success');
+                    } else {
+                        showToast('Email Error: ' + data.message, 'error');
+                    }
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Fetch Failed: " + err.message, 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
+            }, 'Send Request', 'btn-primary');
         });
-    }
+    });
 }
 
         document.querySelectorAll('.student-row').forEach(row => {
@@ -488,7 +486,7 @@ function requestExcuseFromDashboard() {
 
             // STRICT VALIDATION: If they typed random letters that don't match exactly
             if (!match) {
-                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                showToast("Invalid Offense! Please select an exact match from the dropdown list.", "error");
                 inputElem.value = ''; // Wipe the invalid text
                 demField.value = 0;
                 sancField.value = '';
@@ -514,26 +512,24 @@ function requestExcuseFromDashboard() {
 
         // 4. DELETE ROW FUNCTION
         function deleteOffenseRow(button) {
-            const row = button.closest('tr');
-            const recordId = row.dataset.recordId;
-
-            if (confirm("Are you sure you want to delete this row?")) {
-                // If this is an existing database record, we will need to delete it from MySQL
+            showConfirmModal("Are you sure you want to delete this row?", () => {
+                const row = button.closest('tr');
+                const recordId = row.dataset.recordId;
                 if (recordId) {
-                    console.log("Trigger backend delete for ID:", recordId);
-                    // TODO: We will add the API call here in the next step!
+                    fetch(`/api/delete_offense/${recordId}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+                    }).then(res => res.json()).then(data => {
+                        if(data.status === 'success') {
+                            row.remove();
+                        } else {
+                            showToast("Error deleting offense", "error");
+                        }
+                    });
+                } else {
+                    row.remove();
                 }
-                
-                // Remove from UI
-                row.remove();
-                updateUnservedCSTable();
-                
-                // Ensure there is always at least one row
-                const tbody = document.getElementById('detailed-offenses-body');
-                if (tbody.children.length === 0) {
-                    addNewOffenseRow();
-                }
-            }
+            }, "Delete", "btn-danger");
         }
 
         // 5. CALCULATE ROW LOGIC
@@ -576,8 +572,8 @@ function requestExcuseFromDashboard() {
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') { alert('Personal Information Saved Successfully!'); window.location.reload(); } 
-                else { alert('Error saving data: ' + data.message); }
+                if(data.status === 'success') { showToast('Personal Information Saved Successfully!', 'success'); setTimeout(() => window.location.reload(), 1000); } 
+                else { showToast('Error saving data: ' + data.message, 'error'); }
             });
         }
 
@@ -678,10 +674,12 @@ function requestExcuseFromDashboard() {
         }
 
         function clearPhoto() {
-            if (confirm("Would you like to delete the current photo?")) {
-                setPhotoUI('', true);
+            showConfirmModal("Would you like to delete the current photo?", () => {
+                document.getElementById('profile-img').src = "{% static 'images/default-avatar.png' %}";
                 document.getElementById('upload-photo-input').value = '';
-            }
+                document.getElementById('hidden-photo-action').value = 'DELETE';
+                document.getElementById('btn-clear-photo').style.display = 'none';
+            }, "Delete", "btn-danger");
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -710,8 +708,8 @@ function requestExcuseFromDashboard() {
             if (periodType === 'CUSTOM') {
                 start = document.getElementById('range-start').value;
                 end = document.getElementById('range-end').value;
-                if (!start || !end) return alert("Please select both start and end dates.");
-                if (new Date(end) < new Date(start)) return alert("End date cannot be before start date.");
+                if (!start || !end) return showToast("Please select both start and end dates.", "error");
+                if (new Date(end) < new Date(start)) return showToast("End date cannot be before start date.", "error");
             } else if (periodType === 'TODAY') {
                 start = end = new Date().toISOString().split('T')[0];
             }
@@ -831,7 +829,7 @@ function requestExcuseFromDashboard() {
                         btnUp.classList.add('text-danger');
                         btnUp.onclick = () => cancelSigCamera(type);
                         activeSigCamera = type;
-                    }).catch(err => alert("Camera access denied."));
+                    }).catch(err => showToast("Camera access denied.", "error"));
             } else {
                 const canvas = document.getElementById(`sig-canvas-${type}`);
                 const context = canvas.getContext('2d');
@@ -874,11 +872,12 @@ function requestExcuseFromDashboard() {
         }
 
         function clearSignature(type) {
-            if (confirm(`Would you like to delete the ${type}'s signature?`)) {
+            showConfirmModal(`Would you like to delete the ${type}'s signature?`, () => {
                 setSigUI('', type, true);
                 document.getElementById(`upload-sig-${type}`).value = '';
-            }
+            }, "Delete", "btn-danger");
         }
     </script>
+    {% include 'core/modals/system_modals.html' %}
 </body>
 </html>

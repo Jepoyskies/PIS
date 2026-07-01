@@ -1,0 +1,113 @@
+<!-- Shared System Modals & Toasts -->
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1060">
+    <div id="systemToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="systemToastBody">
+                Success!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark border-0">
+                <h5 class="modal-title fw-bold" id="confirmModalTitle"><i class="fa-solid fa-circle-exclamation me-2"></i>Confirmation Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body fw-bold text-muted" id="confirmModalBody">
+                Are you sure?
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary fw-bold rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-bold rounded-pill px-4" id="confirmModalActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prompt Modal -->
+<div class="modal fade" id="promptModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Input Required</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body fw-bold text-muted">
+                <p id="promptModalBody">Please specify:</p>
+                <input type="text" id="promptModalInput" class="form-control shadow-sm border-primary" value="">
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary fw-bold rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-bold rounded-pill px-4" id="promptModalActionBtn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showToast(message, type = 'success') {
+        const toastEl = document.getElementById('systemToast');
+        if (!toastEl) return;
+        const toastBody = document.getElementById('systemToastBody');
+        toastBody.innerText = message;
+        if (type === 'success') {
+            toastEl.className = 'toast align-items-center text-white bg-success border-0 shadow';
+        } else {
+            toastEl.className = 'toast align-items-center text-white bg-danger border-0 shadow';
+        }
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
+
+    function showConfirmModal(message, actionCallback, btnText = 'Confirm', btnClass = 'btn-primary') {
+        const modalEl = document.getElementById('confirmationModal');
+        if (!modalEl) return;
+        document.getElementById('confirmModalBody').innerText = message;
+        const actionBtn = document.getElementById('confirmModalActionBtn');
+        actionBtn.innerText = btnText;
+        actionBtn.className = `btn ${btnClass} fw-bold rounded-pill px-4`;
+        
+        const newActionBtn = actionBtn.cloneNode(true);
+        actionBtn.parentNode.replaceChild(newActionBtn, actionBtn);
+        
+        const modal = new bootstrap.Modal(modalEl);
+        
+        newActionBtn.addEventListener('click', () => {
+            modal.hide();
+            actionCallback();
+        });
+        
+        modal.show();
+    }
+
+    function showPromptModal(message, defaultValue, actionCallback) {
+        const modalEl = document.getElementById('promptModal');
+        if (!modalEl) return;
+        document.getElementById('promptModalBody').innerText = message;
+        const inputEl = document.getElementById('promptModalInput');
+        inputEl.value = defaultValue;
+        
+        const actionBtn = document.getElementById('promptModalActionBtn');
+        const newActionBtn = actionBtn.cloneNode(true);
+        actionBtn.parentNode.replaceChild(newActionBtn, actionBtn);
+        
+        const modal = new bootstrap.Modal(modalEl);
+        
+        newActionBtn.addEventListener('click', () => {
+            const val = document.getElementById('promptModalInput').value.trim();
+            if (val) {
+                modal.hide();
+                actionCallback(val);
+            }
+        });
+        
+        modal.show();
+    }
+</script>

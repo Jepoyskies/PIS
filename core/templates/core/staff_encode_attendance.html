@@ -218,7 +218,13 @@
             students.forEach(s => {
                 formData[s.id] = {};
                 for(let p=1; p<=7; p++) {
-                    formData[s.id][p] = { code: 'P', note: '' }; 
+                    let defaultCode = 'P';
+                    let defaultNote = '';
+                    if (historyData[p] && historyData[p].records[s.id]) {
+                        defaultCode = historyData[p].records[s.id].code;
+                        defaultNote = historyData[p].records[s.id].note;
+                    }
+                    formData[s.id][p] = { code: defaultCode, note: defaultNote }; 
                 }
             });
             for(let i=1; i<=7; i++) {
@@ -364,63 +370,82 @@
         window.updateNote = function(studentId, val) { formData[studentId][activePeriod].note = val; };
 
         function submitFinalForm() {
-            if(confirm("Confirm and permanently lock this period?")) {
-                const form = document.getElementById('attendanceForm');
-                document.getElementById('hidden_period_number').value = activePeriod;
-                const dynamicInputs = document.getElementById('dynamic-inputs');
-                dynamicInputs.innerHTML = '';
-                
-                students.forEach(s => {
-                    let cInput = document.createElement('input'); cInput.type = 'hidden'; cInput.name = `code_${s.id}`; cInput.value = formData[s.id][activePeriod].code; dynamicInputs.appendChild(cInput);
-                    if(formData[s.id][activePeriod].note) { let nInput = document.createElement('input'); nInput.type = 'hidden'; nInput.name = `note_${s.id}`; nInput.value = formData[s.id][activePeriod].note; dynamicInputs.appendChild(nInput); }
-                });
-                form.submit();
-            }
+            showConfirmModal(
+                "Confirm and permanently lock this period?",
+                () => {
+                    const form = document.getElementById('attendanceForm');
+                    document.getElementById('hidden_period_number').value = activePeriod;
+                    const dynamicInputs = document.getElementById('dynamic-inputs');
+                    dynamicInputs.innerHTML = '';
+                    
+                    students.forEach(s => {
+                        let cInput = document.createElement('input'); cInput.type = 'hidden'; cInput.name = `code_${s.id}`; cInput.value = formData[s.id][activePeriod].code; dynamicInputs.appendChild(cInput);
+                        if(formData[s.id][activePeriod].note) { let nInput = document.createElement('input'); nInput.type = 'hidden'; nInput.name = `note_${s.id}`; nInput.value = formData[s.id][activePeriod].note; dynamicInputs.appendChild(nInput); }
+                    });
+                    form.submit();
+                },
+                'Encode & Approve',
+                'btn-success'
+            );
         }
 
         function unapproveActivePeriod() {
-            if(confirm("Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.")) {
-                const batchId = batchIds[activePeriod];
-                if (!batchId) { alert('Cannot find this period batch. Please refresh.'); return; }
-                const form = document.getElementById('unapproveForm');
-                form.action = `/staff/attendance/reopen/${batchId}/`;
-                form.submit();
-            }
+            showConfirmModal(
+                "Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.",
+                () => {
+                    const batchId = batchIds[activePeriod];
+                    if (!batchId) { showToast('Cannot find this period batch. Please refresh.', 'error'); return; }
+                    const form = document.getElementById('unapproveForm');
+                    form.action = `/staff/attendance/reopen/${batchId}/`;
+                    form.submit();
+                },
+                'Unapprove & Edit',
+                'btn-danger'
+            );
         }
 
         const batchDate = "{{ today|date:'Y-m-d' }}";
 
         function requestExcuseLetter(btn, studentId, studentName) {
-            const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
-            if (!violationStr) return;
-            if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                btn.disabled = true;
-                fetch(`/api/student/${studentId}/request-excuse/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ date: batchDate, violation_name: violationStr })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`);
-                        btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
-                    } else {
-                        alert('Error: ' + data.message);
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Network error.");
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                });
-            }
+            showPromptModal(
+                `Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`,
+                'absence',
+                (violationStr) => {
+                    showConfirmModal(
+                        `Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`,
+                        () => {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                            const originalHtml = btn.innerHTML;
+                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                            btn.disabled = true;
+                            fetch(`/api/student/${studentId}/request-excuse/`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                                body: JSON.stringify({ date: batchDate, violation_name: violationStr })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    showToast(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`);
+                                    btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
+                                } else {
+                                    showToast('Error: ' + data.message, 'error');
+                                    btn.innerHTML = originalHtml;
+                                    btn.disabled = false;
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                showToast("Network error.", "error");
+                                btn.innerHTML = originalHtml;
+                                btn.disabled = false;
+                            });
+                        },
+                        'Send Request',
+                        'btn-primary'
+                    );
+                }
+            );
         }
     </script>
     <form method="POST" id="unapproveForm" class="d-none">
@@ -559,7 +584,7 @@
 
             const match = globalOffenses.find(o => o.name === offenseVal);
             if (!match) {
-                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                showToast("Invalid Offense! Please select an exact match from the dropdown list.", "error");
                 inputElem.value = ''; 
                 demField.value = 0;
                 sancField.value = '';
@@ -579,13 +604,13 @@
         }
 
         function deleteOffenseRow(button) {
-            const row = button.closest('tr');
-            if (confirm("Are you sure you want to delete this row?")) {
+            showConfirmModal("Are you sure you want to delete this row?", () => {
+                const row = button.closest('tr');
                 row.remove();
                 updateUnservedCSTable();
                 const tbody = document.getElementById('detailed-offenses-body');
                 if (tbody.children.length === 0) addNewOffenseRow();
-            }
+            }, "Delete", "btn-danger");
         }
 
         function calculateRow(input) {
@@ -665,8 +690,8 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') { alert('Personal Information Saved Successfully!'); } 
-                else { alert('Error saving data: ' + data.message); }
+                if(data.status === 'success') { showToast('Personal Information Saved Successfully!', 'success'); } 
+                else { showToast('Error saving data: ' + data.message, 'error'); }
             });
         }
 
@@ -725,7 +750,7 @@
                             btnUpload.classList.add('text-danger');
                             btnUpload.onclick = cancelCamera; 
                             isCameraActive = true;
-                        }).catch(function(err) { alert("Camera access denied."); });
+                        }).catch(function(err) { showToast("Camera access denied.", "error"); });
                 }
             } else {
                 const canvas = document.getElementById('webcam-canvas');
@@ -768,10 +793,15 @@
         }
 
         function clearPhoto() {
-            if (confirm("Delete the current photo?")) {
-                setPhotoUI('', true);
-                document.getElementById('upload-photo-input').value = '';
-            }
+            showConfirmModal(
+                "Delete the current photo?",
+                () => {
+                    setPhotoUI('', true);
+                    document.getElementById('upload-photo-input').value = '';
+                },
+                'Delete',
+                'btn-danger'
+            );
         }
 
         let sigVideoStream = null;
@@ -872,11 +902,17 @@
         }
 
         function clearSignature(type) {
-            if (confirm(`Delete the ${type}'s signature?`)) {
-                setSigUI('', type, true);
-                document.getElementById(`upload-sig-${type}`).value = '';
-            }
+            showConfirmModal(
+                `Delete the ${type}'s signature?`,
+                () => {
+                    setSigUI('', type, true);
+                    document.getElementById(`upload-sig-${type}`).value = '';
+                },
+                'Delete',
+                'btn-danger'
+            );
         }
     </script>
+    {% include 'core/modals/system_modals.html' %}
 </body>
 </html>

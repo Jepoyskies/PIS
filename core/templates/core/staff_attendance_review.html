@@ -322,7 +322,7 @@
             }
 
             if (pendingPeriods.length === 0) {
-                alert("No pending periods to approve.");
+                showToast("No pending periods to approve.", "error");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING';
                 return;
@@ -350,18 +350,23 @@
                 window.location.reload();
             } catch (error) {
                 console.error("Error approving periods:", error);
-                alert("An error occurred while saving. Please try again.");
+                showToast("An error occurred while saving. Please try again.", "error");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-rocket me-1"></i> APPROVE ALL PENDING';
             }
         }
 
         function unapproveActivePeriod() {
-            if(confirm("Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.")) {
-                const form = document.getElementById('unapproveForm');
-                form.action = `/staff/attendance/reopen/${batchIds[activePeriod]}/`;
-                form.submit();
-            }
+            showConfirmModal(
+                "Are you sure you want to reopen this period? Any automated offenses generated from this period will be temporarily removed until you approve it again.",
+                () => {
+                    const form = document.getElementById('unapproveForm');
+                    form.action = `/staff/attendance/reopen/${batchIds[activePeriod]}/`;
+                    form.submit();
+                },
+                "Unapprove & Edit",
+                "btn-danger"
+            );
         }
 
         function renderExpandedGrid() {
@@ -591,41 +596,49 @@
         // ==========================================
         // NEW EXCUSE LETTER LOGIC
         // ==========================================
-const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
+        const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
 
-       function requestExcuseLetter(btn, studentId, studentName) {
-    const violationStr = prompt(`Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`, 'absence');
-    if (!violationStr) return; 
-
-    if (confirm(`Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`)) {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const originalHtml = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        btn.disabled = true;
-                fetch(`/api/student/${studentId}/request-excuse/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ date: batchDate, violation_name: violationStr })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`);
-                        btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
-                    } else {
-                        alert('Error: ' + data.message);
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Network error.");
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                });
-            }
+        function requestExcuseLetter(btn, studentId, studentName) {
+            showPromptModal(
+                `Please specify the violation reason for ${studentName} on ${batchDate} (e.g., 'absence', 'tardiness'):`,
+                'absence',
+                (violationStr) => {
+                    showConfirmModal(
+                        `Send an email and dashboard notification to ${studentName} requesting an excuse letter for ${batchDate} regarding their ${violationStr}?`,
+                        () => {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                            const originalHtml = btn.innerHTML;
+                            
+                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                            btn.disabled = true;
+                            fetch(`/api/student/${studentId}/request-excuse/`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                                body: JSON.stringify({ date: batchDate, violation_name: violationStr })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    showToast(`Notification sent successfully to ${studentId}@my.xu.edu.ph!`, "success");
+                                    btn.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
+                                } else {
+                                    showToast('Error: ' + data.message, "error");
+                                    btn.innerHTML = originalHtml;
+                                    btn.disabled = false;
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                showToast("Network error.", "error");
+                                btn.innerHTML = originalHtml;
+                                btn.disabled = false;
+                            });
+                        },
+                        'Send Request',
+                        'btn-primary'
+                    );
+                }
+            );
         }
 
     </script>
@@ -776,7 +789,7 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
 
             // STRICT VALIDATION: If they typed random letters that don't match exactly
             if (!match) {
-                alert("Invalid Offense! Please select an exact match from the dropdown list.");
+                showToast("Invalid Offense! Please select an exact match from the dropdown list.", "error");
                 inputElem.value = ''; // Wipe the invalid text
                 demField.value = 0;
                 sancField.value = '';
@@ -802,10 +815,10 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
 
         // 4. DELETE ROW FUNCTION
         function deleteOffenseRow(button) {
-            const row = button.closest('tr');
-            const recordId = row.dataset.recordId;
+            showConfirmModal("Are you sure you want to delete this row?", () => {
+                const row = button.closest('tr');
+                const recordId = row.dataset.recordId;
 
-            if (confirm("Are you sure you want to delete this row?")) {
                 // If this is an existing database record, we will need to delete it from MySQL
                 if (recordId) {
                     console.log("Trigger backend delete for ID:", recordId);
@@ -819,9 +832,10 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
                 // Ensure there is always at least one row
                 const tbody = document.getElementById('detailed-offenses-body');
                 if (tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center p-5 text-muted fw-bold">No records found.</td></tr>';
                     addNewOffenseRow();
                 }
-            }
+            }, "Delete", "btn-danger");
         }
 
         // 5. CALCULATE ROW LOGIC
@@ -913,8 +927,8 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
         })
         .then(res => res.json())
         .then(data => {
-            if(data.status === 'success') { alert('Personal Information Saved Successfully!'); } 
-            else { alert('Error saving data: ' + data.message); }
+            if(data.status === 'success') { showToast('Personal Information Saved Successfully!', 'success'); } 
+            else { showToast('Error saving data: ' + data.message, 'error'); }
         });
     }
 
@@ -973,7 +987,7 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
                         btnUpload.classList.add('text-danger');
                         btnUpload.onclick = cancelCamera; 
                         isCameraActive = true;
-                    }).catch(function(err) { alert("Camera access denied."); });
+                    }).catch(function(err) { showToast("Camera access denied.", "error"); });
             }
         } else {
             const canvas = document.getElementById('webcam-canvas');
@@ -1018,10 +1032,10 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
     }
 
     function clearPhoto() {
-        if (confirm("Delete the current photo?")) {
+        showConfirmModal("Delete the current photo?", () => {
             setPhotoUI('', true);
             document.getElementById('upload-photo-input').value = '';
-        }
+        }, "Delete", "btn-danger");
     }
 
     let sigVideoStream = null;
@@ -1122,11 +1136,12 @@ const batchDate = "{{ batch.daily_attendance.date|date:'Y-m-d' }}";
     }
 
     function clearSignature(type) {
-        if (confirm(`Delete the ${type}'s signature?`)) {
+        showConfirmModal(`Delete the ${type}'s signature?`, () => {
             setSigUI('', type, true);
             document.getElementById(`upload-sig-${type}`).value = '';
-        }
+        }, "Delete", "btn-danger");
     }
     </script>
+    {% include 'core/modals/system_modals.html' %}
 </body>
 </html>

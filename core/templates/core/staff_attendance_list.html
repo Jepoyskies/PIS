@@ -226,10 +226,11 @@
         function startEncoding() {
             const dateVal = document.getElementById('encode-date').value;
             const secVal = document.getElementById('encode-section').value;
-            if(!dateVal || !secVal) { alert("Please select a date and section."); return; }
+            if(!dateVal || !secVal) { showToast("Please select a date and section.", "error"); return; }
             window.location.href = `/staff/attendance/encode/${secVal}/${dateVal}/`;
         }
     </script>
     <script src="{% static 'core/js/bootstrap.bundle.min.js' %}"></script>
+    {% include 'core/modals/system_modals.html' %}
 </body>
 </html>

@@ -34,12 +34,10 @@ urlpatterns = [
 
     path('staff/attendance/list/', views.staff_attendance_list, name='staff_attendance_list'),
     path('staff/attendance/encode/<int:section_id>/<str:date_str>/', views.staff_encode_attendance, name='staff_encode_attendance'),
-    path('staff/attendance/review/<int:batch_id>/', views.staff_attendance_review, name='staff_attendance_review'),
     path('staff/attendance/approve/<int:batch_id>/', views.approve_attendance_batch, name='approve_attendance_batch'),
     path('staff/attendance/reopen/<int:batch_id>/', views.reopen_attendance_batch, name='reopen_attendance_batch'),
     path('api/offenses/list/', views.api_get_offenses, name='api_get_offenses'),
     path('staff/report/student/<str:student_id>/', views.generate_student_report, name='student_report'),
-    path('api/record/<int:record_id>/toggle-served/', views.api_toggle_served, name='api_toggle_served'),
     path('api/record/<int:record_id>/toggle-served/', views.api_toggle_served, name='api_toggle_served'),
     path('reports/student-demerits/', views.report_student_demerits, name='report_student_demerits'),
     path('reports/enrolment-summary/', views.report_enrolment_summary, name='report_enrolment_summary'),
@@ -59,7 +57,6 @@ urlpatterns = [
     path('reports/detailed-deportment/', views.report_detailed_deportment, name='report_detailed_deportment'),
     path('reports/deportment/', views.report_deportment, name='report_deportment'),
     path('reports/daily-attendance-summary/', views.report_daily_attendance_summary, name='report_daily_attendance_summary'),
-    path('api/student/<str:student_id>/request-excuse/', views.api_request_excuse, name='api_request_excuse'),
     path('api/student/<str:student_id>/request-excuse/', views.api_request_excuse, name='api_request_excuse'),
     path('student/request/<int:req_id>/submit/', views.submit_excuse_letter, name='submit_excuse_letter'), # NEW ENDPOINT
     # Excuse Letters Staff Portal

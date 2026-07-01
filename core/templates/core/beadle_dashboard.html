@@ -422,7 +422,7 @@
                 }
             });
 
-            if(missing) alert("Please ensure every student has a status selected before reviewing.");
+            if(missing) showToast("Please ensure every student has a status selected before reviewing.", "error");
             else new bootstrap.Modal(document.getElementById('reviewModal')).show();
         }
 
@@ -432,7 +432,7 @@
             const form = document.getElementById('attendanceForm');
             let invalid = false;
             students.forEach(s => { if (formData[s.id][activePeriod].code !== firstChoices[s.id][activePeriod] && !formData[s.id][activePeriod].note) invalid = true; });
-            if(invalid) { bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide(); alert("You changed a status but forgot to provide a reason in the Note field!"); return; }
+            if(invalid) { bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide(); showToast("You changed a status but forgot to provide a reason in the Note field!", "error"); return; }
             const dynamicInputs = document.getElementById('dynamic-inputs');
             dynamicInputs.innerHTML = '';
             let pInput = document.createElement('input'); pInput.type = 'hidden'; pInput.name = 'period_number'; pInput.value = activePeriod; dynamicInputs.appendChild(pInput);
@@ -443,5 +443,6 @@
             form.submit();
         }
     </script>
+    {% include 'core/modals/system_modals.html' %}
 </body>
 </html>
